@@ -27,6 +27,9 @@ body {
   justify-content: center;
   font-size: 2vw;
 }
+.active {
+  background-color: lightblue; /* Választható szín az aktív sor kiemeléséhez */
+}
 @media (max-width: 600px) {
   .cell-content {
       font-size: 4vw;
