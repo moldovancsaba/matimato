@@ -155,4 +155,3 @@ function generateGameResult() {
 document.addEventListener('DOMContentLoaded', (event) => {
   createBoard(board);
 });
-```
