@@ -1,21 +1,32 @@
 body {
   text-align: center;
   font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100vh;
 }
+
 .board {
   display: grid;
   grid-template-columns: repeat(9, 1fr);
   grid-gap: 5px;
   max-width: 90vw;
+  max-height: 90vh;
   margin: auto;
+  aspect-ratio: 1 / 1; /* Megőrzi az 1:1 arányt */
 }
+
 .cell {
   width: 100%;
-  padding-top: 100%; /* Aspect ratio 1:1 */
+  padding-top: 11.11%; /* 100 / 9 */
   position: relative;
   border: 1px solid black;
   cursor: pointer;
 }
+
 .cell-content {
   position: absolute;
   top: 0;
@@ -26,10 +37,13 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 2vw;
+  user-select: none; /* Megakadályozza a szöveg kijelölését */
 }
+
 .active {
   background-color: lightblue; /* Választható szín az aktív sor kiemeléséhez */
 }
+
 @media (max-width: 600px) {
   .cell-content {
       font-size: 4vw;
