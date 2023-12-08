@@ -1,49 +1,43 @@
 class Board {
   constructor() {
-      this.rows = 9;
-      this.columns = 9;
-      this.cells = this.createInitialBoard();
+    this.rows = 9;
+    this.columns = 9;
+    this.cells = this.createInitialBoard();
   }
 
   createInitialBoard() {
-      let board = Array.from({ length: 9 }, (_, index) => 
-          Array.from({ length: 9 }, (_, cellIndex) => (index + cellIndex) % 9 + 1)
-      );
-
-      // Keverés a sorok és oszlopok között
-      for (let i = 0; i < 9; i++) {
-          let row = Math.floor(Math.random() * 9);
-          let col = Math.floor(Math.random() * 9);
-          [board[i], board[row]] = [board[row], board[i]]; // Sorok cseréje
-          for (let j = 0; j < 9; j++) {
-              [board[j][i], board[j][col]] = [board[j][col], board[j][i]]; // Oszlopok cseréje
-          }
+    let board = [];
+    for (let i = 0; i < this.rows; i++) {
+      let row = [];
+      for (let j = 0; j < this.columns; j++) {
+        row.push((i * this.columns + j) % 9 + 1);
       }
-
-      return board;
+      board.push(row);
+    }
+    return board;
   }
 
   removeNumber(row, column) {
-      this.cells[row][column] = null;
+    this.cells[row][column] = null;
   }
 
   hasAvailableMoves(row, column) {
-      return this.cells[row].some(cell => cell != null) || this.cells.some(r => r[column] != null);
+    return this.cells[row].some(cell => cell != null) || this.cells.some(r => r[column] != null);
   }
 }
 
 class Player {
   constructor() {
-      this.score = 0;
+    this.score = 0;
   }
 
   play(board, position) {
-      if (board.cells[position.row][position.column] != null) {
-          this.score += board.cells[position.row][position.column];
-          board.removeNumber(position.row, position.column);
-          return true;
-      }
-      return false;
+    if (board.cells[position.row][position.column] != null) {
+      this.score += board.cells[position.row][position.column];
+      board.removeNumber(position.row, position.column);
+      return true;
+    }
+    return false;
   }
 }
 
@@ -56,22 +50,22 @@ function createBoard(board) {
   const boardElement = document.getElementById('board');
   boardElement.innerHTML = '';
   for (let i = 0; i < board.rows; i++) {
-      for (let j = 0; j < board.columns; j++) {
-          const cell = document.createElement('div');
-          cell.className = 'cell';
-          if (i === activeRow) {
-              cell.classList.add('active'); // Az aktív sor kiemelése
-          }
-          const cellContent = document.createElement('div');
-          cellContent.className = 'cell-content';
-          cellContent.textContent = board.cells[i][j];
-          cell.appendChild(cellContent);
-
-          if (i === activeRow && board.cells[i][j] != null) {
-              cell.onclick = () => handleCellClick(i, j);
-          }
-          boardElement.appendChild(cell);
+    for (let j = 0; j < board.columns; j++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      if (i === activeRow) {
+        cell.classList.add('active');
       }
+      const cellContent = document.createElement('div');
+      cellContent.className = 'cell-content';
+      cellContent.textContent = board.cells[i][j];
+      cell.appendChild(cellContent);
+
+      if (i === activeRow && board.cells[i][j] != null) {
+        cell.onclick = () => handleCellClick(i, j);
+      }
+      boardElement.appendChild(cell);
+    }
   }
 }
 
@@ -81,33 +75,33 @@ function handleCellClick(row, column) {
 
 function handleHumanMove(row, column) {
   if (row !== activeRow) {
-      console.log("Nem a megengedett sorból választottál. Próbáld újra!");
-      return;
+    console.log("Nem a megengedett sorból választottál. Próbáld újra!");
+    return;
   }
   if (humanPlayer.play(board, { row, column })) {
-      activeRow = column; // Frissíti az aktív sort a kiválasztott oszlop alapján
-      updateBoard();
-      if (!board.hasAvailableMoves(column, row)) {
-          endGame();
-          return;
-      }
-      handleComputerMove(column);
+    activeRow = column; // Frissíti az aktív sort a kiválasztott oszlop alapján
+    updateBoard();
+    if (!board.hasAvailableMoves(column, row)) {
+      endGame();
+      return;
+    }
+    handleComputerMove(column);
   } else {
-      console.log("Nem sikerült lépni. Próbáld újra!");
+    console.log("Nem sikerült lépni. Próbáld újra!");
   }
 }
 
 function handleComputerMove(column) {
   let availableRows = [];
   for (let i = 0; i < board.rows; i++) {
-      if (board.cells[i][column] != null) {
-          availableRows.push(i);
-      }
+    if (board.cells[i][column] != null) {
+      availableRows.push(i);
+    }
   }
 
   if (availableRows.length === 0) {
-      endGame();
-      return;
+    endGame();
+    return;
   }
 
   let randomRowIndex = availableRows[Math.floor(Math.random() * availableRows.length)];
@@ -122,15 +116,43 @@ function updateBoard() {
 
 function endGame() {
   if (humanPlayer.score > computerPlayer.score) {
-      console.log("Az emberi játékos nyert!");
+    console.log("Az emberi játékos nyert!");
   } else if (humanPlayer.score < computerPlayer.score) {
-      console.log("A számítógép nyert!");
+    console.log("A számítógép nyert!");
   } else {
-      console.log("Döntetlen!");
+    console.log("Döntetlen!");
   }
+
+  // Statisztika mentése
+  saveGameStats();
+}
+
+function saveGameStats() {
+  const gameId = generateGameId();
+  const gameResult = generateGameResult();
+
+  firebase.database().ref('games/' + gameId).set({
+    result: gameResult,
+    timestamp: new Date().toISOString()
+  });
+}
+
+function generateGameId() {
+  const now = new Date();
+  const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+  const randomPart = String(Math.floor(Math.random() * 100000000)).padStart(8, '0');
+  return datePart + randomPart;
+}
+
+function generateGameResult() {
+  const winner = humanPlayer.score > computerPlayer.score ? 1 : 2;
+  const humanScore = String(humanPlayer.score).padStart(3, '0');
+  const computerScore = String(computerPlayer.score).padStart(3, '0');
+  return `${winner}${humanScore}${computerScore}`;
 }
 
 // Inicializálja a táblát a kezdő állapotban.
 document.addEventListener('DOMContentLoaded', (event) => {
-    createBoard(board);
+  createBoard(board);
 });
+```
