@@ -1,14 +1,34 @@
 body {
-  font-family: sans-serif;
-  background-color: #ffffff;
-}
-
-#container {
-  width: 500px;
-  height: 500px;
-  margin: 0 auto;
-}
-
-h1 {
   text-align: center;
+  font-family: Arial, sans-serif;
+}
+.board {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  grid-gap: 5px;
+  max-width: 90vw;
+  margin: auto;
+}
+.cell {
+  width: 100%;
+  padding-top: 100%; /* Aspect ratio 1:1 */
+  position: relative;
+  border: 1px solid black;
+  cursor: pointer;
+}
+.cell-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2vw;
+}
+@media (max-width: 600px) {
+  .cell-content {
+      font-size: 4vw;
+  }
 }
