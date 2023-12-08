@@ -13,17 +13,14 @@ body {
   display: grid;
   grid-template-columns: repeat(9, 1fr);
   grid-gap: 5px;
-  max-width: 90vw;
-  max-height: 90vh;
+  width: 100%;
+  max-width: 600px; /* Limitálja a tábla maximális szélességét */
   margin: auto;
   aspect-ratio: 1 / 1; /* Megőrzi az 1:1 arányt */
 }
 
 .cell {
-  width: 100%;
-  padding-top: 11.11%; /* 100 / 9 */
   position: relative;
-  border: 1px solid black;
   cursor: pointer;
 }
 
@@ -36,7 +33,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2vw;
+  font-size: 3vw; /* A betűméret skálázása a képernyő szélességéhez */
   user-select: none; /* Megakadályozza a szöveg kijelölését */
 }
 
@@ -46,6 +43,6 @@ body {
 
 @media (max-width: 600px) {
   .cell-content {
-      font-size: 4vw;
+      font-size: 5vw;
   }
 }
