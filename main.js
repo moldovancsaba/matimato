@@ -1,38 +1,70 @@
+class Board {
+  constructor() {
+    this.cells = this.createInitialBoard();
+    this.rows = 9;
+    this.columns = 9;
+  }
+
+  createInitialBoard() {
+    let board = [];
+    for (let i = 0; i < 9; i++) {
+      let row = [];
+      for (let j = 0; j < 9; j++) {
+        row.push(Math.floor(Math.random() * 9) + 1);
+      }
+      board.push(row);
+    }
+    return board;
+  }
+
+  removeNumber(row, column) {
+    this.cells[row][column] = null;
+  }
+
+  hasAvailableMoves() {
+    return this.cells.some(row => row.some(cell => cell != null));
+  }
+}
+
+class Player {
+  constructor() {
+    this.score = 0;
+  }
+
+  play(board, position) {
+    if (board.cells[position.row][position.column] != null) {
+      this.score += board.cells[position.row][position.column];
+      board.removeNumber(position.row, position.column);
+      return true;
+    }
+    return false;
+  }
+}
+
 // A játék kezdetén létrehozzuk a tábla és a játékosok objektumait.
 const board = new Board();
-const humanPlayer = new HumanPlayer();
-const computerPlayer = new ComputerPlayer();
+const humanPlayer = new Player();
+const computerPlayer = new Player();
 
 // A játékmenetet a következő függvény kezeli.
 function playGame() {
-  // A játék kezdetén a tábla minden mezőjére 1-től 9-ig számokat helyezünk.
-  for (let i = 0; i < board.rows; i++) {
-    for (let j = 0; j < board.columns; j++) {
-      board.cells[i][j] = i + j + 1;
-    }
-  }
+  let activeRow = 4; // A középső sor indexe (0-tól indexelve).
 
-  // A játékosok kezdőpontjait beállítjuk.
-  humanPlayer.row = 4;
-  humanPlayer.column = 4;
-  computerPlayer.row = 4;
-  computerPlayer.column = 4;
-
-  // A játékot addig folytatjuk, amíg valamelyik játékos nyer.
-  while (true) {
-    // A játékos lép.
-    humanPlayer.play(board);
-
-    // Ha a játékos nem tud lépni, akkor a játék véget ér.
-    if (!humanPlayer.canPlay(board)) {
+  // A játékot addig folytatjuk, amíg van elérhető lépés.
+  while (board.hasAvailableMoves()) {
+    // Emberi játékos lép.
+    let humanMove = { row: activeRow, column: /* itt kérjük be a felhasználótól a választást */ };
+    if (humanPlayer.play(board, humanMove)) {
+      activeRow = humanMove.column;
+    } else {
       break;
     }
 
-    // A számítógép lép.
-    computerPlayer.play(board);
-
-    // Ha a számítógép nem tud lépni, akkor a játék véget ér.
-    if (!computerPlayer.canPlay(board)) {
+    // Számítógép lép.
+    let computerMove = { row: activeRow, column: /* itt generáljuk a számítógép választását */ };
+    if (computerPlayer.play(board, computerMove)) {
+      activeRow = computerMove.column;
+    } else {
       break;
     }
   }
