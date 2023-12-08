@@ -21,8 +21,9 @@ class Board {
     this.cells[row][column] = null;
   }
 
-  hasAvailableMoves() {
-    return this.cells.some(row => row.some(cell => cell != null));
+  hasAvailableMoves(row, column) {
+    // Ellenőrizze, hogy vannak-e elérhető lépések az adott sorban vagy oszlopban.
+    return this.cells[row].some(cell => cell != null) || this.cells.some(r => r[column] != null);
   }
 }
 
@@ -41,35 +42,50 @@ class Player {
   }
 }
 
-// A játék kezdetén létrehozzuk a tábla és a játékosok objektumait.
-const board = new Board();
-const humanPlayer = new Player();
-const computerPlayer = new Player();
+// Emberi játékos lépésének kezelése
+function handleHumanMove(row, column) {
+  if (!humanPlayer.play(board, { row, column })) {
+    console.log("Nem sikerült lépni. Próbáld újra!");
+    return;
+  }
 
-// A játékmenetet a következő függvény kezeli.
-function playGame() {
-  let activeRow = 4; // A középső sor indexe (0-tól indexelve).
+  // Frissítse a táblát, majd ellenőrizze, hogy van-e lépés a számítógép számára.
+  updateBoard();
+  if (!board.hasAvailableMoves(column, row)) {
+    endGame();
+    return;
+  }
 
-  // A játékot addig folytatjuk, amíg van elérhető lépés.
-  while (board.hasAvailableMoves()) {
-    // Emberi játékos lép.
-    let humanMove = { row: activeRow, column: /* itt kérjük be a felhasználótól a választást */ };
-    if (humanPlayer.play(board, humanMove)) {
-      activeRow = humanMove.column;
-    } else {
-      break;
-    }
+  // Számítógép lépése
+  handleComputerMove(column);
+}
 
-    // Számítógép lép.
-    let computerMove = { row: activeRow, column: /* itt generáljuk a számítógép választását */ };
-    if (computerPlayer.play(board, computerMove)) {
-      activeRow = computerMove.column;
-    } else {
-      break;
+// Számítógép lépésének kezelése
+function handleComputerMove(column) {
+  // Egyszerű AI a példa kedvéért: válasszon egy véletlenszerű számot az aktív oszlopból.
+  let availableRows = [];
+  for (let i = 0; i < board.rows; i++) {
+    if (board.cells[i][column] != null) {
+      availableRows.push(i);
     }
   }
 
-  // A játék végét kiírjuk a konzolra.
+  if (availableRows.length === 0) {
+    endGame();
+    return;
+  }
+
+  let randomRowIndex = availableRows[Math.floor(Math.random() * availableRows.length)];
+  computerPlayer.play(board, { row: randomRowIndex, column });
+  updateBoard();
+}
+
+function updateBoard() {
+  // Itt frissíti a táblát a DOM-ban, például újrarajzolja a táblát a board.cells alapján.
+}
+
+function endGame() {
+  // Játék vége logika: kiírja a győztest és leállítja a játékot.
   if (humanPlayer.score > computerPlayer.score) {
     console.log("Az emberi játékos nyert!");
   } else if (humanPlayer.score < computerPlayer.score) {
@@ -79,5 +95,6 @@ function playGame() {
   }
 }
 
-// A játék elindítása.
-playGame();
+// Példa a játék indítására, ha szükséges.
+// updateBoard(); // Inicializálja és frissíti a táblát a kezdő állapotban.
+// A felhasználói interakciókat (pl. cellákra kattintás) itt lehet kezelni.
