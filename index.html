@@ -1,14 +1,61 @@
 <!DOCTYPE html>
-<html lang="hu">
+<html>
 <head>
-  <title>Matimato</title>
-  <link rel="stylesheet" href="style.css">
+    <title>Játék</title>
+    <style>
+        .board {
+            display: grid;
+            grid-template-columns: repeat(9, 50px);
+            grid-template-rows: repeat(9, 50px);
+            gap: 5px;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 1px solid black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .selected {
+            background-color: lightgreen;
+        }
+    </style>
 </head>
 <body>
-  <div id="container">
-    <h1>matimato</h1>
-  </div>
-  <script src="main.js"></script>
-  <h1>otamitam</h1>
+    <h1>Játék</h1>
+    <div id="board" class="board"></div>
+    <script src="main.js"></script>
+    <script>
+        const boardElement = document.getElementById('board');
+
+        // Tábla létrehozása
+        function createBoard(board) {
+            boardElement.innerHTML = '';
+            for (let i = 0; i < board.rows; i++) {
+                for (let j = 0; j < board.columns; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.textContent = board.cells[i][j];
+                    cell.onclick = () => handleCellClick(i, j);
+                    boardElement.appendChild(cell);
+                }
+            }
+        }
+
+        // Kezelje a cellákra kattintást
+        function handleCellClick(row, column) {
+            // Itt hívja meg a játékos lépésének logikáját, és frissítse a felületet
+            console.log(`Kiválasztott cella: ${row}, ${column}`);
+            // Például: humanPlayer.play(board, { row: row, column: column });
+            // Frissítse a táblát: createBoard(board);
+        }
+
+        // Játéktábla inicializálása és megjelenítése
+        createBoard(board);
+
+        // További logikát és interakciót ide lehet implementálni
+    </script>
 </body>
 </html>
