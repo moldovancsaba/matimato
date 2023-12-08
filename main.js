@@ -22,7 +22,6 @@ class Board {
   }
 
   hasAvailableMoves(row, column) {
-    // Ellenőrizze, hogy vannak-e elérhető lépések az adott sorban vagy oszlopban.
     return this.cells[row].some(cell => cell != null) || this.cells.some(r => r[column] != null);
   }
 }
@@ -42,27 +41,25 @@ class Player {
   }
 }
 
-// Emberi játékos lépésének kezelése
+const board = new Board();
+const humanPlayer = new Player();
+const computerPlayer = new Player();
+let activeRow = 4; // A középső sor indexe (0-tól indexelve).
+
 function handleHumanMove(row, column) {
-  if (!humanPlayer.play(board, { row, column })) {
+  if (humanPlayer.play(board, { row, column })) {
+    updateBoard();
+    if (!board.hasAvailableMoves(column, row)) {
+      endGame();
+      return;
+    }
+    handleComputerMove(column);
+  } else {
     console.log("Nem sikerült lépni. Próbáld újra!");
-    return;
   }
-
-  // Frissítse a táblát, majd ellenőrizze, hogy van-e lépés a számítógép számára.
-  updateBoard();
-  if (!board.hasAvailableMoves(column, row)) {
-    endGame();
-    return;
-  }
-
-  // Számítógép lépése
-  handleComputerMove(column);
 }
 
-// Számítógép lépésének kezelése
 function handleComputerMove(column) {
-  // Egyszerű AI a példa kedvéért: válasszon egy véletlenszerű számot az aktív oszlopból.
   let availableRows = [];
   for (let i = 0; i < board.rows; i++) {
     if (board.cells[i][column] != null) {
@@ -81,11 +78,10 @@ function handleComputerMove(column) {
 }
 
 function updateBoard() {
-  // Itt frissíti a táblát a DOM-ban, például újrarajzolja a táblát a board.cells alapján.
+  createBoard(board);
 }
 
 function endGame() {
-  // Játék vége logika: kiírja a győztest és leállítja a játékot.
   if (humanPlayer.score > computerPlayer.score) {
     console.log("Az emberi játékos nyert!");
   } else if (humanPlayer.score < computerPlayer.score) {
@@ -95,6 +91,7 @@ function endGame() {
   }
 }
 
-// Példa a játék indítására, ha szükséges.
-// updateBoard(); // Inicializálja és frissíti a táblát a kezdő állapotban.
-// A felhasználói interakciókat (pl. cellákra kattintás) itt lehet kezelni.
+// Ez az inicializáló kód az oldal betöltésekor fut le.
+document.addEventListener('DOMContentLoaded', (event) => {
+  createBoard(board);
+});
