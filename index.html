@@ -30,7 +30,6 @@
     <script>
         const boardElement = document.getElementById('board');
 
-        // Tábla létrehozása
         function createBoard(board) {
             boardElement.innerHTML = '';
             for (let i = 0; i < board.rows; i++) {
@@ -44,18 +43,9 @@
             }
         }
 
-        // Kezelje a cellákra kattintást
         function handleCellClick(row, column) {
-            // Itt hívja meg a játékos lépésének logikáját, és frissítse a felületet
-            console.log(`Kiválasztott cella: ${row}, ${column}`);
-            // Például: humanPlayer.play(board, { row: row, column: column });
-            // Frissítse a táblát: createBoard(board);
+            handleHumanMove(row, column);
         }
-
-        // Játéktábla inicializálása és megjelenítése
-        createBoard(board);
-
-        // További logikát és interakciót ide lehet implementálni
     </script>
 </body>
 </html>
