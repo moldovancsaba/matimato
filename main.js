@@ -29,6 +29,16 @@ function playGame() {
 
     // A játékosnak további lehetősége van, hogy játsszon
     console.log("A szám megfelel a játékszabályoknak.");
+
+    // A játéktér megjelenítése
+    for (let row = 0; row < 5; row++) {
+      for (let col = 0; col < 5; col++) {
+        if (gameBoard[row][col] !== null) {
+          console.log(`${gameBoard[row][col]} (${row}, ${col})`);
+        }
+      }
+    }
+
     playGame();
   } else {
     // A szám nem felel meg a játékszabályoknak
@@ -39,4 +49,15 @@ function playGame() {
 }
 
 // A játék kezdete
-window.onload = playGame;
+window.onload = function() {
+  // A játéktér megjelenítése
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 5; col++) {
+      if (gameBoard[row][col] !== null) {
+        console.log(`${gameBoard[row][col]} (${row}, ${col})`);
+      }
+    }
+  }
+
+  playGame();
+};
