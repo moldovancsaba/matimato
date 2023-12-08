@@ -1,63 +1,51 @@
-// A játéktér mezőinek inicializálása
-const gameBoard = [];
-for (let row = 0; row < 5; row++) {
-  gameBoard[row] = [];
-  for (let col = 0; col < 5; col++) {
-    gameBoard[row][col] = null;
-  }
-}
+// A játék kezdetén létrehozzuk a tábla és a játékosok objektumait.
+const board = new Board();
+const humanPlayer = new HumanPlayer();
+const computerPlayer = new ComputerPlayer();
 
-// A játékos nevét elmentjük a Firebase adatbázisba
-const playerName = "John Doe";
-
-firebase.database().ref("players").push({
-  name: playerName
-});
-
-// A játékmenet
+// A játékmenetet a következő függvény kezeli.
 function playGame() {
-  // A játékos mehet
-  console.log("A játékos mehet.");
+  // A játék kezdetén a tábla minden mezőjére 1-től 9-ig számokat helyezünk.
+  for (let i = 0; i < board.rows; i++) {
+    for (let j = 0; j < board.columns; j++) {
+      board.cells[i][j] = i + j + 1;
+    }
+  }
 
-  // A játékos egy számot helyez a táblára
-  const playerInput = prompt("Adj meg egy számot (1-9): ");
-  let playerNumber = parseInt(playerInput);
+  // A játékosok kezdőpontjait beállítjuk.
+  humanPlayer.row = 4;
+  humanPlayer.column = 4;
+  computerPlayer.row = 4;
+  computerPlayer.column = 4;
 
-  // A játék ellenőrzi, hogy a játékos által elhelyezett szám megfelel-e a játékszabályoknak
-  if (playerNumber > 0 && playerNumber < 10) {
-    // A szám megfelel a játékszabályoknak
+  // A játékot addig folytatjuk, amíg valamelyik játékos nyer.
+  while (true) {
+    // A játékos lép.
+    humanPlayer.play(board);
 
-    // A játékosnak további lehetősége van, hogy játsszon
-    console.log("A szám megfelel a játékszabályoknak.");
-
-    // A játéktér megjelenítése
-    for (let row = 0; row < 5; row++) {
-      for (let col = 0; col < 5; col++) {
-        if (gameBoard[row][col] !== null) {
-          console.log(`${gameBoard[row][col]} (${row}, ${col})`);
-        }
-      }
+    // Ha a játékos nem tud lépni, akkor a játék véget ér.
+    if (!humanPlayer.canPlay(board)) {
+      break;
     }
 
-    playGame();
-  } else {
-    // A szám nem felel meg a játékszabályoknak
+    // A számítógép lép.
+    computerPlayer.play(board);
 
-    // A játékos veszít
-    console.log("A szám nem felel meg a játékszabályoknak. A játékos veszít.");
+    // Ha a számítógép nem tud lépni, akkor a játék véget ér.
+    if (!computerPlayer.canPlay(board)) {
+      break;
+    }
+  }
+
+  // A játék végét kiírjuk a konzolra.
+  if (humanPlayer.score > computerPlayer.score) {
+    console.log("Az emberi játékos nyert!");
+  } else if (humanPlayer.score < computerPlayer.score) {
+    console.log("A számítógép nyert!");
+  } else {
+    console.log("Döntetlen!");
   }
 }
 
-// A játék kezdete
-window.onload = function() {
-  // A játéktér megjelenítése
-  for (let row = 0; row < 5; row++) {
-    for (let col = 0; col < 5; col++) {
-      if (gameBoard[row][col] !== null) {
-        console.log(`${gameBoard[row][col]} (${row}, ${col})`);
-      }
-    }
-  }
-
-  playGame();
-};
+// A játék elindítása.
+playGame();
