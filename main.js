@@ -6,19 +6,22 @@ class Board {
   }
 
   createInitialBoard() {
-    let board = [];
-    for (let i = 0; i < this.rows; i++) {
-      let row = [];
-      for (let j = 0; j < this.columns; j++) {
-        row.push((i * this.columns + j) % 9 + 1);
-      }
-      board.push(row);
+    let board = new Array(this.rows).fill(null).map(() => new Array(this.columns).fill(0));
+    for (let num = 1; num <= 9; num++) {
+      this.placeNumber(num, board);
     }
     return board;
   }
 
-  removeNumber(row, column) {
-    this.cells[row][column] = null;
+  placeNumber(num, board) {
+    for (let i = 0; i < 9; i++) {
+      let j = Math.floor(Math.random() * 9);
+      let row = (num - 1 + i) % 9;
+      while (board[row][j] !== 0) {
+        j = (j + 1) % 9;
+      }
+      board[row][j] = num;
+    }
   }
 
   hasAvailableMoves(row, column) {
