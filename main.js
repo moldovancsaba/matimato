@@ -57,7 +57,7 @@ function createBoard(board) {
       const cell = document.createElement('div');
       cell.className = 'cell';
       if (i === activeRow) {
-        cell.classList.add('active');
+        cell.classList.add('active'); // Az aktív sor kiemelése
       }
       const cellContent = document.createElement('div');
       cellContent.className = 'cell-content';
