@@ -4,37 +4,17 @@
     <title>matimato</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="style.css">
-    <!-- Firebase SDK Importálása -->
     <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-database.js"></script>
-    <script src="firebase.js"></script>
+    <script src="path/to/your/firebase.js"></script>
 </head>
 <body>
     <h1>matimato the game</h1>
     <div id="board" class="board"></div>
-    <script src="main.js"></script>
-    <script>
-        const boardElement = document.getElementById('board');
-
-        function createBoard(board) {
-            boardElement.innerHTML = '';
-            for (let i = 0; i < board.rows; i++) {
-                for (let j = 0; j < board.columns; j++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    const cellContent = document.createElement('div');
-                    cellContent.className = 'cell-content';
-                    cellContent.textContent = board.cells[i][j];
-                    cell.appendChild(cellContent);
-                    cell.onclick = () => handleCellClick(i, j);
-                    boardElement.appendChild(cell);
-                }
-            }
-        }
-
-        function handleCellClick(row, column) {
-            handleHumanMove(row, column);
-        }
-    </script>
+    <div id="message"></div> <!-- Elem a hibakövetési üzenetekhez -->
+    <script src="Board.js"></script>
+    <script src="Player.js"></script>
+    <script src="GameLogic.js"></script>
+    <script src="FirebaseLogic.js"></script>
 </body>
 </html>
