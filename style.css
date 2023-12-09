@@ -38,7 +38,7 @@ body {
 }
 
 .active {
-  background-color: rgb(17, 163, 212); /* Választható szín az aktív sor kiemeléséhez */
+  background-color: rgb(223, 134, 33); /* Válassz egy jól látható színt */
 }
 
 @media (max-width: 600px) {
