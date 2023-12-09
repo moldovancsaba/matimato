@@ -1,10 +1,16 @@
+function displayMessage(message) {
+    const messageElement = document.getElementById('message');
+    messageElement.textContent = message; // Üzenet megjelenítése a képernyőn
+}
+
 function handleCellClick(row, column) {
+    displayMessage(`Handling click at row ${row}, column ${column}`);
     handleHumanMove(row, column);
 }
 
 function handleHumanMove(row, column) {
     if (row !== activeRow) {
-        console.log("Nem a megengedett sorból választottál. Próbáld újra!");
+        displayMessage("Nem a megengedett sorból választottál. Próbáld újra!");
         return;
     }
     if (humanPlayer.play(board, { row, column })) {
@@ -16,7 +22,7 @@ function handleHumanMove(row, column) {
         }
         handleComputerMove(column);
     } else {
-        console.log("Nem sikerült lépni. Próbáld újra!");
+        displayMessage("Nem sikerült lépni. Próbáld újra!");
     }
 }
 
@@ -44,13 +50,16 @@ function updateBoard() {
 }
 
 function endGame() {
+    let resultMessage = "";
     if (humanPlayer.score > computerPlayer.score) {
-        console.log("Az emberi játékos nyert!");
+        resultMessage = "Az emberi játékos nyert!";
     } else if (humanPlayer.score < computerPlayer.score) {
-        console.log("A számítógép nyert!");
+        resultMessage = "A számítógép nyert!";
     } else {
-        console.log("Döntetlen!");
+        resultMessage = "Döntetlen!";
     }
+    displayMessage(resultMessage);
+    saveGameStats(); // Ha Firebase integrációt használsz
 }
 
 // Az activeRow változót és a board példányt a Board.js fájlból kell importálni vagy globálisan elérhetővé tenni.
