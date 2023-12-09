@@ -7,8 +7,11 @@ class Board {
 
   createInitialBoard() {
     let board = new Array(this.rows).fill(null).map(() => new Array(this.columns).fill(0));
-    for (let num = 1; num <= 9; num++) {
-      this.placeNumber(num, board);
+    for (let i = 0; i < this.rows; i++) {
+      for (let j = 0; j < this.columns; j++) {
+        let num = (i * 3 + Math.floor(i / 3) + j) % 9 + 1;
+        board[i][j] = num;
+      }
     }
     return board;
   }
