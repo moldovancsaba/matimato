@@ -37,6 +37,10 @@ body {
   user-select: none; /* Megakadályozza a szöveg kijelölését */
 }
 
+.active .cell-content {
+  font-weight: bold; /* Megvastagítja az aktív sor számjegyeit */
+}
+
 .active {
   background-color: rgb(223, 134, 33); /* Válassz egy jól látható színt */
 }

@@ -32,6 +32,9 @@ function createBoard(board) {
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
+            if (i === activeRow) {
+                cell.classList.add('active'); // Hozzáadja az 'active' osztályt az aktív sor celláihoz
+            }
             const cellContent = document.createElement('div');
             cellContent.className = 'cell-content';
             cellContent.textContent = board.cells[i][j];
