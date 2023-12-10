@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>matimato the game (v1.4)</title>
+    <title>matimato the game (v1.5)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
-    <link rel="stylesheet" type="text/css" href="style.css?v=1.3">
+    <link rel="stylesheet" type="text/css" href="style.css?v=1.5">
 </head>
 <body>
-    <h1>matimato the game (v1.4)</h1>
+    <h1>matimato the game (v1.5)</h1>
     <div id="board" class="board"></div>
     <div id="message"></div>
 
@@ -30,10 +30,10 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            loadScript('Board.js?v=1.3', function() {
-                loadScript('Player.js?v=1.3', function() {
-                    loadScript('GameLogic.js?v=1.3', function() {
-                        loadScript('FirebaseLogic.js?v=1.3', function() {
+            loadScript('Board.js?v=1.5', function() {
+                loadScript('Player.js?v=1.5', function() {
+                    loadScript('GameLogic.js?v=1.5', function() {
+                        loadScript('FirebaseLogic.js?v=1.5', function() {
                             console.log('Minden script betöltve.');
                         });
                     });
