@@ -17,7 +17,7 @@ function handleHumanMove(row, column) {
         activeRow = getNextActiveRow(column); // Frissíti az aktív sort
         updateBoard();
         if (!board.hasAvailableMoves(column, row)) {
-            endGame();
+            endGame('human');
             return;
         }
         handleComputerMove(column);
@@ -35,39 +35,47 @@ function handleComputerMove(column) {
     }
 
     if (availableRows.length === 0) {
-        endGame();
+        endGame('computer');
         return;
     }
 
     let randomRowIndex = availableRows[Math.floor(Math.random() * availableRows.length)];
     computerPlayer.play(board, { row: randomRowIndex, column });
-    activeRow = getNextActiveRow(randomRowIndex); // Frissíti az aktív sort
+    activeRow = getNextActiveRow(randomRowIndex);
     updateBoard();
+    if (!board.hasAvailableMoves(randomRowIndex, column)) {
+        endGame('computer');
+        return;
+    }
 }
 
 function updateBoard() {
-    createBoard(board); // Újrarajzolja a táblát az aktuális állapottal
+    createBoard(board);
 }
 
-function endGame() {
+function endGame(lastPlayer) {
     let resultMessage = "";
     if (humanPlayer.score > computerPlayer.score) {
         resultMessage = "Az emberi játékos nyert!";
+        animateBoardForWin();
     } else if (humanPlayer.score < computerPlayer.score) {
         resultMessage = "A számítógép nyert!";
     } else {
-        resultMessage = "Döntetlen!";
+        // Pontegyenlőség esetén az utoljára lépő játékos nyer
+        resultMessage = lastPlayer === 'human' ? "Az emberi játékos nyert!" : "A számítógép nyert!";
     }
     displayMessage(resultMessage);
-    // saveGameStats(); // Ha Firebase integrációt használsz, és implementálva van
+    setTimeout(startNewGame, 5000);
 }
 
 function getNextActiveRow(currentColumn) {
     // Implementáld a következő aktív sor logikáját
-    return currentColumn; // Ideiglenes megoldás
+    return currentColumn;
 }
+
+// További funkciók: animateBoardForWin, startNewGame, stb.
 
 let activeRow = 4; // Kezdeti beállítás a középső sorra
 
-// A tábla létrehozásának inicializálása
-createBoard(board);
+// Játék indítása
+startNewGame();
