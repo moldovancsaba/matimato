@@ -12,7 +12,10 @@ body {
 h1 {
   position: fixed;
   top: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
+  max-width: 600px; /* Korlátozza a fejléc szélességét */
   background-color: white;
   text-align: center;
   font-size: 5vw; /* Dinamikus betűméret */
@@ -23,14 +26,17 @@ h1 {
 
 #loadStatus {
   position: fixed;
-  top: 60px; /* Helyezze el a cím alatt */
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
-  background-color: #f0f0f0; /* Háttérszín */
-  max-height: 50px; /* Fix magasság */
-  overflow: auto; /* Görgethető, ha túl sok szöveg van */
-  font-size: 12px; /* Kis betűméret */
+  max-width: 600px; /* Korlátozza a betöltési státusz sáv szélességét */
+  background-color: #f0f0f0;
+  max-height: 50px;
+  overflow: auto;
+  font-size: 12px;
   padding: 5px;
-  box-shadow: 0px 2px 5px rgba(0,0,0,0.2); /* Árnyék a szeparáció érdekében */
+  box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
   z-index: 100;
 }
 
@@ -38,11 +44,11 @@ h1 {
   display: grid;
   grid-template-columns: repeat(9, 1fr);
   grid-gap: 5px;
-  width: 90%; /* Keskenyebb tábla */
-  max-width: 600px;
-  margin: auto;
+  width: 90%;
+  max-width: 540px; /* Módosított szélesség */
+  margin: 20px auto 0 auto;
   aspect-ratio: 1 / 1;
-  padding-top: 110px; /* Eltolás a cím és a státusz sáv alatt */
+  padding-top: 110px;
 }
 
 .cell {
