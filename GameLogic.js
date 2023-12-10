@@ -4,7 +4,7 @@ function displayMessage(message) {
 }
 
 function handleCellClick(row, column) {
-    displayMessage(`Handling click at row ${row}, column ${column}`);
+    displayMessage(`Cell clicked at row ${row}, column ${column}`);
     handleHumanMove(row, column);
 }
 
@@ -62,5 +62,4 @@ function endGame() {
     saveGameStats(); // Ha Firebase integrációt használsz
 }
 
-// Az activeRow változót és a board példányt a Board.js fájlból kell importálni vagy globálisan elérhetővé tenni.
 let activeRow = 4; // Kezdeti beállítás a középső sorra
