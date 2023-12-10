@@ -47,6 +47,7 @@ function createBoard(board) {
     }
 }
 
+
 const board = new Board();
 createBoard(board);
 
