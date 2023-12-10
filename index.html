@@ -3,23 +3,22 @@
 <head>
     <title>matimato</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="style.css">
+    
+    <!-- CSS frissítése query stringgel -->
+    <link rel="stylesheet" type="text/css" href="style.css?v=1.1">
+
+    <!-- JavaScript fájlok frissítése query stringgel -->
     <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js" onerror="onScriptError('Firebase App')"></script>
     <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-database.js" onerror="onScriptError('Firebase Database')"></script>
-    <script src="firebase.js" onerror="onScriptError('Firebase Custom JS')"></script>
+    <script src="firebase.js?v=1.1" onerror="onScriptError('Firebase Custom JS')"></script>
 </head>
 <body>
     <h1>matimato the game</h1>
     <div id="board" class="board"></div>
     <div id="message"></div>
-    <script src="Board.js" onerror="onScriptError('Board.js')"></script>
-    <script src="Player.js" onerror="onScriptError('Player.js')"></script>
-    <script src="GameLogic.js" onerror="onScriptError('GameLogic.js')"></script>
-    <script src="FirebaseLogic.js" onerror="onScriptError('FirebaseLogic.js')"></script>
-    <script>
-        function onScriptError(scriptName) {
-            document.body.innerHTML += '<p>Hiba történt a ' + scriptName + ' betöltése közben.</p>';
-        }
-    </script>
+    <script src="Board.js?v=1.1" onerror="onScriptError('Board.js')"></script>
+    <script src="Player.js?v=1.1" onerror="onScriptError('Player.js')"></script>
+    <script src="GameLogic.js?v=1.1" onerror="onScriptError('GameLogic.js')"></script>
+    <script src="FirebaseLogic.js?v=1.1" onerror="onScriptError('FirebaseLogic.js')"></script>
 </body>
 </html>
