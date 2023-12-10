@@ -36,6 +36,7 @@ function createBoard(board) {
             cellContent.className = 'cell-content';
             cellContent.textContent = board.cells[i][j];
             cell.appendChild(cellContent);
+            cell.onclick = () => handleCellClick(i, j);
             boardElement.appendChild(cell);
         }
     }
