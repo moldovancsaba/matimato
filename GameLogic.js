@@ -59,12 +59,15 @@ function endGame() {
         resultMessage = "Döntetlen!";
     }
     displayMessage(resultMessage);
-    saveGameStats(); // Ha Firebase integrációt használsz
+    // saveGameStats(); // Ha Firebase integrációt használsz, és implementálva van
 }
 
 function getNextActiveRow(currentColumn) {
-    // Itt valósítsd meg a logikát, hogy meghatározd a következő aktív sort a játék szabályai szerint
-    return currentColumn; // Példa, szükség szerint módosítsd
+    // Implementáld a következő aktív sor logikáját
+    return currentColumn; // Ideiglenes megoldás
 }
 
 let activeRow = 4; // Kezdeti beállítás a középső sorra
+
+// A tábla létrehozásának inicializálása
+createBoard(board);
