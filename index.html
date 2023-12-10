@@ -4,21 +4,22 @@
     <title>matimato</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="style.css">
-    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-database.js"></script>
-    <script src="firebase.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js" onerror="onScriptError('Firebase App')"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-database.js" onerror="onScriptError('Firebase Database')"></script>
+    <script src="firebase.js" onerror="onScriptError('Firebase Custom JS')"></script>
 </head>
 <body>
     <h1>matimato the game</h1>
     <div id="board" class="board"></div>
-    <div id="message"></div> <!-- Elem a hibakövetési üzenetekhez -->
-    <script src="Board.js"></script>
-    <script src="Player.js"></script>
-    <script src="GameLogic.js"></script>
-    <script src="FirebaseLogic.js"></script>
+    <div id="message"></div>
+    <script src="Board.js" onerror="onScriptError('Board.js')"></script>
+    <script src="Player.js" onerror="onScriptError('Player.js')"></script>
+    <script src="GameLogic.js" onerror="onScriptError('GameLogic.js')"></script>
+    <script src="FirebaseLogic.js" onerror="onScriptError('FirebaseLogic.js')"></script>
     <script>
-        // Üzenet megjelenítése, ha minden JavaScript fájl sikeresen betöltődött
-        document.body.innerHTML += '<p>Minden fájl sikeresen betöltődött.</p>';
+        function onScriptError(scriptName) {
+            document.body.innerHTML += '<p>Hiba történt a ' + scriptName + ' betöltése közben.</p>';
+        }
     </script>
 </body>
 </html>
