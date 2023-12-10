@@ -22,7 +22,7 @@ body {
 .cell {
   position: relative;
   cursor: pointer;
-  border: 1px solid #ddd; /* Hozzáadott keret minden cellához */
+  border: 1px solid #ddd;
 }
 
 .cell-content {
@@ -38,23 +38,17 @@ body {
   user-select: none;
 }
 
-.active {
-  background-color: #ffcc00; /* Jól látható háttérszín az aktív sorhoz */
-  border-color: #ff6600; /* Jól látható keretszín az aktív sorhoz */
+.active-row {
+  background-color: #ffd700; /* Jól látható háttérszín az aktív sorhoz */
+  border: 2px solid #ff4500; /* Jól látható keret az aktív sorhoz */
 }
 
 .active .cell-content {
   font-weight: bold;
-  color: #ffffff; /* Színváltozás az aktív sor számjegyeihez */
-  font-size: 4vw; /* Nagyobb betűméret az aktív sor számjegyeihez */
 }
 
 @media (max-width: 600px) {
   .cell-content {
-      font-size: 5vw;
-  }
-
-  .active .cell-content {
-      font-size: 6vw;
+    font-size: 5vw;
   }
 }

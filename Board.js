@@ -6,12 +6,14 @@ class Board {
     }
 
     createInitialBoard() {
-        let board = new Array(this.rows).fill(null).map(() => new Array(this.columns).fill(0));
+        let board = [];
         for (let i = 0; i < this.rows; i++) {
+            let row = [];
             for (let j = 0; j < this.columns; j++) {
                 let num = (i * 3 + Math.floor(i / 3) + j) % 9 + 1;
-                board[i][j] = num;
+                row.push(num);
             }
+            board.push(row);
         }
         return board;
     }
@@ -32,6 +34,9 @@ function createBoard(board) {
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
+            if (i === activeRow) {
+                cell.classList.add('active-row'); // Az aktív sor celláinak kiemelése
+            }
             const cellContent = document.createElement('div');
             cellContent.className = 'cell-content';
             cellContent.textContent = board.cells[i][j];
@@ -44,3 +49,5 @@ function createBoard(board) {
 
 const board = new Board();
 createBoard(board);
+
+// Gondoskodj arról, hogy az activeRow változót a GameLogic.js vagy egy másik releváns fájlban kezeld.
