@@ -3,24 +3,22 @@
 <head>
     <title>matimato</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Cache megelőzés meta tag-ek -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-
-    <link rel="stylesheet" type="text/css" href="style.css?version=1.0">
+    <link rel="stylesheet" type="text/css" href="style.css">
     <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-database.js"></script>
-    <script src="path/to/your/firebase.js"></script>
+    <script src="firebase.js"></script>
 </head>
 <body>
     <h1>matimato the game</h1>
     <div id="board" class="board"></div>
     <div id="message"></div> <!-- Elem a hibakövetési üzenetekhez -->
-    <script src="Board.js?version=1.0"></script>
-    <script src="Player.js?version=1.0"></script>
-    <script src="GameLogic.js?version=1.0"></script>
-    <script src="FirebaseLogic.js?version=1.0"></script>
+    <script src="Board.js"></script>
+    <script src="Player.js"></script>
+    <script src="GameLogic.js"></script>
+    <script src="FirebaseLogic.js"></script>
+    <script>
+        // Üzenet megjelenítése, ha minden JavaScript fájl sikeresen betöltődött
+        document.body.innerHTML += '<p>Minden fájl sikeresen betöltődött.</p>';
+    </script>
 </body>
 </html>
