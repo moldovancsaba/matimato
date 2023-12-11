@@ -7,13 +7,16 @@ body {
   flex-direction: column;
   justify-content: center;
   height: 100vh;
-  background-image: url('Background.svg'); /* Háttérkép beállítása */
-  background-size: cover; /* Háttérkép kitölti az egész területet */
-  background-attachment: fixed; /* Háttérkép fixálása görgetéskor */
+  background-image: url('Background.svg');
+  background-size: cover;
+  background-attachment: fixed;
+  user-select: none; /* Kijelölés tiltása */
+  overflow: hidden; /* Görgetés tiltása */
+  touch-action: manipulation; /* Nagyítás tiltása mobil eszközökön */
 }
 
 h1 {
-  background-color: #7CF; /* Fejléc háttérszíne */
+  background-color: #9CFFCB; /* Világosabb zöldes szín */
   color: white;
   position: fixed;
   top: 0;
@@ -43,7 +46,7 @@ h1 {
   position: relative;
   cursor: pointer;
   border: 1px solid #ddd;
-  background-color: #7CF; /* Cellák háttérszíne */
+  background-color: #9CFFCB; /* Cellák világosabb zöldes színe */
   display: flex;
   align-items: center;
   justify-content: center;
