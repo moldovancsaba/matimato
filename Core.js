@@ -105,7 +105,6 @@ function endGame() {
     } else if (humanPlayer.score < computerPlayer.score) {
         resultMessage = "A számítógép nyert!";
     } else {
-        // Ha azonos a pontszám, az utoljára lépő nyer
         resultMessage = "Az utoljára lépő játékos nyert!";
     }
     displayMessage(resultMessage);
@@ -123,14 +122,22 @@ function createBoard(board) {
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
+            cell.setAttribute('data-row', i);
+            cell.setAttribute('data-column', j);
+
             if (i === activeRow) {
                 cell.classList.add('active-row');
             }
+
             const cellContent = document.createElement('div');
             cellContent.className = 'cell-content';
             cellContent.textContent = board.cells[i][j];
             cell.appendChild(cellContent);
-            cell.onclick = () => handleCellClick(i, j);
+
+            cell.addEventListener('click', function() {
+                handleCellClick(parseInt(this.getAttribute('data-row')), parseInt(this.getAttribute('data-column')));
+            });
+
             boardElement.appendChild(cell);
         }
     }
