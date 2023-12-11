@@ -1,13 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@800&display=swap');
+
 body {
   text-align: center;
-  font-family: Arial, sans-serif;
+  font-family: 'Open Sans', sans-serif;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   height: 100vh;
-  background-image: url('Background.svg?v=155');
+  background-image: url('Background.svg?v=156');
   background-size: cover;
   background-attachment: fixed;
   user-select: none; /* Kijelölés tiltása */
@@ -16,13 +18,14 @@ body {
 }
 
 h1 {
-  background-color: #5B7970; /* Sötétebb és szürkésebb zöld árnyalat */
+  background-color: #7CF; /* Fejléc háttérszíne */
   color: white;
   position: fixed;
   top: 0;
   width: 100%;
   text-align: center;
   font-size: 2em; /* A h1 alapértelmezett mérete */
+  font-weight: 800; /* Extra vastag betűsúly */
   padding: 10px 0;
   margin: 0;
   z-index: 100;
@@ -35,22 +38,25 @@ h1 {
   grid-gap: 5px;
   width: 90%;
   max-width: 540px;
-  margin: 70px auto 0 auto;
+  margin: 30px auto 0 auto; /* Csökkentett távolság a fejléc és a tábla között */
   aspect-ratio: 1 / 1;
 }
 
 .cell {
   position: relative;
   cursor: pointer;
-  border: 1px solid #ddd;
-  background-color: #5B7970; /* Cellák sötétebb és szürkésebb zöld árnyalata */
+  border-radius: 15px; /* Nagyobb lekerekített sarkok */
+  background-color: #7CF; /* A cellák háttérszíne */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* Árnyék a gomboknak */
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px; /* Lekerekített sarkok */
 }
 
 .cell-content {
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 800; /* Extra vastag betűsúly */
+  color: white; /* Fehér színű számok */
   font-size: 3vw;
   user-select: none;
 }
