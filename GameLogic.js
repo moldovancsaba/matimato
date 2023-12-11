@@ -16,47 +16,48 @@ function handleHumanMove(row, column) {
     if (humanPlayer.play(board, { row, column })) {
         activeRow = getNextActiveRow(column);
         updateBoard();
-        if (!board.hasAvailableMoves(column, row)) {
-            endGame('human');
+        if (!board.hasAvailableMoves()) {
+            endGame();
             return;
         }
-        handleComputerMove(column);
+        handleComputerMove();
     } else {
         displayMessage("Nem sikerült lépni. Próbáld újra!");
     }
 }
 
-function handleComputerMove(column) {
+function handleComputerMove() {
     let availableRows = [];
     for (let i = 0; i < board.rows; i++) {
-        if (board.cells[i][column] != null) {
+        if (board.cells[i][activeRow] != null) {
             availableRows.push(i);
         }
     }
 
     if (availableRows.length === 0) {
-        endGame('computer');
+        endGame();
         return;
     }
 
     let randomRowIndex = availableRows[Math.floor(Math.random() * availableRows.length)];
-    computerPlayer.play(board, { row: randomRowIndex, column });
+    computerPlayer.play(board, { row: randomRowIndex, column: activeRow });
     activeRow = getNextActiveRow(randomRowIndex);
     updateBoard();
 }
 
 function updateBoard() {
     createBoard(board);
+    highlightActiveRow();
 }
 
-function endGame(lastPlayer) {
+function endGame() {
     let resultMessage = "";
     if (humanPlayer.score > computerPlayer.score) {
         resultMessage = "Az emberi játékos nyert!";
     } else if (humanPlayer.score < computerPlayer.score) {
         resultMessage = "A számítógép nyert!";
     } else {
-        resultMessage = lastPlayer === 'human' ? "Az emberi játékos nyert!" : "A számítógép nyert!";
+        resultMessage = "Döntetlen!";
     }
     displayMessage(resultMessage);
     // saveGameStats(); // Ha Firebase integrációt használsz, és implementálva van
@@ -65,6 +66,18 @@ function endGame(lastPlayer) {
 function getNextActiveRow(currentColumn) {
     // Implementáld a következő aktív sor logikáját
     return currentColumn; // Ideiglenes megoldás
+}
+
+function highlightActiveRow() {
+    // Kiemeli az aktív sort a táblán
+    const rows = document.querySelectorAll('.cell');
+    rows.forEach(row => {
+        if (parseInt(row.getAttribute('data-row')) === activeRow) {
+            row.classList.add('active-row');
+        } else {
+            row.classList.remove('active-row');
+        }
+    });
 }
 
 let activeRow = 4; // Kezdeti beállítás a középső sorra
