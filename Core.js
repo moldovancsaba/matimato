@@ -6,22 +6,16 @@ class Board {
     }
 
     createInitialBoard() {
-        const emojiMap = {
-            1: '1️⃣', 2: '2️⃣', 3: '3️⃣',
-            4: '4️⃣', 5: '5️⃣', 6: '6️⃣',
-            7: '7️⃣', 8: '8️⃣', 9: '9️⃣'
-        };
-
         const numbers = [
-            [6, 3, 9, 5, 7, 4, 1, 8, 2].map(n => emojiMap[n]),
-            [5, 4, 1, 8, 2, 9, 3, 7, 6].map(n => emojiMap[n]),
-            [7, 8, 2, 6, 1, 3, 9, 5, 4].map(n => emojiMap[n]),
-            [1, 9, 8, 4, 6, 7, 5, 2, 3].map(n => emojiMap[n]),
-            [3, 6, 5, 9, 8, 2, 4, 1, 7].map(n => emojiMap[n]),
-            [4, 2, 7, 1, 3, 5, 8, 6, 9].map(n => emojiMap[n]),
-            [9, 5, 6, 7, 4, 8, 2, 3, 1].map(n => emojiMap[n]),
-            [8, 1, 3, 2, 9, 6, 7, 4, 5].map(n => emojiMap[n]),
-            [2, 7, 4, 3, 5, 1, 6, 9, 8].map(n => emojiMap[n])
+            [6, 3, 9, 5, 7, 4, 1, 8, 2],
+            [5, 4, 1, 8, 2, 9, 3, 7, 6],
+            [7, 8, 2, 6, 1, 3, 9, 5, 4],
+            [1, 9, 8, 4, 6, 7, 5, 2, 3],
+            [3, 6, 5, 9, 8, 2, 4, 1, 7],
+            [4, 2, 7, 1, 3, 5, 8, 6, 9],
+            [9, 5, 6, 7, 4, 8, 2, 3, 1],
+            [8, 1, 3, 2, 9, 6, 7, 4, 5],
+            [2, 7, 4, 3, 5, 1, 6, 9, 8]
         ];
 
         // Keverés a sorok véletlenszerű sorrendbe állításához
@@ -61,6 +55,7 @@ const board = new Board();
 const humanPlayer = new Player();
 const computerPlayer = new Player();
 let activeRow = 4; // Kezdeti beállítás a középső sorra
+
 
 function displayMessage(message) {
     const messageElement = document.getElementById('message');
@@ -143,7 +138,7 @@ function createBoard(board) {
             }
             const cellContent = document.createElement('div');
             cellContent.className = 'cell-content';
-            cellContent.innerHTML = board.cells[i][j]; // Használja az innerHTML-t az emoji-k megjelenítéséhez
+            cellContent.textContent = board.cells[i][j]; // Számok megjelenítése
             cell.appendChild(cellContent);
             cell.onclick = () => handleCellClick(i, j);
             boardElement.appendChild(cell);
