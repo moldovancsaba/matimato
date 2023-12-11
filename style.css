@@ -7,17 +7,20 @@ body {
   flex-direction: column;
   justify-content: center;
   height: 100vh;
-  background-image: url('Background.svg?v=1.41');
-  background-size: cover;
-  background-attachment: fixed;
+  background-image: url('Background.svg'); /* Háttérkép beállítása */
+  background-size: cover; /* Háttérkép kitölti az egész területet */
+  background-attachment: fixed; /* Háttérkép fixálása görgetéskor */
 }
 
 h1 {
+  background-color: #7CF; /* Fejléc háttérszíne */
+  color: white;
   position: fixed;
   top: 0;
-  left: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
-  background-color: #7CF; /* Frissített háttérszín */
+  max-width: 600px;
   text-align: center;
   font-size: 5vw;
   padding: 10px 0;
@@ -25,13 +28,10 @@ h1 {
   z-index: 100;
 }
 
-#message {
-  margin-top: 20px;
-}
-
 .board {
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(5, 1fr);
   grid-gap: 5px;
   width: 90%;
   max-width: 540px;
@@ -43,38 +43,29 @@ h1 {
   position: relative;
   cursor: pointer;
   border: 1px solid #ddd;
-}
-
-.cell-content {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  background-color: #7CF; /* Cellák háttérszíne */
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.cell-content {
   font-size: 3vw;
   user-select: none;
 }
 
-.active-row {
-  background-color: #ffd700;
-  border: 2px solid #ff4500;
-}
-
 @media (max-width: 600px) {
   .cell-content {
-      font-size: 5vw;
+    font-size: 5vw;
   }
 
   h1 {
-      font-size: 6vw;
+    font-size: 6vw;
   }
 }
 
 @media (min-width: 600px) {
   h1 {
-      font-size: 24px; /* Fix betűméret nagyobb képernyőkön */
+    font-size: 24px;
   }
 }
