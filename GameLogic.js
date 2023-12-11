@@ -14,10 +14,10 @@ function handleHumanMove(row, column) {
         return;
     }
     if (humanPlayer.play(board, { row, column })) {
-        activeRow = getNextActiveRow(column); // Frissíti az aktív sort
+        activeRow = getNextActiveRow(column);
         updateBoard();
         if (!board.hasAvailableMoves(column, row)) {
-            endGame();
+            endGame('human');
             return;
         }
         handleComputerMove(column);
@@ -35,28 +35,28 @@ function handleComputerMove(column) {
     }
 
     if (availableRows.length === 0) {
-        endGame();
+        endGame('computer');
         return;
     }
 
     let randomRowIndex = availableRows[Math.floor(Math.random() * availableRows.length)];
     computerPlayer.play(board, { row: randomRowIndex, column });
-    activeRow = getNextActiveRow(randomRowIndex); // Frissíti az aktív sort
+    activeRow = getNextActiveRow(randomRowIndex);
     updateBoard();
 }
 
 function updateBoard() {
-    createBoard(board); // Újrarajzolja a táblát az aktuális állapottal
+    createBoard(board);
 }
 
-function endGame() {
+function endGame(lastPlayer) {
     let resultMessage = "";
     if (humanPlayer.score > computerPlayer.score) {
         resultMessage = "Az emberi játékos nyert!";
     } else if (humanPlayer.score < computerPlayer.score) {
         resultMessage = "A számítógép nyert!";
     } else {
-        resultMessage = "Döntetlen!";
+        resultMessage = lastPlayer === 'human' ? "Az emberi játékos nyert!" : "A számítógép nyert!";
     }
     displayMessage(resultMessage);
     // saveGameStats(); // Ha Firebase integrációt használsz, és implementálva van
