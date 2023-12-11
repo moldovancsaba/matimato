@@ -1,3 +1,23 @@
+let activeRow = 4; // Kezdeti beállítás a középső sorra
+
+class Player {
+    constructor() {
+        this.score = 0;
+    }
+
+    play(board, position) {
+        if (board.cells[position.row][position.column] != null) {
+            this.score += board.cells[position.row][position.column];
+            board.removeNumber(position.row, position.column);
+            return true;
+        }
+        return false;
+    }
+}
+
+const humanPlayer = new Player();
+const computerPlayer = new Player();
+
 function displayMessage(message) {
     const messageElement = document.getElementById('message');
     messageElement.textContent = message;
@@ -20,67 +40,31 @@ function handleHumanMove(row, column) {
             endGame();
             return;
         }
-        handleComputerMove();
+        setTimeout(handleComputerMove, 500); // Kis késleltetés a számítógép lépése előtt
     } else {
         displayMessage("Nem sikerült lépni. Próbáld újra!");
     }
 }
 
 function handleComputerMove() {
-    let availableRows = [];
-    for (let i = 0; i < board.rows; i++) {
-        if (board.cells[i][activeRow] != null) {
-            availableRows.push(i);
-        }
-    }
-
-    if (availableRows.length === 0) {
-        endGame();
-        return;
-    }
-
-    let randomRowIndex = availableRows[Math.floor(Math.random() * availableRows.length)];
-    computerPlayer.play(board, { row: randomRowIndex, column: activeRow });
-    activeRow = getNextActiveRow(randomRowIndex);
+    // A számítógép választása
+    // ...
     updateBoard();
 }
 
 function updateBoard() {
     createBoard(board);
-    highlightActiveRow();
 }
 
 function endGame() {
-    let resultMessage = "";
-    if (humanPlayer.score > computerPlayer.score) {
-        resultMessage = "Az emberi játékos nyert!";
-    } else if (humanPlayer.score < computerPlayer.score) {
-        resultMessage = "A számítógép nyert!";
-    } else {
-        resultMessage = "Döntetlen!";
-    }
-    displayMessage(resultMessage);
-    // saveGameStats(); // Ha Firebase integrációt használsz, és implementálva van
+    // Játék vége logika
+    // ...
 }
 
 function getNextActiveRow(currentColumn) {
-    // Implementáld a következő aktív sor logikáját
-    return currentColumn; // Ideiglenes megoldás
+    // Következő aktív sor logikája
+    return currentColumn;
 }
 
-function highlightActiveRow() {
-    // Kiemeli az aktív sort a táblán
-    const rows = document.querySelectorAll('.cell');
-    rows.forEach(row => {
-        if (parseInt(row.getAttribute('data-row')) === activeRow) {
-            row.classList.add('active-row');
-        } else {
-            row.classList.remove('active-row');
-        }
-    });
-}
-
-let activeRow = 4; // Kezdeti beállítás a középső sorra
-
-// A tábla létrehozásának inicializálása
+// Inicializálja a játékot
 createBoard(board);
