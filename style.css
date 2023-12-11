@@ -9,7 +9,7 @@ body {
   flex-direction: column;
   justify-content: center;
   height: 100vh;
-  background-image: url('Background.svg?v=156');
+  background-image: url('Background.svg?v=157');
   background-size: cover;
   background-attachment: fixed;
   user-select: none; /* Kijelölés tiltása */
@@ -29,13 +29,14 @@ h1 {
   padding: 10px 0;
   margin: 0;
   z-index: 100;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* Árnyék a fejléchez */
 }
 
 .board {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   grid-template-rows: repeat(5, 1fr);
-  grid-gap: 5px;
+  grid-gap: 10px; /* Nagyobb térköz a cellák között */
   width: 90%;
   max-width: 540px;
   margin: 30px auto 0 auto; /* Csökkentett távolság a fejléc és a tábla között */
@@ -47,7 +48,7 @@ h1 {
   cursor: pointer;
   border-radius: 15px; /* Nagyobb lekerekített sarkok */
   background-color: #7CF; /* A cellák háttérszíne */
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* Árnyék a gomboknak */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* Sötétebb és hangsúlyosabb árnyék */
   display: flex;
   align-items: center;
   justify-content: center;
