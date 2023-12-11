@@ -2,20 +2,29 @@ class Board {
     constructor() {
         this.rows = 9;
         this.columns = 9;
-        this.cells = [];
+        this.cells = this.createInitialBoard();
     }
 
     createInitialBoard() {
-        let board = [];
-        for (let i = 0; i < this.rows; i++) {
-            let row = [];
-            for (let j = 0; j < this.columns; j++) {
-                let num = (i * 3 + Math.floor(i / 3) + j) % 9 + 1;
-                row.push(num);
-            }
-            board.push(row);
+        const numbers = [
+            [6, 3, 9, 5, 7, 4, 1, 8, 2],
+            [5, 4, 1, 8, 2, 9, 3, 7, 6],
+            [7, 8, 2, 6, 1, 3, 9, 5, 4],
+            [1, 9, 8, 4, 6, 7, 5, 2, 3],
+            [3, 6, 5, 9, 8, 2, 4, 1, 7],
+            [4, 2, 7, 1, 3, 5, 8, 6, 9],
+            [9, 5, 6, 7, 4, 8, 2, 3, 1],
+            [8, 1, 3, 2, 9, 6, 7, 4, 5],
+            [2, 7, 4, 3, 5, 1, 6, 9, 8]
+        ];
+
+        // Keverés a sorok véletlenszerű sorrendbe állításához
+        for (let i = numbers.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
         }
-        return board;
+
+        return numbers;
     }
 
     removeNumber(row, column) {
@@ -105,6 +114,7 @@ function endGame() {
     } else if (humanPlayer.score < computerPlayer.score) {
         resultMessage = "A számítógép nyert!";
     } else {
+        // Ha azonos a pontszám, az utoljára lépő nyer
         resultMessage = "Az utoljára lépő játékos nyert!";
     }
     displayMessage(resultMessage);
@@ -122,31 +132,18 @@ function createBoard(board) {
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
-            cell.setAttribute('data-row', i);
-            cell.setAttribute('data-column', j);
-
             if (i === activeRow) {
                 cell.classList.add('active-row');
             }
-
             const cellContent = document.createElement('div');
             cellContent.className = 'cell-content';
             cellContent.textContent = board.cells[i][j];
             cell.appendChild(cellContent);
-
-            cell.addEventListener('click', function() {
-                handleCellClick(parseInt(this.getAttribute('data-row')), parseInt(this.getAttribute('data-column')));
-            });
-
+            cell.onclick = () => handleCellClick(i, j);
             boardElement.appendChild(cell);
         }
     }
 }
 
-// A játék indításának kezelése
-document.getElementById('startButton').addEventListener('click', function() {
-    board.cells = board.createInitialBoard();
-    createBoard(board);
-    this.style.display = 'none'; // Elrejti a "Start" gombot
-});
-```
+// A játék inicializálása
+createBoard(board);
