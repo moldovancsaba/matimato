@@ -47,26 +47,77 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px; /* Lekerekített sarkok */
-}
-
-.cell-content {
-  font-size: 3vw;
-  user-select: none;
-}
-
-@media (max-width: 600px) {
-  .cell-content {
+  body {
+    text-align: center;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100vh;
+    background-image: url('Background.svg');
+    background-size: cover;
+    background-attachment: fixed;
+    user-select: none; /* Kijelölés tiltása */
+    overflow: hidden; /* Görgetés tiltása */
+    touch-action: manipulation; /* Nagyítás tiltása mobil eszközökön */
+    -ms-text-size-adjust: 100%; /* Betűméret állítás figyelmen kívül hagyása IE/Edge böngészőkben */
+    -webkit-text-size-adjust: 100%; /* Betűméret állítás figyelmen kívül hagyása Chrome/Safari/Opera böngészőkben */
+  }
+  
+  h1 {
+    background-color: #6DACA1; /* Sötétebb és szürkésebb zöld árnyalat */
+    color: white;
+    position: fixed;
+    top: 0;
+    width: 100%; /* Fejléc teljes szélességűvé tétele */
+    text-align: center;
     font-size: 5vw;
+    padding: 10px 0;
+    margin: 0;
+    z-index: 100;
   }
-
-  h1 {
-    font-size: 6vw;
+  
+  .board {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    grid-gap: 5px;
+    width: 90%;
+    max-width: 540px;
+    margin: 70px auto 0 auto;
+    aspect-ratio: 1 / 1;
   }
-}
-
-@media (min-width: 600px) {
-  h1 {
-    font-size: 24px;
+  
+  .cell {
+    position: relative;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    background-color: #6DACA1; /* Cellák sötétebb és szürkésebb zöld árnyalata */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px; /* Lekerekített sarkok */
   }
-}
+  
+  .cell-content {
+    font-size: 3vw;
+    user-select: none;
+  }
+  
+  @media (max-width: 600px) {
+    .cell-content {
+      font-size: 5vw;
+    }
+  
+    h1 {
+      font-size: 6vw;
+    }
+  }
+  
+  @media (min-width: 600px) {
+    h1 {
+      font-size: 24px;
+    }
+  }
