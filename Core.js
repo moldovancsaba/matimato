@@ -2,7 +2,7 @@ class Board {
     constructor() {
         this.rows = 9;
         this.columns = 9;
-        this.cells = this.createInitialBoard();
+        this.cells = [];
     }
 
     createInitialBoard() {
@@ -143,5 +143,10 @@ function createBoard(board) {
     }
 }
 
-// A játék inicializálása
-createBoard(board);
+// A játék indításának kezelése
+document.getElementById('startButton').addEventListener('click', function() {
+    board.cells = board.createInitialBoard();
+    createBoard(board);
+    this.style.display = 'none'; // Elrejti a "Start" gombot
+});
+```
