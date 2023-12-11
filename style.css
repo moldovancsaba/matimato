@@ -7,7 +7,7 @@ body {
   flex-direction: column;
   justify-content: center;
   height: 100vh;
-  background-image: url('Background.svg?v=1.39');
+  background-image: url('Background.svg?v=1.41');
   background-size: cover;
   background-attachment: fixed;
 }
@@ -15,11 +15,9 @@ body {
 h1 {
   position: fixed;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   width: 100%;
-  max-width: 600px;
-  background-color: white;
+  background-color: #7CF; /* Frissített háttérszín */
   text-align: center;
   font-size: 5vw;
   padding: 10px 0;
@@ -77,6 +75,6 @@ h1 {
 
 @media (min-width: 600px) {
   h1 {
-      font-size: 24px;
+      font-size: 24px; /* Fix betűméret nagyobb képernyőkön */
   }
 }
