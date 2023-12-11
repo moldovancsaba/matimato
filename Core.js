@@ -1,130 +1,25 @@
 class Board {
-    constructor() {
-        this.rows = 9;
-        this.columns = 9;
+    constructor(rows, columns) {
+        this.rows = rows;
+        this.columns = columns;
         this.cells = this.createInitialBoard();
     }
 
     createInitialBoard() {
-        const numbers = [
-            [6, 3, 9, 5, 7, 4, 1, 8, 2],
-            [5, 4, 1, 8, 2, 9, 3, 7, 6],
-            [7, 8, 2, 6, 1, 3, 9, 5, 4],
-            [1, 9, 8, 4, 6, 7, 5, 2, 3],
-            [3, 6, 5, 9, 8, 2, 4, 1, 7],
-            [4, 2, 7, 1, 3, 5, 8, 6, 9],
-            [9, 5, 6, 7, 4, 8, 2, 3, 1],
-            [8, 1, 3, 2, 9, 6, 7, 4, 5],
-            [2, 7, 4, 3, 5, 1, 6, 9, 8]
-        ];
-
-        // Keverés a sorok véletlenszerű sorrendbe állításához
-        for (let i = numbers.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+        let board = [];
+        for (let i = 0; i < this.rows; i++) {
+            let row = [];
+            for (let j = 0; j < this.columns; j++) {
+                let num = Math.floor(Math.random() * 9) + 1; // Random szám 1 és 9 között
+                row.push(num);
+            }
+            board.push(row);
         }
-
-        return numbers;
-    }
-
-    removeNumber(row, column) {
-        this.cells[row][column] = null;
-    }
-
-    hasAvailableMoves() {
-        return this.cells.some(row => row.some(cell => cell != null));
+        return board;
     }
 }
 
-class Player {
-    constructor() {
-        this.score = 0;
-    }
-
-    play(board, position) {
-        if (board.cells[position.row][position.column] != null) {
-            this.score += board.cells[position.row][position.column];
-            board.removeNumber(position.row][position.column] = null;
-            return true;
-        }
-        return false;
-    }
-}
-
-const board = new Board();
-const humanPlayer = new Player();
-const computerPlayer = new Player();
-let activeRow = 4; // Kezdeti beállítás a középső sorra
-
-
-function displayMessage(message) {
-    const messageElement = document.getElementById('message');
-    messageElement.textContent = message;
-}
-
-function handleCellClick(row, column) {
-    displayMessage(`Cell clicked at row ${row}, column ${column}`);
-    handleHumanMove(row, column);
-}
-
-function handleHumanMove(row, column) {
-    if (row !== activeRow) {
-        displayMessage("Nem a megengedett sorból választottál. Próbáld újra!");
-        return;
-    }
-    if (humanPlayer.play(board, { row, column })) {
-        activeRow = getNextActiveRow(column);
-        updateBoard();
-        if (!board.hasAvailableMoves()) {
-            endGame();
-            return;
-        }
-        setTimeout(handleComputerMove, 500); // Kis késleltetés a számítógép lépése előtt
-    } else {
-        displayMessage("Nem sikerült lépni. Próbáld újra!");
-    }
-}
-
-function handleComputerMove() {
-    let availableRows = [];
-    for (let i = 0; i < board.rows; i++) {
-        if (board.cells[i][activeRow] != null) {
-            availableRows.push(i);
-        }
-    }
-
-    if (availableRows.length === 0) {
-        endGame();
-        return;
-    }
-
-    let randomRowIndex = availableRows[Math.floor(Math.random() * availableRows.length)];
-    computerPlayer.play(board, { row: randomRowIndex, column: activeRow });
-    activeRow = getNextActiveRow(randomRowIndex);
-    updateBoard();
-}
-
-function updateBoard() {
-    createBoard(board);
-}
-
-function endGame() {
-    let resultMessage = "";
-    if (humanPlayer.score > computerPlayer.score) {
-        resultMessage = "Az emberi játékos nyert!";
-    } else if (humanPlayer.score < computerPlayer.score) {
-        resultMessage = "A számítógép nyert!";
-    } else {
-        // Ha azonos a pontszám, az utoljára lépő nyer
-        resultMessage = "Az utoljára lépő játékos nyert!";
-    }
-    displayMessage(resultMessage);
-    // saveGameStats(); // Ha Firebase integrációt használsz
-}
-
-function getNextActiveRow(currentColumn) {
-    return currentColumn;
-}
+const board = new Board(5, 5); // 5x5-ös tábla létrehozása
 
 function createBoard(board) {
     const boardElement = document.getElementById('board');
@@ -133,18 +28,10 @@ function createBoard(board) {
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
-            if (i === activeRow) {
-                cell.classList.add('active-row');
-            }
-            const cellContent = document.createElement('div');
-            cellContent.className = 'cell-content';
-            cellContent.textContent = board.cells[i][j]; // Számok megjelenítése
-            cell.appendChild(cellContent);
-            cell.onclick = () => handleCellClick(i, j);
+            cell.textContent = board.cells[i][j]; // Számjegyek megjelenítése
             boardElement.appendChild(cell);
         }
     }
 }
 
-// A játék inicializálása
-createBoard(board);
+createBoard(board); // Tábla létrehozása
