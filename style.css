@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@800&display=swap');
-
 body {
   text-align: center;
   font-family: 'Open Sans', sans-serif;
@@ -9,55 +7,51 @@ body {
   flex-direction: column;
   justify-content: center;
   height: 100vh;
-  background-image: url('Background.svg?v=157');
+  background-image: url('Background.svg');
   background-size: cover;
   background-attachment: fixed;
-  user-select: none; /* Kijelölés tiltása */
-  overflow: hidden; /* Görgetés tiltása */
-  touch-action: manipulation; /* Mobil nagyítás tiltása */
 }
 
 h1 {
-  background-color: #7CF; /* Fejléc háttérszíne */
-  color: white;
   position: fixed;
   top: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
+  max-width: 600px;
+  background-color: #3399aa;
   text-align: center;
-  font-size: 2em; /* A h1 alapértelmezett mérete */
-  font-weight: 800; /* Extra vastag betűsúly */
+  font-size: 24px;
   padding: 10px 0;
   margin: 0;
   z-index: 100;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* Árnyék a fejléchez */
 }
 
 .board {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: repeat(5, 1fr);
-  grid-gap: 10px; /* Nagyobb térköz a cellák között */
+  grid-gap: 15px;
   width: 90%;
-  max-width: 540px;
-  margin: 30px auto 0 auto; /* Csökkentett távolság a fejléc és a tábla között */
+  max-width: 450px;
+  margin: 20px auto 0 auto;
   aspect-ratio: 1 / 1;
+  padding-top: 70px;
 }
 
 .cell {
   position: relative;
   cursor: pointer;
-  border-radius: 15px; /* Nagyobb lekerekített sarkok */
-  background-color: #7CF; /* A cellák háttérszíne */
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* Sötétebb és hangsúlyosabb árnyék */
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background-color: #3399aa;
+  border-radius: 10px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .cell-content {
-  font-family: 'Open Sans', sans-serif;
-  font-weight: 800; /* Extra vastag betűsúly */
-  color: white; /* Fehér színű számok */
+  color: white;
+  font-weight: 800; /* ExtraBold */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 3vw;
   user-select: none;
 }
@@ -69,7 +63,7 @@ h1 {
 }
 
 @media (min-width: 600px) {
-  .cell-content {
-    font-size: 24px; /* Nagyobb betűméret asztali böngészőben */
+  h1 {
+    font-size: 24px; /* Fix betűméret nagyobb képernyőkön */
   }
 }
