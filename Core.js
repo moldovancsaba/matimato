@@ -6,16 +6,22 @@ class Board {
     }
 
     createInitialBoard() {
+        const emojiMap = {
+            1: '1️⃣', 2: '2️⃣', 3: '3️⃣',
+            4: '4️⃣', 5: '5️⃣', 6: '6️⃣',
+            7: '7️⃣', 8: '8️⃣', 9: '9️⃣'
+        };
+
         const numbers = [
-            [6, 3, 9, 5, 7, 4, 1, 8, 2],
-            [5, 4, 1, 8, 2, 9, 3, 7, 6],
-            [7, 8, 2, 6, 1, 3, 9, 5, 4],
-            [1, 9, 8, 4, 6, 7, 5, 2, 3],
-            [3, 6, 5, 9, 8, 2, 4, 1, 7],
-            [4, 2, 7, 1, 3, 5, 8, 6, 9],
-            [9, 5, 6, 7, 4, 8, 2, 3, 1],
-            [8, 1, 3, 2, 9, 6, 7, 4, 5],
-            [2, 7, 4, 3, 5, 1, 6, 9, 8]
+            [6, 3, 9, 5, 7, 4, 1, 8, 2].map(n => emojiMap[n]),
+            [5, 4, 1, 8, 2, 9, 3, 7, 6].map(n => emojiMap[n]),
+            [7, 8, 2, 6, 1, 3, 9, 5, 4].map(n => emojiMap[n]),
+            [1, 9, 8, 4, 6, 7, 5, 2, 3].map(n => emojiMap[n]),
+            [3, 6, 5, 9, 8, 2, 4, 1, 7].map(n => emojiMap[n]),
+            [4, 2, 7, 1, 3, 5, 8, 6, 9].map(n => emojiMap[n]),
+            [9, 5, 6, 7, 4, 8, 2, 3, 1].map(n => emojiMap[n]),
+            [8, 1, 3, 2, 9, 6, 7, 4, 5].map(n => emojiMap[n]),
+            [2, 7, 4, 3, 5, 1, 6, 9, 8].map(n => emojiMap[n])
         ];
 
         // Keverés a sorok véletlenszerű sorrendbe állításához
@@ -44,7 +50,7 @@ class Player {
     play(board, position) {
         if (board.cells[position.row][position.column] != null) {
             this.score += board.cells[position.row][position.column];
-            board.removeNumber(position.row, position.column);
+            board.removeNumber(position.row][position.column] = null;
             return true;
         }
         return false;
@@ -78,7 +84,7 @@ function handleHumanMove(row, column) {
             endGame();
             return;
         }
-        setTimeout(handleComputerMove, 500);
+        setTimeout(handleComputerMove, 500); // Kis késleltetés a számítógép lépése előtt
     } else {
         displayMessage("Nem sikerült lépni. Próbáld újra!");
     }
@@ -137,7 +143,7 @@ function createBoard(board) {
             }
             const cellContent = document.createElement('div');
             cellContent.className = 'cell-content';
-            cellContent.textContent = board.cells[i][j];
+            cellContent.innerHTML = board.cells[i][j]; // Használja az innerHTML-t az emoji-k megjelenítéséhez
             cell.appendChild(cellContent);
             cell.onclick = () => handleCellClick(i, j);
             boardElement.appendChild(cell);
