@@ -52,18 +52,22 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 3vw;
+  font-size: 6vw; /* Nagyobb betűméret */
   user-select: none;
 }
 
 @media (max-width: 600px) {
   .cell-content {
-    font-size: 5vw;
+    font-size: 9vw;
   }
 }
 
 @media (min-width: 600px) {
+  .cell-content {
+    font-size: 32px; /* Fix betűméret nagyobb képernyőkön */
+  }
+
   h1 {
-    font-size: 24px; /* Fix betűméret nagyobb képernyőkön */
+    font-size: 24px; /* Fix betűméret */
   }
 }
