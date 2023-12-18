@@ -1,3 +1,4 @@
+// Játék tábla osztály
 class Board {
     constructor() {
         this.rows = 5;
@@ -5,118 +6,38 @@ class Board {
         this.cells = this.createInitialBoard();
     }
 
+    // Random számok generálása a táblára
     createInitialBoard() {
         let board = [];
         for (let i = 0; i < this.rows; i++) {
             let row = [];
             for (let j = 0; j < this.columns; j++) {
-                let randomNum = Math.floor(Math.random() * 9) + 1;
-                row.push(randomNum);
+                let num = Math.floor(Math.random() * 9) + 1;
+                row.push(num);
             }
             board.push(row);
         }
         return board;
     }
 
+    // Szám eltávolítása a tábláról
     removeNumber(row, column) {
         this.cells[row][column] = 0;
     }
-
-    hasAvailableMoves() {
-        return this.cells.some(row => row.some(cell => cell > 0));
-    }
 }
 
-class Player {
-    constructor() {
-        this.score = 0;
-    }
-
-    play(board, position) {
-        if (board.cells[position.row][position.column] > 0) {
-            this.score += board.cells[position.row][position.column];
-            board.removeNumber(position.row, position.column);
-            return true;
-        }
-        return false;
-    }
-}
-
-const board = new Board();
-const humanPlayer = new Player();
-const computerPlayer = new Player();
-let activeRow = 0;
-
-function displayMessage(message) {
-    const messageElement = document.getElementById('message');
-    messageElement.textContent = message;
-}
-
-function handleCellClick(row, column) {
-    displayMessage(`Cell clicked at row ${row}, column ${column}`);
-    handleHumanMove(row, column);
-}
-
-function handleHumanMove(row, column) {
-    if (row !== activeRow) {
-        displayMessage("Nem a megengedett sorból választottál. Próbáld újra!");
-        return;
-    }
-    if (humanPlayer.play(board, { row, column })) {
-        activeRow = getNextActiveRow(column);
-        updateBoard();
-        updateScoreDisplay();
-        if (!board.hasAvailableMoves()) {
-            endGame();
-            return;
-        }
-        setTimeout(handleComputerMove, 500);
-    } else {
-        displayMessage("Nem sikerült lépni. Próbáld újra!");
-    }
-}
-
-function handleComputerMove() {
-    // A számítógép választása...
-    updateBoard();
-}
-
-function updateBoard() {
-    createBoard(board);
-}
-
-function endGame() {
-    let resultMessage = "";
-    if (humanPlayer.score > computerPlayer.score) {
-        resultMessage = "Az emberi játékos nyert!";
-    } else if (humanPlayer.score < computerPlayer.score) {
-        resultMessage = "A számítógép nyert!";
-    } else {
-        resultMessage = "Az utoljára lépő játékos nyert!";
-    }
-    displayMessage(resultMessage);
-    // saveGameStats(); // Ha Firebase integrációt használsz
-}
-
-function getNextActiveRow(currentColumn) {
-    return currentColumn;
-}
-
-function updateScoreDisplay() {
-    const scoreDisplay = document.getElementById('scoreDisplay');
-    scoreDisplay.textContent = 'Pontszám: ' + humanPlayer.score;
-}
-
+// A tábla létrehozása és megjelenítése
 function createBoard(board) {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
+
     for (let i = 0; i < board.rows; i++) {
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
             const cellContent = document.createElement('div');
             cellContent.className = 'cell-content';
-            cellContent.textContent = board.cells[i][j] > 0 ? board.cells[i][j] : '';
+            cellContent.textContent = board.cells[i][j];
             cell.appendChild(cellContent);
             cell.onclick = () => handleCellClick(i, j);
             boardElement.appendChild(cell);
@@ -124,5 +45,56 @@ function createBoard(board) {
     }
 }
 
-// A játék inicializálása
+// Globális változók
+const board = new Board();
+let totalScore = 0;
+
+// Kattintás kezelése
+function handleCellClick(row, column) {
+    if (board.cells[row][column] !== 0) {
+        totalScore += board.cells[row][column];
+        board.removeNumber(row, column);
+        updateBoard();
+        displayScore();
+    }
+}
+
+// Tábla frissítése
+function updateBoard() {
+    createBoard(board);
+}
+
+// Pontszám megjelenítése
+function displayScore() {
+    const scoreElement = document.getElementById('score');
+    scoreElement.textContent = "Total Score: " + totalScore;
+}
+
+// Tábla és pontszám inicializálása
 createBoard(board);
+displayScore();
+// Stílus és HTML elemek inicializálása
+document.addEventListener('DOMContentLoaded', function() {
+    // Fejléc stílusának beállítása
+    const header = document.createElement('h1');
+    header.textContent = 'Matimato Game';
+    header.style.textAlign = 'center';
+    header.style.backgroundColor = '#3399aa';
+    header.style.color = 'white';
+    header.style.padding = '10px';
+    header.style.margin = '0';
+    header.style.position = 'fixed';
+    header.style.top = '0';
+    header.style.width = '100%';
+    header.style.zIndex = '1000';
+
+    // Pontszám stílusának beállítása
+    const scoreElement = document.createElement('div');
+    scoreElement.id = 'score';
+    scoreElement.style.textAlign = 'center';
+    scoreElement.style.marginTop = '60px';
+
+    // Elemek hozzáadása a dokumentumhoz
+    document.body.insertBefore(header, document.body.firstChild);
+    document.body.insertBefore(scoreElement, document.getElementById('board'));
+});
