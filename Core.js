@@ -1,7 +1,7 @@
 class Board {
-    constructor(rows, columns) {
-        this.rows = rows;
-        this.columns = columns;
+    constructor() {
+        this.rows = 5;
+        this.columns = 5;
         this.cells = this.createInitialBoard();
     }
 
@@ -10,16 +10,25 @@ class Board {
         for (let i = 0; i < this.rows; i++) {
             let row = [];
             for (let j = 0; j < this.columns; j++) {
-                let num = Math.floor(Math.random() * 9) + 1; // Random szám 1 és 9 között
+                // Random szám generálása 1 és 9 között
+                let num = Math.floor(Math.random() * 9) + 1;
                 row.push(num);
             }
             board.push(row);
         }
         return board;
     }
+
+    removeNumber(row, column) {
+        this.cells[row][column] = null;
+    }
+
+    hasAvailableMoves() {
+        return this.cells.some(row => row.some(cell => cell != null));
+    }
 }
 
-const board = new Board(5, 5); // 5x5-ös tábla létrehozása
+const board = new Board();
 
 function createBoard(board) {
     const boardElement = document.getElementById('board');
@@ -28,10 +37,21 @@ function createBoard(board) {
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
-            cell.textContent = board.cells[i][j]; // Számjegyek megjelenítése
+            const cellContent = document.createElement('div');
+            cellContent.className = 'cell-content';
+            cellContent.textContent = board.cells[i][j];
+            cell.appendChild(cellContent);
+
+            cell.onclick = function() {
+                // Kattintás hatására eltüntetjük a számot
+                board.removeNumber(i, j);
+                this.firstChild.style.display = 'none';
+            };
+
             boardElement.appendChild(cell);
         }
     }
 }
 
-createBoard(board); // Tábla létrehozása
+// A játék inicializálása
+createBoard(board);
