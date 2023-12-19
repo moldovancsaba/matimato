@@ -1,7 +1,7 @@
 class Board {
-    constructor() {
-        this.rows = 5;
-        this.columns = 5;
+    constructor(rows, columns) {
+        this.rows = rows;
+        this.columns = columns;
         this.cells = this.createInitialBoard();
     }
 
@@ -10,7 +10,7 @@ class Board {
         for (let i = 0; i < this.rows; i++) {
             let row = [];
             for (let j = 0; j < this.columns; j++) {
-                row.push(Math.floor(Math.random() * 9) + 1);
+                row.push(Math.floor(Math.random() * 9) + 1); // Véletlenszerű számok 1 és 9 között
             }
             board.push(row);
         }
@@ -18,56 +18,54 @@ class Board {
     }
 
     removeNumber(row, column) {
-        this.cells[row][column] = 0;
+        this.cells[row][column] = 0; // Nulla értékre állítás eltávolításkor
+    }
+
+    hasAvailableMoves() {
+        return this.cells.some(row => row.some(cell => cell !== 0));
     }
 }
 
-class Player {
-    constructor() {
-        this.score = 0;
-    }
+// Globális változók
+const board = new Board(5, 5); // 5x5-ös tábla
+let totalScore = 0; // Összpontszám
 
-    play(board, position) {
-        if (board.cells[position.row][position.column] !== 0) {
-            this.score += board.cells[position.row][position.column];
-            board.removeNumber(position.row, position.column);
-            return true;
-        }
-        return false;
-    }
-}
-
-const board = new Board();
-const humanPlayer = new Player();
-
-function displayScore() {
-    const scoreElement = document.getElementById('score');
-    scoreElement.textContent = `Score: ${humanPlayer.score}`;
-}
-
-function handleCellClick(row, column) {
-    if (humanPlayer.play(board, { row, column })) {
-        updateBoard();
-        displayScore();
-    }
-}
-
-function updateBoard() {
+// Játéktábla létrehozása
+function createBoard(board) {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
+    boardElement.style.gridTemplateColumns = `repeat(${board.columns}, 1fr)`; // Oszlopok beállítása
     for (let i = 0; i < board.rows; i++) {
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
-            const cellContent = document.createElement('div');
-            cellContent.className = 'cell-content';
-            cellContent.textContent = board.cells[i][j] === 0 ? '' : board.cells[i][j];
-            cell.appendChild(cellContent);
-            cell.onclick = () => handleCellClick(i, j);
+            cell.textContent = board.cells[i][j] !== 0 ? board.cells[i][j] : ''; // Üres cella kezelése
+            cell.addEventListener('click', () => handleCellClick(i, j));
             boardElement.appendChild(cell);
         }
     }
 }
 
-// A játék inicializálása
-updateBoard();
+// Cellákra kattintás kezelése
+function handleCellClick(row, column) {
+    if (board.cells[row][column] !== 0) {
+        totalScore += board.cells[row][column];
+        board.removeNumber(row, column);
+        updateScoreDisplay();
+        createBoard(board);
+    }
+}
+
+// Pontszám megjelenítése
+function updateScoreDisplay() {
+    const scoreElement = document.getElementById('score');
+    scoreElement.textContent = `Összpontszám: ${totalScore}`;
+}
+
+// A képernyő méretének változására való reagálás
+window.addEventListener('resize', function() {
+    createBoard(board);
+});
+
+// A játék indítása
+createBoard(board);
