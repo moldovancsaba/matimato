@@ -1,0 +1,13 @@
+/* environment.css */
+html, body {
+    overflow: hidden; /* Görgetés letiltása */
+    max-width: 100%;
+    max-height: 100vh;
+    user-select: none; /* Kijelölés letiltása */
+    touch-action: manipulation; /* Zoomolás tiltása */
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+}
