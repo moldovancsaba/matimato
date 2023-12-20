@@ -22,9 +22,3 @@ h1 {
     z-index: 100;
     color: white;
 }
-
-@media (min-width: 600px) {
-    h1 {
-        font-size: 24px; /* Fix betűméret */
-    }
-}
