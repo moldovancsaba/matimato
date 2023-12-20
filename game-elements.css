@@ -31,8 +31,3 @@
     align-items: center;
     justify-content: center;
 }
-
-/* Ablak méretének változása esetén a tábla frissítése */
-window.addEventListener('resize', function() {
-    createBoard(board);
-});
