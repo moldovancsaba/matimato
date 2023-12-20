@@ -47,6 +47,13 @@ h1 {
     box-sizing: border-box; /* A padding és a border is beleszámít a magasságba */
 }
 
+.board {
+    margin-top: 20vh; /* A képernyő magasságának 20%-a */
+    margin-left: auto; /* Bal oldali margó */
+    margin-right: auto; /* Jobb oldali margó */
+    width: 70vw; /* A játéktábla szélessége */
+}
+
 @media (orientation: landscape) {
 h1 {
         font-size: calc(2vw + 1vmin); /* Kisebb betűméret nagyobb képernyőkön */
