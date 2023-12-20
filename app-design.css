@@ -27,6 +27,20 @@ h1 {
     box-sizing: border-box; /* A padding és a border is beleszámít a magasságba */
 }
 
+.score {
+    position: fixed;
+    top: 10vh; /* A képernyő magasságának 10%-ánál helyezkedik el */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+    font-size: calc(3vw + 1vmin); /* Dinamikus betűméret */
+    color: white;
+    z-index: 100;
+    box-sizing: border-box;
+}
+
 @media (min-width: 600px) {
     h1 {
         font-size: calc(2vw + 1vmin); /* Kisebb betűméret nagyobb képernyőkön */
