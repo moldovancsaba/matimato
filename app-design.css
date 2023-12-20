@@ -33,16 +33,26 @@ h1 {
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
-    max-width: 600px;
+    background-color: #3399aa;
     text-align: center;
-    font-size: calc(3vw + 1vmin); /* Dinamikus betűméret */
-    color: white;
+    font-size: calc(5vw + 1vmin); /* Dinamikus betűméret */
+    padding: 2% 0; /* Kisebb padding */
+    margin: 0;
     z-index: 100;
-    box-sizing: border-box;
+    color: white;
+    white-space: nowrap; /* Nem törik a sor */
+    overflow: hidden; /* Túlcsordulás elrejtése */
+    text-overflow: ellipsis; /* Elipsis, ha a szöveg nem fér el */
+    height: 10vh; /* Magasság korlátozása a képernyő 10%-ára */
+    box-sizing: border-box; /* A padding és a border is beleszámít a magasságba */
 }
 
-@media (min-width: 600px) {
-    h1 {
+@media (orientation: landscape) {
+h1 {
+        font-size: calc(2vw + 1vmin); /* Kisebb betűméret nagyobb képernyőkön */
+    }
+
+.score {
         font-size: calc(2vw + 1vmin); /* Kisebb betűméret nagyobb képernyőkön */
     }
 }
