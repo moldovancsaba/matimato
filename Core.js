@@ -28,7 +28,7 @@ class Board {
 
 // Globális változók
 const board = new Board(5, 5); // 5x5-ös tábla
-let totalScore = 0; // Összpontszám
+let totalScore = 0; // Score
 
 // Játéktábla létrehozása
 function createBoard(board) {
@@ -59,7 +59,7 @@ function handleCellClick(row, column) {
 // Pontszám megjelenítése
 function updateScoreDisplay() {
     const scoreElement = document.getElementById('score');
-    scoreElement.textContent = `Összpontszám: ${totalScore}`;
+    scoreElement.textContent = `Score: ${totalScore}`;
 }
 
 // A képernyő méretének változására való reagálás
