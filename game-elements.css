@@ -14,8 +14,8 @@
     position: relative;
     cursor: pointer;
     background-color: #3399aa;
-    border-radius: 5%;
-    box-shadow: 0 4% 8% rgba(0, 0, 0, 0.2);
+    border-radius: 1em;
+    box-shadow: 0.5em 0.5em rgba(0, 0, 0, 0.2);
     aspect-ratio: 1 / 1;
 }
 
