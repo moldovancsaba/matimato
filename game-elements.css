@@ -1,29 +1,36 @@
 /* game-elements.css */
 .board {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    grid-gap: 3%; /* A gombok közötti távolság, a gombok méretének 10%-a */
-    max-height: 64vw; /* A rendelkezésre álló magasság 80%-a */
-    max-width: 80vw; /* A rendelkezésre álló szélesség 80%-a */
-    margin: 20vh auto 0; /* Középre igazítás és felső margó */
-    aspect-ratio: 1 / 1; /* Négyzet alakú tábla */
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 3vw; /* A gombok közötti távolság */
+    width: 80vw;
+    height: auto; /* Automatikus magasság a szélesség alapján */
+    margin: 5vw auto 0; /* Középre igazítás és felső margó */
+    aspect-ratio: 1 / 1;
 }
 
 .cell {
     position: relative;
     cursor: pointer;
     background-color: #3399aa;
-    border-radius: 5%; /* Dinamikus lekerekítés */
-    box-shadow: 0 4% 8% rgba(0, 0, 0, 0.2); /* Dinamikus árnyék */
-    aspect-ratio: 1 / 1; /* Négyzet alakú gombok */
+    border-radius: 5%;
+    box-shadow: 0 4% 8% rgba(0, 0, 0, 0.2);
+    aspect-ratio: 1 / 1;
 }
 
 .cell-content {
     color: white;
-    font-weight: 800; /* ExtraBold */
+    font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 4vw; /* Dinamikus betűméret */
     user-select: none;
+}
+
+@media (orientation: landscape) {
+    .board {
+        width: 80vh; /* A magasság 80%-a szélességként használva */
+        height: auto;
+    }
 }
