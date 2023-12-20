@@ -14,8 +14,8 @@
     position: relative;
     cursor: pointer;
     background-color: #3399aa;
-    border-radius: 1em;
-    box-shadow: 0.5em 0.5em rgba(0, 0, 0, 0.2);
+    border-radius: 2vw;
+    box-shadow: 0vw 2vw rgba(0, 0, 0, 0.2);
     aspect-ratio: 1 / 1;
 }
 
@@ -37,7 +37,17 @@
 
 @media (orientation: landscape) {
     .board {
-        width: 70vh; /* A magasság 80%-a szélességként használva */
-        height: auto;
+    gap: 3vh; /* A gombok közötti távolság */
+    width: 70vh; /* A magasság 80%-a szélességként használva */
+    height: auto;
     }
+
+    .cell {
+    position: relative;
+    cursor: pointer;
+    background-color: rgb(16, 56, 94);
+    border-radius: 2vh;
+    box-shadow: 0vh 2vh rgba(0, 0, 0, 0.7);
+    aspect-ratio: 1 / 1;
+}
 }
