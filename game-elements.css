@@ -3,8 +3,8 @@
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     grid-gap: 3%; /* A gombok közötti távolság, a gombok méretének 10%-a */
-    max-width: 80vw; /* A rendelkezésre álló szélesség 80%-a */
     max-height: 64vw; /* A rendelkezésre álló magasság 80%-a */
+    max-width: 80vw; /* A rendelkezésre álló szélesség 80%-a */
     margin: 20vh auto 0; /* Középre igazítás és felső margó */
     aspect-ratio: 1 / 1; /* Négyzet alakú tábla */
 }
