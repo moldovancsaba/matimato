@@ -6,7 +6,8 @@
     gap: 3vw; /* A gombok közötti távolság */
     width: 70vw;
     height: auto; /* Automatikus magasság a szélesség alapján */
-    margin: 5vw auto 0; /* Középre igazítás és felső margó */
+/*  margin: 5vw auto 0; */
+/*  Középre igazítás és felső margó */
     aspect-ratio: 1 / 1;
 }
 
