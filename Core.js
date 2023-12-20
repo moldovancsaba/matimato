@@ -18,11 +18,11 @@ class Board {
     }
 
     removeNumber(row, column) {
-        this.cells[row][column] = 0; // Nulla értékre állítás eltávolításkor
+        this.cells[row][column] = '•'; // Központi pont megjelenítése eltávolításkor
     }
 
     hasAvailableMoves() {
-        return this.cells.some(row => row.some(cell => cell !== 0));
+        return this.cells.some(row => row.some(cell => cell !== '•'));
     }
 }
 
@@ -39,7 +39,7 @@ function createBoard(board) {
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
-            cell.textContent = board.cells[i][j] !== 0 ? board.cells[i][j] : ''; // Üres cella kezelése
+            cell.textContent = board.cells[i][j]; // Szám vagy "•" megjelenítése
             cell.addEventListener('click', () => handleCellClick(i, j));
             boardElement.appendChild(cell);
         }
@@ -48,8 +48,8 @@ function createBoard(board) {
 
 // Cellákra kattintás kezelése
 function handleCellClick(row, column) {
-    if (board.cells[row][column] !== 0) {
-        totalScore += board.cells[row][column];
+    if (board.cells[row][column] !== '•') {
+        totalScore += isNaN(board.cells[row][column]) ? 0 : board.cells[row][column]; // Pontok hozzáadása, ha a cella számot tartalmaz
         board.removeNumber(row, column);
         updateScoreDisplay();
         createBoard(board);
