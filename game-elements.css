@@ -51,3 +51,17 @@
         font-size: 32px; /* Fix betűméret nagyobb képernyőkön */
     }
 }
+
+@media (orientation: landscape) {
+    .board {
+        width: 80%;
+        max-width: 80%;
+        grid-gap: 10px;
+    }
+    .cell {
+        padding-bottom: 100%; /* Arány megtartása */
+    }
+    .cell-content {
+        font-size: 5vw;
+    }
+}
