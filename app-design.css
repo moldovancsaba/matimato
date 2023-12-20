@@ -10,15 +10,23 @@ body {
 h1 {
     position: fixed;
     top: 0;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
     width: 100%;
-    max-width: 600px;
     background-color: #3399aa;
     text-align: center;
-    font-size: 24px;
-    padding: 10px 0;
+    font-size: calc(5vh - 1vmin); /* Dinamikus betűméret */
+    padding: 10% 0; /* Függőleges középre igazítás */
     margin: 0;
     z-index: 100;
     color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+h1 span {
+    max-width: 70%; /* A szöveg maximális szélessége */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

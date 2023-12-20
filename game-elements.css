@@ -2,20 +2,20 @@
 .board {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    grid-gap: 15px;
-    width: 90%;
-    max-width: 450px;
-    margin: 20px auto 0 auto;
-    aspect-ratio: 1 / 1;
-    padding-top: 70px;
+    grid-gap: 3%; /* A gombok közötti távolság, a gombok méretének 10%-a */
+    width: 80vw; /* A rendelkezésre álló szélesség 80%-a */
+    height: 80vw; /* Magasság is a szélesség 80%-a */
+    margin: 5vw auto 0; /* Középre igazítás és felső margó */
+    aspect-ratio: 1 / 1; /* Négyzet alakú tábla */
 }
 
 .cell {
     position: relative;
     cursor: pointer;
     background-color: #3399aa;
-    border-radius: 10px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 5%; /* Dinamikus lekerekítés */
+    box-shadow: 0 4% 8% rgba(0, 0, 0, 0.2); /* Dinamikus árnyék */
+    aspect-ratio: 1 / 1; /* Négyzet alakú gombok */
 }
 
 .cell-content {
@@ -24,40 +24,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 6vw; /* Nagyobb betűméret */
+    font-size: 4vw; /* Dinamikus betűméret */
     user-select: none;
 }
 
-.result {
-    width: 90%;
-    max-width: 450px;
-    margin: 20px auto;
-    background-color: #3399aa;
-    border-radius: 10px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    padding: 10px;
-    color: white;
-    font-size: 24px;
-}
-
-@media (max-width: 600px) {
-    .cell-content {
-        font-size: 9vw;
-    }
-}
-
-@media (min-width: 600px) {
-    .cell-content {
-        font-size: 32px; /* Fix betűméret nagyobb képernyőkön */
-    }
-
-    h1 {
-        font-size: 24px; /* Fix betűméret */
-    }
-}
-
-.score {
-    font-size: 20px;
-    margin-top: 10px;
-    /* További stílusok igény szerint */
-}
+/* Ablak méretének változása esetén a tábla frissítése */
+window.addEventListener('resize', function() {
+    createBoard(board);
+});
