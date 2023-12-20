@@ -1,6 +1,5 @@
 /* game-elements.css */
 .board {
-    top: 20vh;
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 3vw; /* A gombok közötti távolság */
