@@ -2,11 +2,11 @@
 .board {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 3vw; /* A gombok közötti távolság */
-    width: 70vw;
+    gap: 2vw; /* A gombok közötti távolság */
+    width: 75vw;
+    padding: 1vw;
     height: auto; /* Automatikus magasság a szélesség alapján */
 /*  margin: 5vw auto 0; */
-/*  Középre igazítás és felső margó */
     aspect-ratio: 1 / 1;
 }
 
@@ -15,7 +15,7 @@
     cursor: pointer;
     background-color: #3399aa;
     border-radius: 2vw;
-    box-shadow: 0vw 2vw rgba(0, 0, 0, 0.2);
+    box-shadow: 1vw 1vw rgba(0, 0, 0, 0.2);
     aspect-ratio: 1 / 1;
 }
 
@@ -37,8 +37,9 @@
 
 @media (orientation: landscape) {
     .board {
-    gap: 3vh; /* A gombok közötti távolság */
-    width: 70vh; /* A magasság 80%-a szélességként használva */
+    gap: 2vh; /* A gombok közötti távolság */
+    width: 50vh; /* A magasság 80%-a szélességként használva */
+    padding: 1vw;
     height: auto;
     }
 
@@ -47,7 +48,7 @@
     cursor: pointer;
     background-color: rgb(16, 56, 94);
     border-radius: 2vh;
-    box-shadow: 0vh 2vh rgba(0, 0, 0, 0.7);
+    box-shadow: 1vh 1vh rgba(0, 0, 0, 0.7);
     aspect-ratio: 1 / 1;
 }
 }
