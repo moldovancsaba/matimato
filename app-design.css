@@ -15,7 +15,7 @@ h1 {
     width: 100%;
     background-color: #3399aa;
     text-align: center;
-    font-size: calc(5vw + 1vmin); /* Dinamikus betűméret */
+    font-size: calc(3vw + 1vmin); /* Dinamikus betűméret */
     padding: 2% 0; /* Kisebb padding */
     margin: 0;
     z-index: 100;
@@ -35,7 +35,7 @@ h1 {
     width: 100%;
     background-color: #474e50;
     text-align: center;
-    font-size: calc(5vw + 1vmin); /* Dinamikus betűméret */
+    font-size: calc(2vw + 1vmin); /* Dinamikus betűméret */
     padding: 2% 0; /* Kisebb padding */
     margin: 0;
     z-index: 100;
