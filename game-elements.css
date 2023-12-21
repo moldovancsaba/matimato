@@ -1,6 +1,6 @@
 /* game-elements.css */
 .board {
-    top: 15vw;
+    top: 15%;
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 1vw; /* A gombok közötti távolság */
@@ -13,7 +13,7 @@
 .cell {
     position: relative;
     cursor: pointer;
-    background-color: #9156b3;
+    background-color: #063b5f;
     border-radius: 10%; /* Dinamikus lekerekítés */
     box-shadow: 0 8% 8% rgba(0, 0, 0, 0.7); /* Dinamikus árnyék */
     aspect-ratio: 1 / 1; /* Négyzet alakú gombok */
@@ -32,8 +32,8 @@
     }
 
     .board {
-        top: 2vw;
-        width: 50vw;
+        top: 5%;
+        width: 35vw;
         height: auto;
     }
 }
