@@ -2,6 +2,9 @@
 play matimato
 everything everywher everytime
 
+..... v203 struggling with orientation - but i can see the light at the end of the tunnel
+
+
 
 this game written 100% supported with bard and chatgpt 4.0
 
