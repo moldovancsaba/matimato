@@ -35,5 +35,6 @@
         top: 5%;
         width: 35vw;
         height: auto;
+        aspect-ratio: 1 / 1;
     }
 }
