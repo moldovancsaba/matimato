@@ -3,10 +3,10 @@
     display: grid;
     grid-template-columns: repeat(5, 1fr); /* 5 oszlop */
     gap: 2vw; /* A gombok közötti távolság */
-    width: 75vw; /* A képernyő szélességének 75%-a */
+    width: 60vw; /* A képernyő szélességének 75%-a */
     margin: 5vw auto 0; /* Függőleges középre igazítás */
     aspect-ratio: 1 / 1; /* Négyzet alakú tábla */
-    max-height: 70vh; /* A képernyő magasságának 70%-a */
+    max-height: 60vh; /* A képernyő magasságának 70%-a */
 }
 
 .cell {
@@ -30,7 +30,7 @@
 
 @media (orientation: landscape) {
     .board {
-        width: 30vw; /* A képernyő szélességének 75%-a */
+        width: 60vw; /* A képernyő szélességének 75%-a */
         height: auto;
     }
     .cell {
