@@ -1,6 +1,5 @@
 /* game-elements.css */
 .board {
-    position: fixed;
     top: 20vw;
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -36,6 +35,7 @@
     }
 
     .board {
+        top: 5vw;
         width: 50vw;
         height: auto;
     }
