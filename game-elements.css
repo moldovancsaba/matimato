@@ -30,7 +30,7 @@
 
 @media (orientation: landscape) {
     .board {
-        width: 70vh; /* A képernyő magasságának 70%-a */
+        width: 30vw; /* A képernyő szélességének 75%-a */
         height: auto;
     }
     .cell {
