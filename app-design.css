@@ -23,13 +23,13 @@ h1 {
     white-space: nowrap; /* Nem törik a sor */
     overflow: hidden; /* Túlcsordulás elrejtése */
     text-overflow: ellipsis; /* Elipsis, ha a szöveg nem fér el */
-    height: 10vh; /* Magasság korlátozása a képernyő 10%-ára */
+    height: 5vh; /* Magasság korlátozása a képernyő %-ára */
     box-sizing: border-box; /* A padding és a border is beleszámít a magasságba */
 }
 
 .score {
     position: fixed;
-    top: 10%;
+    top: 5%;
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
@@ -43,12 +43,6 @@ h1 {
     white-space: nowrap; /* Nem törik a sor */
     overflow: hidden; /* Túlcsordulás elrejtése */
     text-overflow: ellipsis; /* Elipsis, ha a szöveg nem fér el */
-    height: 10vh; /* Magasság korlátozása a képernyő 10%-ára */
+    height: 5vh; /* Magasság korlátozása a képernyő 10%-ára */
     box-sizing: border-box; /* A padding és a border is beleszámít a magasságba */
-}
-
-@media (min-width: 600px) {
-    h1 {
-        font-size: calc(2vw + 1vmin); /* Kisebb betűméret nagyobb képernyőkön */
-    }
 }
