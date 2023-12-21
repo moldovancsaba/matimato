@@ -6,6 +6,7 @@
     width: 75vw; /* A képernyő szélességének 75%-a */
     margin: 5vw auto 0; /* Függőleges középre igazítás */
     aspect-ratio: 1 / 1; /* Négyzet alakú tábla */
+    max-height: 70vh; /* A képernyő magasságának 70%-a */
 }
 
 .cell {
@@ -30,7 +31,7 @@
 @media (orientation: landscape) {
     .board {
         width: 70vh; /* A képernyő magasságának 70%-a */
-        height: 70vh;
+        height: auto;
     }
     .cell {
         border-radius: 5%; /* Kisebb lekerekítés fekvő módban */
