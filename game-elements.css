@@ -1,21 +1,21 @@
 /* game-elements.css */
 .board {
     display: grid;
-    grid-template-columns: repeat(5, 1fr); /* 5 oszlop */
-    gap: 2vw; /* A gombok közötti távolság */
-    width: 90vw; /* A képernyő szélességének 75%-a */
-    margin: 5vw auto 0; /* Függőleges középre igazítás */
-    aspect-ratio: 1 / 1; /* Négyzet alakú tábla */
-    max-height: 80vh; /* A képernyő magasságának 70%-a */
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 3vw; /* A gombok közötti távolság */
+    width: 70vw;
+    height: auto; /* Automatikus magasság a szélesség alapján */
+    margin: 5vw auto 0; /* Középre igazítás és felső margó */
+    aspect-ratio: 1 / 1;
 }
 
 .cell {
     position: relative;
     cursor: pointer;
     background-color: #3399aa;
-    border-radius: 10%; /* Lekerekített sarkok */
-    box-shadow: 0.5vw 0.5vw rgba(0, 0, 0, 0.2); /* Árnyék */
-    aspect-ratio: 1 / 1; /* Négyzet alakú cellák */
+    border-radius: 5%; /* Dinamikus lekerekítés */
+    box-shadow: 0 4% 8% rgba(0, 0, 0, 0.2); /* Dinamikus árnyék */
+    aspect-ratio: 1 / 1; /* Négyzet alakú gombok */
 }
 
 .cell-content {
@@ -24,16 +24,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: calc(3vw + 1vmin); /* Dinamikus betűméret */
+    font-size: 4vw; /* Dinamikus betűméret */
     user-select: none;
 }
 
 @media (orientation: landscape) {
-    .board {
-        width: 30vw; /* A képernyő szélességének 75%-a */
-        height: auto;
+    h1, .score {
+        display: none;
     }
-    .cell {
-        border-radius: 5%; /* Kisebb lekerekítés fekvő módban */
+
+    .board {
+        width: 70vh; /* A magasság 80%-a szélességként használva */
+        height: auto;
     }
 }

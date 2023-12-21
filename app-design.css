@@ -28,38 +28,19 @@ h1 {
 }
 
 .score {
-    position: fixed;
-    top: 10vh; /* A képernyő magasságának 10%-ánál helyezkedik el */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    background-color: #3399aa;
-    text-align: center;
-    font-size: calc(5vw + 1vmin); /* Dinamikus betűméret */
-    padding: 2% 0; /* Kisebb padding */
-    margin: 0;
-    z-index: 100;
+    width: 90%;
+    max-width: 450px;
+    margin: 20px auto;
+    background-color: #444444;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 10px;
     color: white;
-    white-space: nowrap; /* Nem törik a sor */
-    overflow: hidden; /* Túlcsordulás elrejtése */
-    text-overflow: ellipsis; /* Elipsis, ha a szöveg nem fér el */
-    height: 10vh; /* Magasság korlátozása a képernyő 10%-ára */
-    box-sizing: border-box; /* A padding és a border is beleszámít a magasságba */
+    font-size: 24px;
 }
 
-.board {
-    margin-top: 20vh; /* A képernyő magasságának 20%-a */
-    margin-left: auto; /* Bal oldali margó */
-    margin-right: auto; /* Jobb oldali margó */
-    width: 70vw; /* A játéktábla szélessége */
-}
-
-@media (orientation: landscape) {
-h1 {
-        font-size: calc(2vw + 1vmin); /* Kisebb betűméret nagyobb képernyőkön */
-    }
-
-.score {
+@media (min-width: 600px) {
+    h1 {
         font-size: calc(2vw + 1vmin); /* Kisebb betűméret nagyobb képernyőkön */
     }
 }
