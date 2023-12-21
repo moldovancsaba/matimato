@@ -3,7 +3,7 @@
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 3vw; /* A gombok közötti távolság */
-    width: 70vw;
+    width: 90;
     height: auto; /* Automatikus magasság a szélesség alapján */
     margin: 5vw auto 0; /* Középre igazítás és felső margó */
     aspect-ratio: 1 / 1;
@@ -34,7 +34,7 @@
     }
 
     .board {
-        width: 70vh; /* A magasság 80%-a szélességként használva */
+        width: 50vw;
         height: auto;
     }
 }
