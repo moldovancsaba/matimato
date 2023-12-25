@@ -1,55 +1,3 @@
-// Core.js - Első rész
-class Board {
-    constructor(rows, columns) {
-        this.rows = rows;
-        this.columns = columns;
-        this.cells = this.createInitialBoard();
-    }
-
-    createInitialBoard() {
-        let board = [];
-        for (let i = 0; i < this.rows; i++) {
-            let row = [];
-            for (let j = 0; j < this.columns; j++) {
-                row.push(Math.floor(Math.random() * 9) + 1);
-            }
-            board.push(row);
-        }
-        return board;
-    }
-
-    removeNumber(row, column) {
-        this.cells[row][column] = '•';
-    }
-
-    hasAvailableMoves() {
-        return this.cells.some(row => row.some(cell => cell !== '•'));
-    }
-}
-
-class Player {
-    constructor(board) {
-        this.board = board;
-        this.score = 0;
-    }
-
-    makeMove(row, column) {
-        if (this.board.cells[row][column] !== '•') {
-            this.score += this.board.cells[row][column];
-            this.board.removeNumber(row, column);
-            return true;
-        }
-        return false;
-    }
-}
-
-// Globális változók
-const board = new Board(5, 5);
-let humanPlayer = new Player(board);
-let computerPlayer = new Player(board);
-let currentPlayer = computerPlayer; // A számítógép kezdi
-
-// Core.js - Második rész
 // Játéktábla létrehozása
 function createBoard() {
     const boardElement = document.getElementById('board');
@@ -59,6 +7,8 @@ function createBoard() {
             const cell = document.createElement('div');
             cell.className = 'cell';
             cell.textContent = board.cells[i][j];
+            cell.setAttribute('row', i);
+            cell.setAttribute('column', j);
             cell.addEventListener('click', () => handleCellClick(i, j));
             boardElement.appendChild(cell);
         }
@@ -113,7 +63,7 @@ function highlightCell(row, column) {
         cellElement.style.backgroundColor = '#444444';
         setTimeout(() => {
             cellElement.textContent = '•';
-            cellElement.style.backgroundColor = '#063b5f';
+            cellElement.style.backgroundColor = '';
         }, 500);
     }
 }
