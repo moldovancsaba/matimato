@@ -1,5 +1,3 @@
-// AI.js
-
 function handleAIMove() {
     let availableCells = getAvailableCells();
 
@@ -37,3 +35,6 @@ function updateBoardAppearance(row, column) {
         cellElement.style.backgroundColor = '#063b5f';
     }, 400);
 }
+
+// Az AI lépésének indítása
+handleAIMove();
