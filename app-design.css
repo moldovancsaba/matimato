@@ -8,15 +8,15 @@ body {
 }
 
 h1 {
-    position: fixed; /* Pozíció változás 'absolute'-ról 'fixed'-re */
-    top: 0; /* A képernyő tetején */
+    position: absolute;
+    bottom: 10%;
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
     background-color: #3399aa;
     text-align: center;
-    font-size: calc(3vw + 1vmin); /* Dinamikus betűméret */
-    padding: 2% 0; /* Kisebb padding */
+    font-size: calc(3vw + 1vmin);
+    padding: 2% 0;
     margin: 0;
     z-index: 100;
     color: white;
@@ -28,29 +28,54 @@ h1 {
 }
 
 .score-container {
-    position: fixed; /* Pozíció változás 'absolute'-ról 'fixed'-re */
-    top: 5vh; /* A cím alatt */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    text-align: center;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
     z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .score {
-    display: inline-block;
     background-color: #474e50;
-    margin: 0 5px;
     padding: 10px;
     border-radius: 10px;
     color: white;
-    font-size: calc(3vw + 1vmin); /* Dinamikus betűméret */
+    font-size: calc(3vw + 1vmin);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    margin: 5px 0;
+}
+
+@media (orientation: portrait) {
+    /* Álló módban a cím és az eredményjelző az alján */
+    h1, .score-container {
+        position: fixed;
+        bottom: 0;
+    }
+
+    .score-container {
+        bottom: 5vh;
+        left: 50%;
+        transform: translateX(-50%);
+        flex-direction: row;
+    }
 }
 
 @media (orientation: landscape) {
-    /* Fekvő módban a cím és az eredményjelző eltűnik */
-    h1, .score-container {
-        display: none;
+    /* Fekvő módban a pontszámok a játéktábla mellett */
+    .score-container {
+        top: 50%;
+        left: 5%; /* Játékos pontszámok a bal oldalon */
+        right: 5%; /* AI pontszámok a jobb oldalon */
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #ai-score {
+        position: absolute;
+        top: 50%;
+        right: 5%;
+        transform: translateY(-50%);
     }
 }
