@@ -1,4 +1,4 @@
-// Core.js - 1. rész
+// Core.js
 class Board {
     constructor(rows, columns) {
         this.rows = rows;
@@ -58,6 +58,8 @@ function createBoard() {
             const cell = document.createElement('div');
             cell.className = 'cell';
             cell.textContent = board.cells[i][j];
+            cell.setAttribute('row', i);
+            cell.setAttribute('column', j);
             cell.addEventListener('click', () => handleCellClick(i, j));
             boardElement.appendChild(cell);
         }
@@ -69,7 +71,7 @@ function handleCellClick(row, column) {
     if (board.cells[row][column] !== '•' && currentPlayer === humanPlayer) {
         humanPlayer.makeMove(row, column);
         updateScoreDisplay();
-        updateCellAppearance(row, column);
+        highlightCell(row, column);
         switchPlayer();
     }
 }
@@ -88,7 +90,7 @@ function handleAIMove() {
     
     computerPlayer.makeMove(selectedCell.row, selectedCell.column);
     updateScoreDisplay();
-    updateCellAppearance(selectedCell.row, selectedCell.column);
+    highlightCell(selectedCell.row, selectedCell.column);
     switchPlayer();
 }
 
@@ -105,15 +107,17 @@ function getAvailableCells() {
     return availableCells;
 }
 
-// A cella kiemelése a számítógép lépésekor
-function updateCellAppearance(row, column) {
+// A cella kiemelése
+function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
-        cellElement.style.backgroundColor = 'white';
+        cellElement.style.transition = 'background-color 0.5s';
+        cellElement.style.backgroundColor = 'grey';
         setTimeout(() => {
             cellElement.textContent = '•';
-            cellElement.style.backgroundColor = '#063b5f';
-        }, 400);
+            cellElement.style.backgroundColor = '';
+            createBoard(); // Frissíti a táblát minden lépés után
+        }, 500);
     }
 }
 
@@ -130,7 +134,6 @@ function switchPlayer() {
     }
 }
 
-// Core.js - 2. rész
 // Pontszámok megjelenítése
 function updateScoreDisplay() {
     const playerScoreElement = document.getElementById('player-score');
@@ -139,14 +142,22 @@ function updateScoreDisplay() {
     aiScoreElement.textContent = `AI: ${computerPlayer.score}`;
 }
 
+// Játékosok váltása
+function switchPlayer() {
+    currentPlayer = currentPlayer === humanPlayer ? computerPlayer : humanPlayer;
+    if (currentPlayer === computerPlayer) {
+        setTimeout(handleAIMove, 1000); // Kis késleltetés a számítógép lépése előtt
+    }
+}
+
 // A képernyő méretének változására való reagálás
 window.addEventListener('resize', function() {
-    createBoard(board);
+    createBoard();
 });
 
 // A játék indítása
 document.addEventListener('DOMContentLoaded', function() {
     currentPlayer = computerPlayer; // A számítógép kezdi
-    createBoard(board);
+    createBoard();
     handleAIMove();
 });
