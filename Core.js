@@ -1,4 +1,4 @@
-// Core.js első rész
+// Core.js
 class Board {
     constructor(rows, columns) {
         this.rows = rows;
@@ -48,7 +48,7 @@ const board = new Board(5, 5);
 let humanPlayer = new Player(board);
 let computerPlayer = new Player(board);
 let currentPlayer = computerPlayer;
-let lastPlayerColumn = null; // Utolsó játékos lépése
+let lastPlayerMoveColumn = null;
 
 // Játéktábla létrehozása
 function createBoard() {
@@ -64,21 +64,31 @@ function createBoard() {
         }
     }
 }
-// Core.js második rész
+
 // Cellákra kattintás kezelése
 function handleCellClick(row, column) {
     if (board.cells[row][column] !== '•' && currentPlayer === humanPlayer) {
         humanPlayer.makeMove(row, column);
+        lastPlayerMoveColumn = column;  // Megjegyezzük az oszlop számát
         updateScoreDisplay();
-        updateCellAppearance(row, column);
-        lastPlayerColumn = column; // Játékos választott oszlop frissítése
+        highlightCell(row, column);
         switchPlayer();
     }
 }
 
 // A számítógép lépésének kezelése
 function handleAIMove() {
-    let availableCells = getAvailableCellsInColumn(lastPlayerColumn);
+    if (lastPlayerMoveColumn === null) {
+        // Ha ez az első lépés, akkor szabadon választ
+        performRandomAIMove();
+    } else {
+        // Különben csak az adott oszlopból választhat
+        performAIColumnMove(lastPlayerMoveColumn);
+    }
+}
+
+function performRandomAIMove() {
+    let availableCells = getAvailableCells();
 
     if (availableCells.length === 0) {
         endGame();
@@ -90,12 +100,29 @@ function handleAIMove() {
     
     computerPlayer.makeMove(selectedCell.row, selectedCell.column);
     updateScoreDisplay();
-    updateCellAppearance(selectedCell.row, selectedCell.column);
+    highlightCell(selectedCell.row, selectedCell.column);
+    switchPlayer();
+}
+
+function performAIColumnMove(column) {
+    let availableCells = getColumnAvailableCells(column);
+
+    if (availableCells.length === 0) {
+        endGame();
+        return;
+    }
+
+    let randomCellIndex = Math.floor(Math.random() * availableCells.length);
+    let selectedCell = availableCells[randomCellIndex];
+    
+    computerPlayer.makeMove(selectedCell.row, selectedCell.column);
+    updateScoreDisplay();
+    highlightCell(selectedCell.row, selectedCell.column);
     switchPlayer();
 }
 
 // Elérhető cellák lekérdezése az adott oszlopban
-function getAvailableCellsInColumn(column) {
+function getColumnAvailableCells(column) {
     let availableCells = [];
     for (let i = 0; i < board.rows; i++) {
         if (board.cells[i][column] !== '•') {
@@ -105,21 +132,21 @@ function getAvailableCellsInColumn(column) {
     return availableCells;
 }
 
-// A cella kiemelése a számítógép lépésekor
-function updateCellAppearance(row, column) {
+// A cella kiemelése
+function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
-        cellElement.style.backgroundColor = 'darkgrey';
+        cellElement.style.opacity = '0.5';
         setTimeout(() => {
             cellElement.textContent = '•';
-            cellElement.style.backgroundColor = '#063b5f';
+            cellElement.style.opacity = '1';
         }, 500);
     }
 }
-// Core.js harmadik rész
+
 // A játék vége logikája
 function endGame() {
-    alert('A játék véget ért. Az eredmény: You: ' + humanPlayer.score + ', AI: ' + computerPlayer.score);
+    // Ide jön a játék vége logikája, pl. kiírni az eredményt
 }
 
 // Játékosok váltása
@@ -145,7 +172,6 @@ window.addEventListener('resize', function() {
 
 // A játék indítása
 document.addEventListener('DOMContentLoaded', function() {
-    currentPlayer = computerPlayer; // A számítógép kezdi
     createBoard();
     handleAIMove();
 });
