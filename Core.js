@@ -75,7 +75,6 @@ function handleCellClick(row, column) {
         switchPlayer();
     }
 }
-
 // A számítógép lépésének kezelése
 function handleAIMove() {
     let availableCells = lastPlayerColumn === null ? getAvailableCells() : getAvailableCellsInColumn(lastPlayerColumn);
@@ -129,6 +128,7 @@ function highlightCell(row, column) {
         }, 400);
     }
 }
+
 // A játék vége logikája
 function endGame() {
     // Implementáld a játék vége logikáját
