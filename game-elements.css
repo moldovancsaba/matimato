@@ -38,8 +38,7 @@
     }
 
     .board {
-        width: 50vh; /* A magasság 50%-a szélességként használva */
-        height: 50vh; /* Azonos magasság a szélességgel */
+        width: 50vw; /* A magasság 50%-a szélességként használva */
         aspect-ratio: 1 / 1;
     }
 
