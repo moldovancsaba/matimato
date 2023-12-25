@@ -143,8 +143,8 @@ window.addEventListener('resize', function() {
 });
 
 // A játék indítása
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener(‘DOMContentLoaded’, function() {
     currentPlayer = computerPlayer; // A számítógép kezdi
     createBoard(board);
     handleAIMove();
-});
+    });
