@@ -1,4 +1,5 @@
-// Core.js
+// Core.js - 1. rész
+
 class Board {
     constructor(rows, columns) {
         this.rows = rows;
@@ -58,20 +59,20 @@ function createBoard() {
             const cell = document.createElement('div');
             cell.className = 'cell';
             cell.textContent = board.cells[i][j];
-            cell.setAttribute('data-row', i);
-            cell.setAttribute('data-column', j);
             cell.addEventListener('click', () => handleCellClick(i, j));
             boardElement.appendChild(cell);
         }
     }
 }
 
+// Core.js - 2. rész
+
 // Cellákra kattintás kezelése
 function handleCellClick(row, column) {
     if (board.cells[row][column] !== '•' && currentPlayer === humanPlayer) {
         humanPlayer.makeMove(row, column);
         updateScoreDisplay();
-        updateCellAppearance(row, column);
+        updateCellAppearance(row, column, true); // Jelölje a kattintást
         switchPlayer();
     }
 }
@@ -90,7 +91,7 @@ function handleAIMove() {
     
     computerPlayer.makeMove(selectedCell.row, selectedCell.column);
     updateScoreDisplay();
-    updateCellAppearance(selectedCell.row, selectedCell.column);
+    updateCellAppearance(selectedCell.row, selectedCell.column, false); // Nincs kattintási effektus
     switchPlayer();
 }
 
@@ -107,11 +108,19 @@ function getAvailableCells() {
     return availableCells;
 }
 
-// A cella kiemelése a számítógép lépésekor
-function updateCellAppearance(row, column) {
-    let cellElement = document.querySelector(`.cell[data-row="${row}"][data-column="${column}"]`);
+// A cella megjelenésének frissítése
+function updateCellAppearance(row, column, isPlayerMove) {
+    let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
-        cellElement.textContent = '•';
+        if (isPlayerMove) {
+            cellElement.style.backgroundColor = 'gray';
+            setTimeout(() => {
+                cellElement.textContent = '•';
+                cellElement.style.backgroundColor = '';
+            }, 500);
+        } else {
+            cellElement.textContent = '•';
+        }
     }
 }
 
@@ -142,10 +151,8 @@ window.addEventListener('resize', function() {
 });
 
 // A játék indítása
-
-// A játék indítása
 document.addEventListener('DOMContentLoaded', function() {
     currentPlayer = computerPlayer; // A számítógép kezdi
-    createBoard(board);
+    createBoard();
     handleAIMove();
 });
