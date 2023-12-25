@@ -1,36 +1,49 @@
 /* game-elements.css */
 .board {
-    position: absolute; /* Abszolút pozícionálás a középre helyezéshez */
-    top: 50%; /* Középre helyezés függőlegesen */
-    left: 50%; /* Középre helyezés vízszintesen */
-    transform: translate(-50%, -50%); /* A tábla középpontjának igazítása */
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr)); /* 5 oszlop, dinamikus szélesség */
+    grid-template-columns: repeat(5, 1fr);
     gap: 1vw; /* A gombok közötti távolság */
-    max-height: 50vh; /* Maximális magasság */
-    max-width: 90vw; /* Maximális szélesség */
-    aspect-ratio: 1; /* Négyzet alakú tábla */
+    width: 90vw;
+    margin: 0 auto; /* Középre igazítás */
+    aspect-ratio: 1 / 1;
 }
 
 .cell {
     position: relative;
     cursor: pointer;
     background-color: #063b5f;
-    border-radius: 5vw; /* Dinamikus lekerekítés */
-    box-shadow: 0 4vw 4vw rgba(0, 0, 0, 0.5); /* Dinamikus árnyék */
+    border-radius: 10%; /* Dinamikus lekerekítés */
+    box-shadow: 0 8% 8% rgba(0, 0, 0, 0.7); /* Dinamikus árnyék */
     aspect-ratio: 1 / 1; /* Négyzet alakú gombok */
     display: flex;
-    font-size: calc(3vw + 1vmin); /* Dinamikus betűméret */
-    font-weight: 800; /* ExtraBold */
-    color: white;
     align-items: center;
     justify-content: center;
+    font-size: 6vw; /* Dinamikus betűméret */
+    font-weight: 800; /* ExtraBold */
+    color: white;
     user-select: none;
 }
 
+.cell-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 @media (orientation: landscape) {
+    h1, .score {
+        display: none;
+    }
+
     .board {
-        max-width: 50vw; /* A magasság 90%-a szélességként használva */
-        max-height: 90vw; /* A szélesség 90%-a magasságként használva */
+        width: 50vh; /* A magasság 50%-a szélességként használva */
+        height: 50vh; /* Azonos magasság a szélességgel */
+        aspect-ratio: 1 / 1;
+    }
+
+    .cell {
+        font-size: 3vh; /* Kisebb betűméret fekvő módban */
     }
 }

@@ -18,9 +18,7 @@ class Board {
     }
 
     removeNumber(row, column) {
-        let removedNumber = this.cells[row][column];
         this.cells[row][column] = '•';
-        return removedNumber;
     }
 
     hasAvailableMoves() {
@@ -51,27 +49,32 @@ function createBoard(board) {
 // Cellákra kattintás kezelése
 function handleCellClick(row, column) {
     if (board.cells[row][column] !== '•') {
-        playerScore += board.removeNumber(row, column);
+        playerScore += isNaN(board.cells[row][column]) ? 0 : board.cells[row][column];
+        board.removeNumber(row, column);
         updateScoreDisplay();
         aiMove();
         createBoard(board);
     }
 }
 
-// AI lépés
+// AI lépése
 function aiMove() {
-    let availableCells = [];
+    // Itt implementáld az AI logikáját
+    // Példa: véletlenszerű lépés
+    const availableCells = [];
     board.cells.forEach((row, rowIndex) => {
-        row.forEach((cell, columnIndex) => {
+        row.forEach((cell, colIndex) => {
             if (cell !== '•') {
-                availableCells.push({ rowIndex, columnIndex });
+                availableCells.push({row: rowIndex, col: colIndex});
             }
         });
     });
 
     if (availableCells.length > 0) {
-        let randomCell = availableCells[Math.floor(Math.random() * availableCells.length)];
-        aiScore += board.removeNumber(randomCell.rowIndex, randomCell.columnIndex);
+        const randomCell = availableCells[Math.floor(Math.random() * availableCells.length)];
+        aiScore += isNaN(board.cells[randomCell.row][randomCell.col]) ? 0 : board.cells[randomCell.row][randomCell.col];
+        board.removeNumber(randomCell.row, randomCell.col);
+        updateScoreDisplay();
     }
 }
 
@@ -82,11 +85,6 @@ function updateScoreDisplay() {
     playerScoreElement.textContent = `You: ${playerScore}`;
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
-
-// A képernyő méretének változására való reagálás
-window.addEventListener('resize', function() {
-    createBoard(board);
-});
 
 // A játék indítása
 createBoard(board);
