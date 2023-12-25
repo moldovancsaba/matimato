@@ -1,3 +1,5 @@
+// Initialization.js
+
 document.addEventListener('DOMContentLoaded', function() {
     // Globális változók
     const board = new Board(5, 5); // 5x5-ös tábla
