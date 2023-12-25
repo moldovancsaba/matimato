@@ -1,47 +1,63 @@
-// GameLogic.js
-
-// Cellákra kattintás kezelése
-function handleCellClick(row, column) {
-    if (board.cells[row][column] !== '•') {
-        playerScore += isNaN(board.cells[row][column]) ? 0 : parseInt(board.cells[row][column]);
-        board.removeNumber(row, column);
-        updateScoreDisplay();
-        createBoard(board);
-        handleAiMove(); // Az AI lépése a játékos után
+class HumanPlayer {
+    constructor(board) {
+        this.board = board;
+        this.score = 0;
     }
-}
 
-// AI lépése
-function handleAiMove() {
-    let availableMoves = [];
-    for (let i = 0; i < board.rows; i++) {
-        for (let j = 0; j < board.columns; j++) {
-            if (board.cells[i][j] !== '•') {
-                availableMoves.push({ row: i, column: j });
-            }
+    makeMove(row, column) {
+        if (this.board.cells[row][column] !== '•') {
+            this.score += this.board.cells[row][column];
+            this.board.removeNumber(row, column);
+            return true;
         }
-    }
-
-    if (availableMoves.length > 0) {
-        let randomMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
-        aiScore += parseInt(board.cells[randomMove.row][randomMove.column]);
-        board.removeNumber(randomMove.row, randomMove.column);
-        setTimeout(() => {
-            updateScoreDisplay();
-            createBoard(board);
-        }, 800); // Késleltetés a vizuális hatás miatt
+        return false;
     }
 }
 
-// Pontszámok frissítése
+class ComputerPlayer {
+    constructor(board) {
+        this.board = board;
+        this.score = 0;
+    }
+
+    makeMove() {
+        // A számítógép lépése
+        // ...
+    }
+}
+
+// Globális változók
+const board = new Board(5, 5);
+let humanPlayer = new HumanPlayer(board);
+let computerPlayer = new ComputerPlayer(board);
+let currentPlayer = computerPlayer; // A számítógép kezdi
+
+function handleCellClick(row, column) {
+    if (currentPlayer === humanPlayer && humanPlayer.makeMove(row, column)) {
+        updateScoreDisplay();
+        switchPlayer();
+    }
+}
+
 function updateScoreDisplay() {
     const playerScoreElement = document.getElementById('player-score');
     const aiScoreElement = document.getElementById('ai-score');
-    playerScoreElement.textContent = `You: ${playerScore}`;
-    aiScoreElement.textContent = `AI: ${aiScore}`;
+    playerScoreElement.textContent = `You: ${humanPlayer.score}`;
+    aiScoreElement.textContent = `AI: ${computerPlayer.score}`;
 }
 
-// A képernyő méretének változására való reagálás
-window.addEventListener('resize', function() {
-    createBoard(board);
-});
+function switchPlayer() {
+    currentPlayer = currentPlayer === humanPlayer ? computerPlayer : humanPlayer;
+    if (currentPlayer === computerPlayer) {
+        setTimeout(() => {
+            let score = computerPlayer.makeMove();
+            computerPlayer.score += score;
+            updateScoreDisplay();
+            switchPlayer();
+        }, 1000); // 1 másodperc késleltetés
+    }
+}
+
+// A játék indítása
+createBoard(board);
+computerPlayer.makeMove(); // A számítógép kezdi a játékot
