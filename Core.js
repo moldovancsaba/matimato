@@ -1,3 +1,4 @@
+// Core.js
 class Board {
     constructor(rows, columns) {
         this.rows = rows;
@@ -47,63 +48,5 @@ function createBoard(board) {
     }
 }
 
-// Cellákra kattintás kezelése
-function handleCellClick(row, column) {
-    if (board.cells[row][column] !== '•') {
-        playerScore += isNaN(board.cells[row][column]) ? 0 : board.cells[row][column]; // Pontok hozzáadása, ha a cella számot tartalmaz
-        board.removeNumber(row, column);
-        updateScoreDisplay();
-        createBoard(board);
-        handleComputerMove(); // Számítógép lépése
-    }
-}
-
-// Számítógép lépése
-function handleComputerMove() {
-    let availableCells = [];
-    for (let i = 0; i < board.rows; i++) {
-        for (let j = 0; j < board.columns; j++) {
-            if (board.cells[i][j] !== '•') {
-                availableCells.push({ row: i, column: j });
-            }
-        }
-    }
-
-    if (availableCells.length > 0) {
-        let randomCellIndex = Math.floor(Math.random() * availableCells.length);
-        let cell = availableCells[randomCellIndex];
-        aiScore += board.cells[cell.row][cell.column];
-        
-        // Vizuális visszajelzés a számítógép lépésére
-        const cellElement = document.querySelector(`.board .cell:nth-child(${cell.row * board.columns + cell.column + 1})`);
-        cellElement.style.backgroundColor = 'white'; // Cellaháttér fehérítése
-
-        setTimeout(() => {
-            board.removeNumber(cell.row, cell.column);
-            updateScoreDisplay();
-            createBoard(board); // Újrarajzolja a táblát a változások után
-        }, 400); // 0.4 másodperc várakozás
-
-        setTimeout(() => {
-            cellElement.style.backgroundColor = ''; // Háttérszín visszaállítása
-        }, 800); // 0.8 másodperc után állítja vissza a háttérszínt
-    }
-}
-
-// Pontszám megjelenítése
-function updateScoreDisplay() {
-    const playerScoreElement = document.getElementById('player-score');
-    const aiScoreElement = document.getElementById('ai-score');
-    playerScoreElement.textContent = `You: ${playerScore}`;
-    aiScoreElement.textContent = `AI: ${aiScore}`;
-}
-
-
-// A képernyő méretének változására való reagálás
-window.addEventListener('resize', function() {
-    createBoard(board);
-});
-
-// A játék indítása és az első AI lépés
+// A játék indítása
 createBoard(board);
-handleComputerMove(); // Első lépés az AI-tól
