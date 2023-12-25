@@ -35,7 +35,6 @@ let aiScore = 0; // AI pontszáma
 function createBoard(board) {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
-    boardElement.style.gridTemplateColumns = `repeat(${board.columns}, 1fr)`; // Oszlopok beállítása
     for (let i = 0; i < board.rows; i++) {
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
@@ -75,6 +74,7 @@ function handleComputerMove() {
         aiScore += board.cells[cell.row][cell.column];
         board.removeNumber(cell.row, cell.column);
         updateScoreDisplay();
+        createBoard(board); // Újrarajzolja a táblát a változások után
     }
 }
 
