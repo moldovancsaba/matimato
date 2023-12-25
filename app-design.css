@@ -27,34 +27,35 @@ h1 {
     box-sizing: border-box;
 }
 
-.score {
+.score-container {
     position: absolute; /* Pozíció változás 'fixed'-ről 'absolute'-ra */
     bottom: 5%; /* Az aljától 5% */
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
-    background-color: #474e50;
     text-align: center;
-    font-size: calc(2vw + 1vmin);
-    padding: 2% 0;
-    margin: 0;
     z-index: 100;
+}
+
+.score {
+    display: inline-block;
+    background-color: #474e50;
+    margin: 0 5px;
+    padding: 10px;
+    border-radius: 10px;
     color: white;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    height: 5vh;
-    box-sizing: border-box;
+    font-size: calc(3vw + 1vmin); /* Dinamikus betűméret */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 @media (orientation: portrait) {
     /* Álló módban a cím és az eredményjelző az alján */
-    h1, .score {
+    h1, .score-container {
         position: fixed; /* 'absolute' helyett 'fixed' */
         bottom: 0; /* A képernyő alján */
     }
 
-    .score {
+    .score-container {
         bottom: 5vh; /* A cím alatt */
     }
 }
