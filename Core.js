@@ -1,5 +1,4 @@
-// Core.js - 1. rész
-
+// Core.js
 class Board {
     constructor(rows, columns) {
         this.rows = rows;
@@ -48,10 +47,10 @@ class Player {
 const board = new Board(5, 5);
 let humanPlayer = new Player(board);
 let computerPlayer = new Player(board);
-let currentPlayer;
+let currentPlayer = computerPlayer;
 
 // Játéktábla létrehozása
-function createBoard(board) {
+function createBoard() {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
     for (let i = 0; i < board.rows; i++) {
@@ -70,20 +69,10 @@ function handleCellClick(row, column) {
     if (board.cells[row][column] !== '•' && currentPlayer === humanPlayer) {
         humanPlayer.makeMove(row, column);
         updateScoreDisplay();
-        updateCellAppearance(row, column); // Frissítsük a cella megjelenését
+        updateCellAppearance(row, column);
         switchPlayer();
     }
 }
-
-// Cella megjelenésének frissítése
-function updateCellAppearance(row, column) {
-    let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
-    if (cellElement) {
-        cellElement.textContent = '•';
-    }
-}
-
-// Core.js - 2. rész
 
 // A számítógép lépésének kezelése
 function handleAIMove() {
@@ -99,7 +88,7 @@ function handleAIMove() {
     
     computerPlayer.makeMove(selectedCell.row, selectedCell.column);
     updateScoreDisplay();
-    highlightCell(selectedCell.row, selectedCell.column);
+    updateCellAppearance(selectedCell.row, selectedCell.column);
     switchPlayer();
 }
 
@@ -117,14 +106,10 @@ function getAvailableCells() {
 }
 
 // A cella kiemelése a számítógép lépésekor
-function highlightCell(row, column) {
+function updateCellAppearance(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
-        cellElement.style.backgroundColor = 'white';
-        setTimeout(() => {
-            cellElement.textContent = '•';
-            cellElement.style.backgroundColor = '#063b5f';
-        }, 400);
+        cellElement.textContent = '•';
     }
 }
 
