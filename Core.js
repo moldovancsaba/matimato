@@ -1,5 +1,4 @@
 // Core.js - 1. rész
-
 class Board {
     constructor(rows, columns) {
         this.rows = rows;
@@ -65,14 +64,12 @@ function createBoard() {
     }
 }
 
-// Core.js - 2. rész
-
 // Cellákra kattintás kezelése
 function handleCellClick(row, column) {
     if (board.cells[row][column] !== '•' && currentPlayer === humanPlayer) {
         humanPlayer.makeMove(row, column);
         updateScoreDisplay();
-        updateCellAppearance(row, column, true); // Jelölje a kattintást
+        updateCellAppearance(row, column);
         switchPlayer();
     }
 }
@@ -91,7 +88,7 @@ function handleAIMove() {
     
     computerPlayer.makeMove(selectedCell.row, selectedCell.column);
     updateScoreDisplay();
-    updateCellAppearance(selectedCell.row, selectedCell.column, false); // Nincs kattintási effektus
+    updateCellAppearance(selectedCell.row, selectedCell.column);
     switchPlayer();
 }
 
@@ -108,19 +105,15 @@ function getAvailableCells() {
     return availableCells;
 }
 
-// A cella megjelenésének frissítése
-function updateCellAppearance(row, column, isPlayerMove) {
+// A cella kiemelése a számítógép lépésekor
+function updateCellAppearance(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
-        if (isPlayerMove) {
-            cellElement.style.backgroundColor = 'gray';
-            setTimeout(() => {
-                cellElement.textContent = '•';
-                cellElement.style.backgroundColor = '';
-            }, 500);
-        } else {
+        cellElement.style.backgroundColor = 'white';
+        setTimeout(() => {
             cellElement.textContent = '•';
-        }
+            cellElement.style.backgroundColor = '#063b5f';
+        }, 400);
     }
 }
 
@@ -137,6 +130,7 @@ function switchPlayer() {
     }
 }
 
+// Core.js - 2. rész
 // Pontszámok megjelenítése
 function updateScoreDisplay() {
     const playerScoreElement = document.getElementById('player-score');
@@ -147,12 +141,12 @@ function updateScoreDisplay() {
 
 // A képernyő méretének változására való reagálás
 window.addEventListener('resize', function() {
-    createBoard();
+    createBoard(board);
 });
 
 // A játék indítása
 document.addEventListener('DOMContentLoaded', function() {
     currentPlayer = computerPlayer; // A számítógép kezdi
-    createBoard();
+    createBoard(board);
     handleAIMove();
 });
