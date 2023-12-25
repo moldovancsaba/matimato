@@ -1,24 +1,26 @@
 /* game-elements.css */
 .board {
-    top: 15%;
+    position: absolute; /* Abszolút pozícionálás a középre helyezéshez */
+    top: 50%; /* Középre helyezés függőlegesen */
+    left: 50%; /* Középre helyezés vízszintesen */
+    transform: translate(-50%, -50%); /* A tábla középpontjának igazítása */
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 1vw; /* A gombok közötti távolság */
-    width: 90vw;
-    height: auto; /* Automatikus magasság a szélesség alapján */
-    margin: 0vw auto 0; /* Középre igazítás és felső margó */
-    aspect-ratio: 1 / 1;
+    grid-template-columns: repeat(5, minmax(0, 1fr)); /* 5 oszlop, dinamikus szélesség */
+    gap: 2vw; /* A gombok közötti távolság */
+    max-width: 90vw; /* Maximális szélesség */
+    max-height: 90vh; /* Maximális magasság */
+    aspect-ratio: 1 / 1; /* Négyzet alakú tábla */
 }
 
 .cell {
     position: relative;
     cursor: pointer;
     background-color: #063b5f;
-    border-radius: 10%; /* Dinamikus lekerekítés */
-    box-shadow: 0 8% 8% rgba(0, 0, 0, 0.7); /* Dinamikus árnyék */
+    border-radius: 5vw; /* Dinamikus lekerekítés */
+    box-shadow: 0 4vw 4vw rgba(0, 0, 0, 0.5); /* Dinamikus árnyék */
     aspect-ratio: 1 / 1; /* Négyzet alakú gombok */
     display: flex;
-    font-size: 6vw; /* Dinamikus betűméret */
+    font-size: calc(3vw + 1vmin); /* Dinamikus betűméret */
     font-weight: 800; /* ExtraBold */
     color: white;
     align-items: center;
@@ -27,14 +29,8 @@
 }
 
 @media (orientation: landscape) {
-    h1, .score {
-        display: none;
-    }
-
     .board {
-        top: 5%;
-        width: 40vw;
-        height: auto;
-        aspect-ratio: 1 / 1;
+        max-width: 90vh; /* A magasság 90%-a szélességként használva */
+        max-height: 90vw; /* A szélesség 90%-a magasságként használva */
     }
 }
