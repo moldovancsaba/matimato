@@ -6,6 +6,10 @@
     width: 90vw;
     margin: auto; /* Középre igazítás */
     aspect-ratio: 1 / 1;
+    position: absolute; /* Abszolút pozícionálás */
+    top: 50%; /* A képernyő közepén */
+    left: 50%;
+    transform: translate(-50%, -50%); /* Középre igazítás */
 }
 
 .cell {
@@ -24,14 +28,17 @@
     user-select: none;
 }
 
+/* AI és Játékos pontszámainak elhelyezése fekvő módban */
 @media (orientation: landscape) {
     .board {
-        width: 40vw;
+        width: 70vw; /* A magasság 70%-a szélességként használva */
         aspect-ratio: 1 / 1;
     }
 
+    .cell {
+        font-size: 5vh; /* Kisebb betűméret fekvő módban */
+    }
 
-    /* AI és Játékos pontszámainak elhelyezése */
     #ai-score, #player-score {
         position: absolute;
         top: 50%;
