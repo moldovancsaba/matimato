@@ -1,4 +1,3 @@
-// Core.js
 class Board {
     constructor(rows, columns) {
         this.rows = rows;
@@ -11,7 +10,7 @@ class Board {
         for (let i = 0; i < this.rows; i++) {
             let row = [];
             for (let j = 0; j < this.columns; j++) {
-                row.push(Math.floor(Math.random() * 9) + 1); // Véletlenszerű számok 1 és 9 között
+                row.push(Math.floor(Math.random() * 9) + 1);
             }
             board.push(row);
         }
@@ -19,7 +18,7 @@ class Board {
     }
 
     removeNumber(row, column) {
-        this.cells[row][column] = '•'; // Központi pont megjelenítése eltávolításkor
+        this.cells[row][column] = '•';
     }
 
     hasAvailableMoves() {
@@ -27,26 +26,28 @@ class Board {
     }
 }
 
-// Globális változók
-const board = new Board(5, 5); // 5x5-ös tábla
-let playerScore = 0; // Játékos pontszáma
-let aiScore = 0; // AI pontszáma
+const board = new Board(5, 5);
+let playerScore = 0;
+let aiScore = 0;
 
-// Játéktábla létrehozása
 function createBoard(board) {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
-    boardElement.style.gridTemplateColumns = `repeat(${board.columns}, 1fr)`; // Oszlopok beállítása
+    boardElement.style.gridTemplateColumns = `repeat(${board.columns}, 1fr)`;
     for (let i = 0; i < board.rows; i++) {
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
-            cell.textContent = board.cells[i][j]; // Szám vagy "•" megjelenítése
+            cell.textContent = board.cells[i][j];
             cell.addEventListener('click', () => handleCellClick(i, j));
             boardElement.appendChild(cell);
         }
     }
 }
 
-// A játék indítása
+function handleCellClick(row, column) {
+    // Implementáld a cellákra kattintás kezelését itt
+}
+
+// A játéktábla inicializálása
 createBoard(board);
