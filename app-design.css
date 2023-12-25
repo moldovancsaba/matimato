@@ -8,15 +8,15 @@ body {
 }
 
 h1 {
-    position: absolute; /* Pozíció változás 'fixed'-ről 'absolute'-ra */
-    bottom: 10%; /* Az aljától 10% */
+    position: fixed; /* Pozíció változás 'absolute'-ról 'fixed'-re */
+    top: 0; /* A képernyő tetején */
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
     background-color: #3399aa;
     text-align: center;
-    font-size: calc(3vw + 1vmin);
-    padding: 2% 0;
+    font-size: calc(3vw + 1vmin); /* Dinamikus betűméret */
+    padding: 2% 0; /* Kisebb padding */
     margin: 0;
     z-index: 100;
     color: white;
@@ -28,8 +28,8 @@ h1 {
 }
 
 .score-container {
-    position: absolute; /* Pozíció változás 'fixed'-ről 'absolute'-ra */
-    bottom: 5%; /* Az aljától 5% */
+    position: fixed; /* Pozíció változás 'absolute'-ról 'fixed'-re */
+    top: 5vh; /* A cím alatt */
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
@@ -48,14 +48,9 @@ h1 {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-@media (orientation: portrait) {
-    /* Álló módban a cím és az eredményjelző az alján */
+@media (orientation: landscape) {
+    /* Fekvő módban a cím és az eredményjelző eltűnik */
     h1, .score-container {
-        position: fixed; /* 'absolute' helyett 'fixed' */
-        bottom: 0; /* A képernyő alján */
-    }
-
-    .score-container {
-        bottom: 5vh; /* A cím alatt */
+        display: none;
     }
 }
