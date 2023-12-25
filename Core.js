@@ -1,3 +1,28 @@
+// Core.js
+class Board {
+    constructor(rows, columns) {
+        this.rows = rows;
+        this.columns = columns;
+        this.cells = this.createInitialBoard();
+    }
+
+    createInitialBoard() {
+        let board = [];
+        for (let i = 0; i < this.rows; i++) {
+            let row = [];
+            for (let j = 0; j < this.columns; j++) {
+                row.push(Math.floor(Math.random() * 9) + 1);
+            }
+            board.push(row);
+        }
+        return board;
+    }
+}
+
+// Globális változók
+const board = new Board(5, 5);
+let isPlayerTurn = true; // A játékos kezdi
+
 // Játéktábla létrehozása
 function createBoard() {
     const boardElement = document.getElementById('board');
@@ -7,8 +32,6 @@ function createBoard() {
             const cell = document.createElement('div');
             cell.className = 'cell';
             cell.textContent = board.cells[i][j];
-            cell.setAttribute('row', i);
-            cell.setAttribute('column', j);
             cell.addEventListener('click', () => handleCellClick(i, j));
             boardElement.appendChild(cell);
         }
@@ -17,86 +40,41 @@ function createBoard() {
 
 // Cellákra kattintás kezelése
 function handleCellClick(row, column) {
-    if (board.cells[row][column] !== '•' && currentPlayer === humanPlayer) {
-        humanPlayer.makeMove(row, column);
-        updateScoreDisplay();
+    if (isPlayerTurn) {
         highlightCell(row, column);
-        switchPlayer();
+        isPlayerTurn = false;
+        setTimeout(() => computerMove(), 1000);
     }
 }
 
-// A számítógép lépésének kezelése
-function handleAIMove() {
-    let availableCells = getAvailableCells();
-
-    if (availableCells.length === 0) {
-        endGame();
-        return;
-    }
-
-    let randomCellIndex = Math.floor(Math.random() * availableCells.length);
-    let selectedCell = availableCells[randomCellIndex];
-    
-    computerPlayer.makeMove(selectedCell.row, selectedCell.column);
-    updateScoreDisplay();
-    highlightCell(selectedCell.row, selectedCell.column);
-    switchPlayer();
-}
-
-// Elérhető cellák lekérdezése
-function getAvailableCells() {
+// A számítógép lépése
+function computerMove() {
+    // Véletlenszerűen választ egy cellát
     let availableCells = [];
-    for (let i = 0; i < board.rows; i++) {
-        for (let j = 0; j < board.columns; j++) {
-            if (board.cells[i][j] !== '•') {
-                availableCells.push({ row: i, column: j });
-            }
+    document.querySelectorAll('.cell').forEach((cell, index) => {
+        if (cell.textContent !== '•') {
+            availableCells.push(cell);
         }
+    });
+
+    if (availableCells.length > 0) {
+        let randomCell = availableCells[Math.floor(Math.random() * availableCells.length)];
+        randomCell.click();
     }
-    return availableCells;
+
+    isPlayerTurn = true;
 }
 
-// A cella kiemelése a lépésekor
+// A cella kiemelése
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
         cellElement.style.backgroundColor = '#444444';
         setTimeout(() => {
             cellElement.textContent = '•';
-            cellElement.style.backgroundColor = '';
         }, 500);
     }
 }
 
-// A játék vége logikája
-function endGame() {
-    // Implementáld a játék vége logikáját
-}
-
-// Játékosok váltása
-function switchPlayer() {
-    currentPlayer = currentPlayer === humanPlayer ? computerPlayer : humanPlayer;
-    if (currentPlayer === computerPlayer) {
-        setTimeout(handleAIMove, 1000); // Kis késleltetés a számítógép lépése előtt
-    }
-}
-
-// Pontszámok megjelenítése
-function updateScoreDisplay() {
-    const playerScoreElement = document.getElementById('player-score');
-    const aiScoreElement = document.getElementById('ai-score');
-    playerScoreElement.textContent = `You: ${humanPlayer.score}`;
-    aiScoreElement.textContent = `AI: ${computerPlayer.score}`;
-}
-
-// A képernyő méretének változására való reagálás
-window.addEventListener('resize', function() {
-    createBoard();
-});
-
 // A játék indítása
-document.addEventListener('DOMContentLoaded', function() {
-    currentPlayer = computerPlayer; // A számítógép kezdi
-    createBoard();
-    handleAIMove();
-});
+document.addEventListener('DOMContentLoaded', createBoard);
