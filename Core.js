@@ -10,7 +10,7 @@ class Board {
         for (let i = 0; i < this.rows; i++) {
             let row = [];
             for (let j = 0; j < this.columns; j++) {
-                row.push(Math.floor(Math.random() * 9) + 1);
+                row.push(Math.floor(Math.random() * 9) + 1); // Véletlenszerű számok 1 és 9 között
             }
             board.push(row);
         }
@@ -18,7 +18,7 @@ class Board {
     }
 
     removeNumber(row, column) {
-        this.cells[row][column] = '•';
+        this.cells[row][column] = '•'; // Központi pont megjelenítése eltávolításkor
     }
 
     hasAvailableMoves() {
@@ -27,19 +27,20 @@ class Board {
 }
 
 // Globális változók
-const board = new Board(5, 5);
-let playerScore = 0;
-let aiScore = 0;
+const board = new Board(5, 5); // 5x5-ös tábla
+let playerScore = 0; // Játékos pontszáma
+let aiScore = 0; // AI pontszáma
 
 // Játéktábla létrehozása
 function createBoard(board) {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
+    boardElement.style.gridTemplateColumns = `repeat(${board.columns}, 1fr)`; // Oszlopok beállítása
     for (let i = 0; i < board.rows; i++) {
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
-            cell.textContent = board.cells[i][j];
+            cell.textContent = board.cells[i][j]; // Szám vagy "•" megjelenítése
             cell.addEventListener('click', () => handleCellClick(i, j));
             boardElement.appendChild(cell);
         }
@@ -49,31 +50,30 @@ function createBoard(board) {
 // Cellákra kattintás kezelése
 function handleCellClick(row, column) {
     if (board.cells[row][column] !== '•') {
-        playerScore += isNaN(board.cells[row][column]) ? 0 : board.cells[row][column];
+        playerScore += isNaN(board.cells[row][column]) ? 0 : board.cells[row][column]; // Pontok hozzáadása, ha a cella számot tartalmaz
         board.removeNumber(row, column);
         updateScoreDisplay();
-        aiMove();
         createBoard(board);
+        handleComputerMove(); // Számítógép lépése a játékos lépése után
     }
 }
 
-// AI lépése
-function aiMove() {
-    // Itt implementáld az AI logikáját
-    // Példa: véletlenszerű lépés
-    const availableCells = [];
-    board.cells.forEach((row, rowIndex) => {
-        row.forEach((cell, colIndex) => {
-            if (cell !== '•') {
-                availableCells.push({row: rowIndex, col: colIndex});
+// Számítógép lépése
+function handleComputerMove() {
+    let availableCells = [];
+    for (let i = 0; i < board.rows; i++) {
+        for (let j = 0; j < board.columns; j++) {
+            if (board.cells[i][j] !== '•') {
+                availableCells.push({ row: i, column: j });
             }
-        });
-    });
+        }
+    }
 
     if (availableCells.length > 0) {
-        const randomCell = availableCells[Math.floor(Math.random() * availableCells.length)];
-        aiScore += isNaN(board.cells[randomCell.row][randomCell.col]) ? 0 : board.cells[randomCell.row][randomCell.col];
-        board.removeNumber(randomCell.row, randomCell.col);
+        let randomCellIndex = Math.floor(Math.random() * availableCells.length);
+        let cell = availableCells[randomCellIndex];
+        aiScore += board.cells[cell.row][cell.column];
+        board.removeNumber(cell.row, cell.column);
         updateScoreDisplay();
     }
 }
@@ -86,5 +86,11 @@ function updateScoreDisplay() {
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
 
-// A játék indítása
+// A képernyő méretének változására való reagálás
+window.addEventListener('resize', function() {
+    createBoard(board);
+});
+
+// A játék indítása és az első AI lépés
 createBoard(board);
+handleComputerMove(); // Első lépés az AI-tól

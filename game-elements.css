@@ -31,7 +31,7 @@
 /* AI és Játékos pontszámainak elhelyezése fekvő módban */
 @media (orientation: landscape) {
     .board {
-        width: 70vw; /* A magasság 70%-a szélességként használva */
+        width: 50vw;
         aspect-ratio: 1 / 1;
     }
 
