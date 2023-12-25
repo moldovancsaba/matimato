@@ -1,10 +1,10 @@
 /* game-elements.css */
 .board {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 1vw; /* A gombok közötti távolság */
     width: 90vw;
-    margin: 0 auto; /* Középre igazítás */
+    margin: auto; /* Középre igazítás */
     aspect-ratio: 1 / 1;
 }
 
@@ -16,33 +16,33 @@
     box-shadow: 0 8% 8% rgba(0, 0, 0, 0.7); /* Dinamikus árnyék */
     aspect-ratio: 1 / 1; /* Négyzet alakú gombok */
     display: flex;
-    align-items: center;
-    justify-content: center;
     font-size: 6vw; /* Dinamikus betűméret */
     font-weight: 800; /* ExtraBold */
     color: white;
+    align-items: center;
+    justify-content: center;
     user-select: none;
 }
 
-.cell-content {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 @media (orientation: landscape) {
-    h1, .score {
-        display: none;
-    }
-
     .board {
-        width: 50vw; /* A magasság 50%-a szélességként használva */
+        width: 40vw;
         aspect-ratio: 1 / 1;
     }
 
-    .cell {
-        font-size: 6vh; /* Kisebb betűméret fekvő módban */
+
+    /* AI és Játékos pontszámainak elhelyezése */
+    #ai-score, #player-score {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    #ai-score {
+        right: 15%; /* Jobb oldalon */
+    }
+
+    #player-score {
+        left: 15%; /* Bal oldalon */
     }
 }
