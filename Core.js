@@ -98,8 +98,6 @@ function updateScoreDisplay() {
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
 
-// A képernyő méretének változására való reagálás
-window.addEventListener('resize', function()
 
 // A képernyő méretének változására való reagálás
 window.addEventListener('resize', function() {
