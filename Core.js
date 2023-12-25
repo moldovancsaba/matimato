@@ -50,8 +50,6 @@ let humanPlayer = new Player(board);
 let computerPlayer = new Player(board);
 let currentPlayer = computerPlayer; // A számítógép kezdi
 
-// Core.js - Második rész
-
 // Játéktábla létrehozása
 function createBoard() {
     const boardElement = document.getElementById('board');
