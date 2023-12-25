@@ -32,9 +32,6 @@ h1 {
     top: 50%;
     transform: translateY(-50%);
     z-index: 100;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 }
 
 .score {
@@ -67,7 +64,6 @@ h1 {
     .score-container {
         top: 50%;
         left: 5%; /* Játékos pontszámok a bal oldalon */
-        right: 5%; /* AI pontszámok a jobb oldalon */
         flex-direction: column;
         align-items: flex-start;
     }
@@ -76,6 +72,13 @@ h1 {
         position: absolute;
         top: 50%;
         right: 5%;
+        transform: translateY(-50%);
+    }
+
+    #player-score {
+        position: absolute;
+        top: 50%;
+        left: 5%;
         transform: translateY(-50%);
     }
 }
