@@ -58,6 +58,8 @@ function createBoard() {
             const cell = document.createElement('div');
             cell.className = 'cell';
             cell.textContent = board.cells[i][j];
+            cell.setAttribute('data-row', i);
+            cell.setAttribute('data-column', j);
             cell.addEventListener('click', () => handleCellClick(i, j));
             boardElement.appendChild(cell);
         }
@@ -107,7 +109,7 @@ function getAvailableCells() {
 
 // A cella kiemelése a számítógép lépésekor
 function updateCellAppearance(row, column) {
-    let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
+    let cellElement = document.querySelector(`.cell[data-row="${row}"][data-column="${column}"]`);
     if (cellElement) {
         cellElement.textContent = '•';
     }
@@ -136,8 +138,10 @@ function updateScoreDisplay() {
 
 // A képernyő méretének változására való reagálás
 window.addEventListener('resize', function() {
-    createBoard(board);
+    createBoard();
 });
+
+// A játék indítása
 
 // A játék indítása
 document.addEventListener('DOMContentLoaded', function() {
