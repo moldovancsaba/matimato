@@ -60,7 +60,12 @@ h1 {
 }
 
 @media (orientation: landscape) {
-    /* Fekvő módban a pontszámok a játéktábla mellett */
+    /* Fekvő módban a cím elrejtése */
+    h1 {
+        display: none;
+    }
+
+    /* A pontszámok a játéktábla mellett */
     .score-container {
         top: 50%;
         left: 5%; /* Játékos pontszámok a bal oldalon */
