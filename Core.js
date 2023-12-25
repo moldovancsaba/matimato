@@ -1,4 +1,5 @@
-// Core.js
+// Core.js - 1. rész
+
 class Board {
     constructor(rows, columns) {
         this.rows = rows;
@@ -72,6 +73,7 @@ function handleCellClick(row, column) {
         switchPlayer();
     }
 }
+// Core.js - 2. rész
 
 // A számítógép lépésének kezelése
 function handleAIMove() {
@@ -143,8 +145,8 @@ window.addEventListener('resize', function() {
 });
 
 // A játék indítása
-document.addEventListener(‘DOMContentLoaded’, function() {
+document.addEventListener('DOMContentLoaded', function() {
     currentPlayer = computerPlayer; // A számítógép kezdi
     createBoard(board);
     handleAIMove();
-    });
+});
