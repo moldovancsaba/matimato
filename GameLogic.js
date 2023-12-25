@@ -1,3 +1,5 @@
+// GameLogic.js
+
 // A számítógép lépésének kezelése
 function handleAIMove() {
     let availableCells = getAvailableCells();
@@ -32,22 +34,24 @@ function getAvailableCells() {
 // A cella kiemelése a számítógép lépésekor
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
-    cellElement.style.backgroundColor = 'white';
-    setTimeout(() => {
-        cellElement.textContent = '•';
-        cellElement.style.backgroundColor = '#063b5f';
-    }, 400);
+    if (cellElement) {
+        cellElement.style.backgroundColor = 'white';
+        setTimeout(() => {
+            cellElement.textContent = '•';
+            cellElement.style.backgroundColor = '#063b5f';
+        }, 400);
+    }
 }
 
 // A játék vége logikája
 function endGame() {
-    // Implementáld a játék vége logikáját
+    // Ide jön a játék vége logikája, pl. kiírni az eredményt
 }
 
 // Játékosok váltása
 function switchPlayer() {
     currentPlayer = currentPlayer === humanPlayer ? computerPlayer : humanPlayer;
     if (currentPlayer === computerPlayer) {
-        handleAIMove();
+        setTimeout(handleAIMove, 1000); // Kis késleltetés a számítógép lépése előtt
     }
 }
