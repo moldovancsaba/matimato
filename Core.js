@@ -1,5 +1,4 @@
 // Core.js - Első rész
-
 class Board {
     constructor(rows, columns) {
         this.rows = rows;
@@ -50,6 +49,7 @@ let humanPlayer = new Player(board);
 let computerPlayer = new Player(board);
 let currentPlayer = computerPlayer; // A számítógép kezdi
 
+// Core.js - Második rész
 // Játéktábla létrehozása
 function createBoard() {
     const boardElement = document.getElementById('board');
@@ -110,7 +110,7 @@ function getAvailableCells() {
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
-        cellElement.style.backgroundColor = 'white';
+        cellElement.style.backgroundColor = '#444444';
         setTimeout(() => {
             cellElement.textContent = '•';
             cellElement.style.backgroundColor = '#063b5f';
