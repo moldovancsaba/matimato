@@ -70,9 +70,19 @@ function handleCellClick(row, column) {
     if (board.cells[row][column] !== '•' && currentPlayer === humanPlayer) {
         humanPlayer.makeMove(row, column);
         updateScoreDisplay();
+        updateCellAppearance(row, column); // Frissítsük a cella megjelenését
         switchPlayer();
     }
 }
+
+// Cella megjelenésének frissítése
+function updateCellAppearance(row, column) {
+    let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
+    if (cellElement) {
+        cellElement.textContent = '•';
+    }
+}
+
 // Core.js - 2. rész
 
 // A számítógép lépésének kezelése
