@@ -10,7 +10,7 @@ class Board {
         for (let i = 0; i < this.rows; i++) {
             let row = [];
             for (let j = 0; j < this.columns; j++) {
-                row.push(Math.floor(Math.random() * 9) + 1); // Véletlenszerű számok 1 és 9 között
+                row.push(Math.floor(Math.random() * 9) + 1);
             }
             board.push(row);
         }
@@ -18,7 +18,9 @@ class Board {
     }
 
     removeNumber(row, column) {
-        this.cells[row][column] = '•'; // Központi pont megjelenítése eltávolításkor
+        let removedNumber = this.cells[row][column];
+        this.cells[row][column] = '•';
+        return removedNumber;
     }
 
     hasAvailableMoves() {
@@ -27,19 +29,19 @@ class Board {
 }
 
 // Globális változók
-const board = new Board(5, 5); // 5x5-ös tábla
-let totalScore = 0; // Score
+const board = new Board(5, 5);
+let playerScore = 0;
+let aiScore = 0;
 
 // Játéktábla létrehozása
 function createBoard(board) {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
-    boardElement.style.gridTemplateColumns = `repeat(${board.columns}, 1fr)`; // Oszlopok beállítása
     for (let i = 0; i < board.rows; i++) {
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
-            cell.textContent = board.cells[i][j]; // Szám vagy "•" megjelenítése
+            cell.textContent = board.cells[i][j];
             cell.addEventListener('click', () => handleCellClick(i, j));
             boardElement.appendChild(cell);
         }
@@ -49,17 +51,36 @@ function createBoard(board) {
 // Cellákra kattintás kezelése
 function handleCellClick(row, column) {
     if (board.cells[row][column] !== '•') {
-        totalScore += isNaN(board.cells[row][column]) ? 0 : board.cells[row][column]; // Pontok hozzáadása, ha a cella számot tartalmaz
-        board.removeNumber(row, column);
+        playerScore += board.removeNumber(row, column);
         updateScoreDisplay();
+        aiMove();
         createBoard(board);
+    }
+}
+
+// AI lépés
+function aiMove() {
+    let availableCells = [];
+    board.cells.forEach((row, rowIndex) => {
+        row.forEach((cell, columnIndex) => {
+            if (cell !== '•') {
+                availableCells.push({ rowIndex, columnIndex });
+            }
+        });
+    });
+
+    if (availableCells.length > 0) {
+        let randomCell = availableCells[Math.floor(Math.random() * availableCells.length)];
+        aiScore += board.removeNumber(randomCell.rowIndex, randomCell.columnIndex);
     }
 }
 
 // Pontszám megjelenítése
 function updateScoreDisplay() {
-    const scoreElement = document.getElementById('score');
-    scoreElement.textContent = `Score: ${totalScore}`;
+    const playerScoreElement = document.getElementById('player-score');
+    const aiScoreElement = document.getElementById('ai-score');
+    playerScoreElement.textContent = `You: ${playerScore}`;
+    aiScoreElement.textContent = `AI: ${aiScore}`;
 }
 
 // A képernyő méretének változására való reagálás
