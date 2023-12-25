@@ -35,6 +35,7 @@ let aiScore = 0; // AI pontszáma
 function createBoard(board) {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
+    boardElement.style.gridTemplateColumns = `repeat(${board.columns}, 1fr)`; // Oszlopok beállítása
     for (let i = 0; i < board.rows; i++) {
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
@@ -53,7 +54,7 @@ function handleCellClick(row, column) {
         board.removeNumber(row, column);
         updateScoreDisplay();
         createBoard(board);
-        handleComputerMove(); // Számítógép lépése a játékos lépése után
+        handleComputerMove(); // Számítógép lépése
     }
 }
 
@@ -72,9 +73,20 @@ function handleComputerMove() {
         let randomCellIndex = Math.floor(Math.random() * availableCells.length);
         let cell = availableCells[randomCellIndex];
         aiScore += board.cells[cell.row][cell.column];
-        board.removeNumber(cell.row, cell.column);
-        updateScoreDisplay();
-        createBoard(board); // Újrarajzolja a táblát a változások után
+        
+        // Vizuális visszajelzés a számítógép lépésére
+        const cellElement = document.querySelector(`.board .cell:nth-child(${cell.row * board.columns + cell.column + 1})`);
+        cellElement.style.backgroundColor = 'white'; // Cellaháttér fehérítése
+
+        setTimeout(() => {
+            board.removeNumber(cell.row, cell.column);
+            updateScoreDisplay();
+            createBoard(board); // Újrarajzolja a táblát a változások után
+        }, 400); // 0.4 másodperc várakozás
+
+        setTimeout(() => {
+            cellElement.style.backgroundColor = ''; // Háttérszín visszaállítása
+        }, 800); // 0.8 másodperc után állítja vissza a háttérszínt
     }
 }
 
@@ -85,6 +97,9 @@ function updateScoreDisplay() {
     playerScoreElement.textContent = `You: ${playerScore}`;
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
+
+// A képernyő méretének változására való reagálás
+window.addEventListener('resize', function()
 
 // A képernyő méretének változására való reagálás
 window.addEventListener('resize', function() {
