@@ -6,10 +6,10 @@
     transform: translate(-50%, -50%); /* A tábla középpontjának igazítása */
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr)); /* 5 oszlop, dinamikus szélesség */
-    gap: 2vw; /* A gombok közötti távolság */
+    gap: 1vw; /* A gombok közötti távolság */
+    max-height: 50vh; /* Maximális magasság */
     max-width: 90vw; /* Maximális szélesség */
-    max-height: 90vh; /* Maximális magasság */
-    aspect-ratio: 1 / 1; /* Négyzet alakú tábla */
+    aspect-ratio: 1; /* Négyzet alakú tábla */
 }
 
 .cell {
@@ -30,7 +30,7 @@
 
 @media (orientation: landscape) {
     .board {
-        max-width: 90vh; /* A magasság 90%-a szélességként használva */
+        max-width: 50vw; /* A magasság 90%-a szélességként használva */
         max-height: 90vw; /* A szélesség 90%-a magasságként használva */
     }
 }
