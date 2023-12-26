@@ -3,6 +3,10 @@
 //------------------------------
 // CODE STARTS HERE
 //------------------------------
+
+
+
+//------------------------------
 // #MM0001 Global variables
 //------------------------------
 
@@ -26,10 +30,12 @@ class Board {
     }
 }
 
-const board = new Board(5, 5);
+let board = new Board(5, 5);
 let playerScore = 0;
 let aiScore = 0;
 let isPlayerTurn = false; // A számítógép kezdi
+
+
 
 //------------------------------
 // #MM0002 Create Gamefield
@@ -38,10 +44,10 @@ let isPlayerTurn = false; // A számítógép kezdi
 function createBoard() {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
-    boardElement.style.gridTemplateRows = `repeat(${board.rows}, 1fr)`; // Adjuk hozzá a sorokat
+    boardElement.style.gridTemplateRows = `repeat(${board.rows}, 1fr)`; 
 
     for (let i = 0; i < board.rows; i++) {
-        const rowDiv = document.createElement('div'); // Létrehozzuk a sor div-et
+        const rowDiv = document.createElement('div');
         rowDiv.className = 'row';
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
@@ -50,25 +56,27 @@ function createBoard() {
             cell.setAttribute('row', i);
             cell.setAttribute('column', j);
             cell.addEventListener('click', () => handleCellClick(i, j));
-            rowDiv.appendChild(cell); // Adjuk hozzá a cellát a sor div-hez
+            rowDiv.appendChild(cell);
         }
-        boardElement.appendChild(rowDiv); // Adjuk hozzá a sor div-et a táblához
+        boardElement.appendChild(rowDiv);
     }
 }
+
+
 
 //------------------------------
 // #MM0003 Game Logic
 //------------------------------
 
-let lastSelectedRow = null; // Utoljára választott sor
-let lastSelectedColumn = null; // Utoljára választott oszlop
+let lastSelectedRow = null; 
+let lastSelectedColumn = null; 
 
 function handleCellClick(row, column) {
     if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedColumn === null || lastSelectedColumn === column)) {
         playerScore += board.cells[row][column];
         board.cells[row][column] = '•';
         highlightCell(row, column);
-        highlightRow(row); // Sor kiemelése
+        highlightRow(row); 
         isPlayerTurn = false;
         lastSelectedRow = row;
         setTimeout(computerMove, 500);
@@ -95,7 +103,6 @@ function computerMove() {
             lastSelectedColumn = maxCell.column;
             updateScoreDisplay();
         } else {
-            // Ha a számítógép nem tud lépni, ellenőrizzük, hogy a játék véget ért-e
             checkEndGame();
         }
     }
@@ -138,6 +145,8 @@ function endGame() {
     document.getElementById('winner-message').textContent = winner;
 }
 
+
+
 //------------------------------
 // #MM0004 User Interface Functions
 //------------------------------
@@ -148,31 +157,31 @@ function highlightCell(row, column) {
         cellElement.style.backgroundColor = '#444444';
         setTimeout(() => {
             cellElement.textContent = '•';
-            cellElement.style.backgroundColor = '#444444'; // Háttérszín megtartása
+            cellElement.style.backgroundColor = '#444444';
         }, 500);
     }
 }
 
 function highlightColumn(column) {
-    clearHighlights(); // Előző kiemelések törlése
+    clearHighlights();
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
         cell.style.border = '6px solid #8B8B8B';
-        cell.style.boxSizing = 'border-box'; // A keretet is beleértve tartsa meg a méretét
+        cell.style.boxSizing = 'border-box';
     });
 }
 
 function highlightRow(row) {
-    clearHighlights(); // Előző kiemelések törlése
+    clearHighlights();
     document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
         cell.style.border = '6px solid #8B8B8B';
-        cell.style.boxSizing = 'border-box'; // A keretet is beleértve tartsa meg a méretét
+        cell.style.boxSizing = 'border-box';
     });
 }
 
 function clearHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
         cell.style.border = '';
-        cell.style.boxSizing = ''; // Visszaállítja az alapértelmezett méretezést
+        cell.style.boxSizing = '';
     });
 }
 
@@ -183,30 +192,20 @@ function updateScoreDisplay() {
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
 
+
+
 //------------------------------
 // #MM0005 Initialize Game
 //------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Start gomb eseménykezelője
-    document.getElementById('start-button').addEventListener('click', () => {
-        document.getElementById('start-screen').style.display = 'none';
-        document.getElementById('board').style.display = 'grid';
-        resetGame();
-        if (!isPlayerTurn) {
-            setTimeout(computerMove, 500); // Az AI első lépése, ha ő kezd
-        }
-    });
-
-    // Restart gomb eseménykezelője
-    document.getElementById('restart-button').addEventListener('click', () => {
-        document.getElementById('end-game-message').style.display = 'none';
-        document.getElementById('board').style.display = 'grid';
-        resetGame();
-        if (!isPlayerTurn) {
-            setTimeout(computerMove, 500); // Az AI első lépése, ha ő kezd
-        }
-    });
+    // Játéktábla és eredményjelző megjelenítése az oldal betöltésekor
+    resetGame();
+    document.getElementById('board').style.display = 'grid';
+    document.getElementById('score').style.display = 'block';
+    if (!isPlayerTurn) {
+        setTimeout(computerMove, 500); // Az AI első lépése, ha ő kezd
+    }
 });
 
 function resetGame() {
@@ -220,16 +219,11 @@ function resetGame() {
     updateScoreDisplay();
 }
 
+
+
 //------------------------------
 // #MM0006 Start and End Game Logic
 //------------------------------
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Kezdetben csak a Start gomb látható
-    hideGame();
-    document.getElementById('start-button').addEventListener('click', startGame);
-    document.getElementById('restart-button').addEventListener('click', restartGame);
-});
 
 function hideGame() {
     document.getElementById('board').style.display = 'none';
@@ -238,48 +232,12 @@ function hideGame() {
     document.getElementById('start-screen').style.display = 'block';
 }
 
-function startGame() {
-    resetGameVariables();
-    createBoard();
-    updateScoreDisplay();
-    document.getElementById('start-screen').style.display = 'none';
-    document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block'; // Megjelenítjük az eredmény kijelzőt
-    if (!isPlayerTurn) {
-        computerMove(); // Az AI első lépése, ha ő kezd
-    }
-}
-
-function restartGame() {
-    resetGameVariables();
-    createBoard();
-    updateScoreDisplay();
-    document.getElementById('end-game-message').style.display = 'none';
-    document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block'; // Megjelenítjük az eredmény kijelzőt
-    if (!isPlayerTurn) {
-        computerMove(); // Az AI első lépése, ha ő kezd
-    }
-}
-
-function resetGameVariables() {
-    // Újraindítja a játékot a kezdeti állapotba
-    board = new Board(5, 5);
-    playerScore = 0;
-    aiScore = 0;
-    isPlayerTurn = false; // A számítógép kezdi a játékot
-    lastSelectedRow = null;
-    lastSelectedColumn = null;
-}
-
-function computerMove() {
-    if (!isPlayerTurn) {
-        let availableCells = getAvailableCells();
-
-        // További logika...
-    }
-}
+// A "startGame" és "restartGame" funkciók törlése, mivel már nincs rájuk szükség
 
 //------------------------------
 // END OF CODE
+//------------------------------
+// CREATED BY MOLDOVAN
+//------------------------------
+// CODE WRITTEN BY GPT
 //------------------------------
