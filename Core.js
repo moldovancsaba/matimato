@@ -49,20 +49,26 @@ function handleCellClick(row, column) {
 
 // A számítógép lépése
 function computerMove() {
-    // Véletlenszerűen választ egy cellát
-    let availableCells = [];
-    document.querySelectorAll('.cell').forEach((cell, index) => {
-        if (cell.textContent !== '•') {
-            availableCells.push(cell);
-        }
-    });
-
+    let availableCells = getAvailableCells();
     if (availableCells.length > 0) {
-        let randomCell = availableCells[Math.floor(Math.random() * availableCells.length)];
-        randomCell.click();
+        let randomIndex = Math.floor(Math.random() * availableCells.length);
+        let selectedCell = availableCells[randomIndex];
+        highlightCell(selectedCell.row, selectedCell.column);
+        isPlayerTurn = true;
     }
+}
 
-    isPlayerTurn = true;
+// Elérhető cellák lekérdezése
+function getAvailableCells() {
+    let availableCells = [];
+    for (let i = 0; i < board.rows; i++) {
+        for (let j = 0; j < board.columns; j++) {
+            if (board.cells[i][j] !== '•') {
+                availableCells.push({ row: i, column: j });
+            }
+        }
+    }
+    return availableCells;
 }
 
 // A cella kiemelése
