@@ -209,7 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // #MM0006 Start and End Game Logic
 //------------------------------
 
-// #MM0006 Start and End Game Logic
 document.addEventListener('DOMContentLoaded', () => {
     // Kezdetben csak a Start gomb látható
     hideGame();
