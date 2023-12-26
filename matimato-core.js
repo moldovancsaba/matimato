@@ -113,48 +113,38 @@ function getAvailableCellsInColumn(column) {
 //--------------------------------------------------
 //--------------------------------------------------
 
-
 // #MM0004 User Interface Functions
-
-// A cella kiemelése
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
         cellElement.style.backgroundColor = '#444444';
         setTimeout(() => {
             cellElement.textContent = '•';
-            cellElement.style.backgroundColor = ''; // Háttérszín visszaállítása
         }, 500);
     }
 }
 
-// Oszlop kiemelése
 function highlightColumn(column) {
     clearHighlights(); // Előző kiemelések törlése
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.style.border = '3px solid white';
-        cell.style.boxSizing = 'border-box'; // A border méretét beleérti a számításba
+        cell.style.border = '6px solid #00008B'; // Sötét kék és dupla vastag keret
     });
 }
 
-// Sor kiemelése
 function highlightRow(row) {
     clearHighlights(); // Előző kiemelések törlése
-    document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
-        cell.style.border = '3px solid white';
-        cell.style.boxSizing = 'border-box'; // A border méretét beleérti a számításba
-    });
+    document.querySelector(`.row:nth-child(${row + 1})`).style.border = '6px solid #00008B'; // Sötét kék és dupla vastag keret
 }
 
-// Előző kiemelések eltávolítása
 function clearHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
-        cell.style.border = '';
-        cell.style.boxSizing = 'content-box'; // Alapértelmezett méretek visszaállítása
+        cell.style.border = ''; // Keret eltávolítása
+    });
+    document.querySelectorAll('.row').forEach(row => {
+        row.style.border = ''; // Keret eltávolítása
     });
 }
 
-// Pontszámok megjelenítése
 function updateScoreDisplay() {
     const playerScoreElement = document.getElementById('player-score');
     const aiScoreElement = document.getElementById('ai-score');
@@ -162,11 +152,12 @@ function updateScoreDisplay() {
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
 
-// A képernyő méretének változására való reagálás
-window.addEventListener('resize', createBoard);
-
 // A játék indítása
-document.addEventListener('DOMContentLoaded', createBoard);
+document.addEventListener('DOMContentLoaded', () => {
+    createBoard();
+    updateScoreDisplay();
+});
+
 
 //--------------------------------------------------
 //--------------------------------------------------
