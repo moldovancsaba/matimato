@@ -1,5 +1,3 @@
-// game-logic.js
-
 class Board {
     constructor(rows, columns) {
         this.rows = rows;
@@ -18,10 +16,6 @@ class Board {
         }
         return board;
     }
-
-    removeNumber(row, column) {
-        this.cells[row][column] = '•';
-    }
 }
 
 const board = new Board(5, 5);
@@ -29,11 +23,27 @@ let playerScore = 0;
 let aiScore = 0;
 let isPlayerTurn = true;
 
+function createBoard() {
+    const boardElement = document.getElementById('board');
+    boardElement.innerHTML = '';
+    for (let i = 0; i < board.rows; i++) {
+        for (let j = 0; j < board.columns; j++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.textContent = board.cells[i][j];
+            cell.setAttribute('row', i);
+            cell.setAttribute('column', j);
+            cell.addEventListener('click', () => handleCellClick(i, j));
+            boardElement.appendChild(cell);
+        }
+    }
+}
+
 function handleCellClick(row, column) {
     if (isPlayerTurn && board.cells[row][column] !== '•') {
         playerScore += board.cells[row][column];
-        board.removeNumber(row, column);
-        highlightColumn(column); // Kiemeli az oszlopot
+        highlightColumn(column);
+        board.cells[row][column] = '•';
         isPlayerTurn = false;
         updateScoreDisplay();
         setTimeout(computerMove, 1000);
@@ -46,8 +56,8 @@ function computerMove() {
         let randomIndex = Math.floor(Math.random() * availableCells.length);
         let selectedCell = availableCells[randomIndex];
         aiScore += board.cells[selectedCell.row][selectedCell.column];
-        board.removeNumber(selectedCell.row, selectedCell.column);
-        highlightRow(selectedCell.row); // Kiemeli a sort
+        highlightRow(selectedCell.row);
+        board.cells[selectedCell.row][selectedCell.column] = '•';
         isPlayerTurn = true;
         updateScoreDisplay();
     }
@@ -65,6 +75,28 @@ function getAvailableCells() {
     return availableCells;
 }
 
+function highlightCell(row, column) {
+    let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
+    if (cellElement) {
+        cellElement.style.backgroundColor = '#444444';
+        setTimeout(() => {
+            cellElement.textContent = '•';
+        }, 500);
+    }
+}
+
+function highlightColumn(column) {
+    document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
+        cell.style.border = '2px solid white';
+    });
+}
+
+function highlightRow(row) {
+    document.querySelectorAll(`.cell[row="${row}"]`).forEach(cell => {
+        cell.style.border = '2px solid white';
+    });
+}
+
 function updateScoreDisplay() {
     const playerScoreElement = document.getElementById('player-score');
     const aiScoreElement = document.getElementById('ai-score');
@@ -72,10 +104,7 @@ function updateScoreDisplay() {
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
 
-function highlightRow(row) {
-    // Implementálja a sor kiemelését
-}
-
-function highlightColumn(column) {
-    // Implementálja az oszlop kiemelését
-}
+document.addEventListener('DOMContentLoaded', () => {
+    createBoard();
+    updateScoreDisplay();
+});
