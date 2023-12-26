@@ -32,6 +32,8 @@ function createBoard() {
             const cell = document.createElement('div');
             cell.className = 'cell';
             cell.textContent = board.cells[i][j];
+            cell.setAttribute('row', i);
+            cell.setAttribute('column', j);
             cell.addEventListener('click', () => handleCellClick(i, j));
             boardElement.appendChild(cell);
         }
@@ -40,8 +42,9 @@ function createBoard() {
 
 // Cellákra kattintás kezelése
 function handleCellClick(row, column) {
-    if (isPlayerTurn) {
+    if (isPlayerTurn && board.cells[row][column] !== '•') {
         highlightCell(row, column);
+        board.cells[row][column] = '•';
         isPlayerTurn = false;
         setTimeout(() => computerMove(), 1000);
     }
@@ -54,6 +57,7 @@ function computerMove() {
         let randomIndex = Math.floor(Math.random() * availableCells.length);
         let selectedCell = availableCells[randomIndex];
         highlightCell(selectedCell.row, selectedCell.column);
+        board.cells[selectedCell.row][selectedCell.column] = '•';
         isPlayerTurn = true;
     }
 }
