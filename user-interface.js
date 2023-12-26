@@ -5,6 +5,8 @@ function createBoard() {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
     for (let i = 0; i < board.rows; i++) {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'row';
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
@@ -12,9 +14,39 @@ function createBoard() {
             cell.setAttribute('row', i);
             cell.setAttribute('column', j);
             cell.addEventListener('click', () => handleCellClick(i, j));
-            boardElement.appendChild(cell);
+            rowDiv.appendChild(cell);
         }
+        boardElement.appendChild(rowDiv);
     }
+}
+
+// Oszlop kiemelése
+function highlightColumn(column) {
+    document.querySelectorAll('.row').forEach(row => {
+        row.childNodes.forEach((cell, cellIndex) => {
+            if (cellIndex === column) {
+                cell.style.backgroundColor = 'white';
+            } else {
+                cell.style.backgroundColor = '';
+            }
+        });
+    });
+}
+
+// Sor kiemelése
+function highlightRow(row) {
+    const rows = document.querySelectorAll('.row');
+    rows.forEach((rowDiv, rowIndex) => {
+        if (rowIndex === row) {
+            rowDiv.childNodes.forEach(cell => {
+                cell.style.backgroundColor = 'white';
+            });
+        } else {
+            rowDiv.childNodes.forEach(cell => {
+                cell.style.backgroundColor = '';
+            });
+        }
+    });
 }
 
 // A cella kiemelése
@@ -36,8 +68,22 @@ function updateScoreDisplay() {
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
 
+// A játéktábla frissítése és kiemelések eltávolítása
+function updateBoard() {
+    createBoard();
+    removeHighlights();
+    updateScoreDisplay();
+}
+
+// Kiemelések eltávolítása
+function removeHighlights() {
+    document.querySelectorAll('.cell').forEach(cell => {
+        cell.style.backgroundColor = '';
+    });
+}
+
 // A képernyő méretének változására való reagálás
-window.addEventListener('resize', createBoard);
+window.addEventListener('resize', updateBoard);
 
 // A játék indítása
-document.addEventListener('DOMContentLoaded', createBoard);
+document.addEventListener('DOMContentLoaded', updateBoard);
