@@ -213,6 +213,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('end-game-message').style.display = 'none';
 });
 
+function resetGame() {
+    // Új tábla létrehozása
+    board = new Board(5, 5);
+    playerScore = 0;
+    aiScore = 0;
+    isPlayerTurn = true;
+    createBoard(); // Játéktábla újrarajzolása az új táblával
+    updateScoreDisplay(); // Pontszámok frissítése
+}
+
 //--------------------------------------------------
 //--------------------------------------------------
 
