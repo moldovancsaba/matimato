@@ -95,10 +95,10 @@ function canPlayerMove() {
 
 function computerMove() {
     if (!isPlayerTurn) {
-        let availableCells;
+        let availableCells = [];
 
+        // Ellenőrzi, hogy van-e választott oszlop
         if (lastSelectedColumn !== null) {
-            // Ha a játékos már lépett, csak az utoljára választott oszlopból választhat
             availableCells = getAvailableCellsInColumn(lastSelectedColumn);
         } else {
             // Ha a játékos még nem lépett, az AI az összes elérhető cella közül választhat
@@ -110,7 +110,7 @@ function computerMove() {
             aiScore += board.cells[maxCell.row][maxCell.column];
             board.cells[maxCell.row][maxCell.column] = '•';
             highlightCell(maxCell.row, maxCell.column);
-            highlightColumn(maxCell.column); // Oszlop kiemelése
+            highlightColumn(maxCell.column);
             isPlayerTurn = true;
             updateScoreDisplay();
         } else {
