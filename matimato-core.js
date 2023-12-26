@@ -67,7 +67,7 @@ function handleCellClick(row, column) {
         playerScore += board.cells[row][column];
         board.cells[row][column] = '•';
         highlightCell(row, column);
-        highlightRow(row); // Sor kiemelése - Megfordítva
+        highlightRow(row); // Sor kiemelése
         isPlayerTurn = false;
         updateScoreDisplay();
         lastSelectedRow = row; // Az utoljára választott sor mentése
@@ -78,15 +78,28 @@ function handleCellClick(row, column) {
 function computerMove() {
     let availableCells = lastSelectedRow != null ? getAvailableCellsInRow(lastSelectedRow) : getAvailableCells();
     if (availableCells.length > 0) {
-        let randomIndex = Math.floor(Math.random() * availableCells.length);
-        let selectedCell = availableCells[randomIndex];
-        aiScore += board.cells[selectedCell.row][selectedCell.column];
-        board.cells[selectedCell.row][selectedCell.column] = '•';
-        highlightCell(selectedCell.row, selectedCell.column);
-        highlightColumn(selectedCell.column); // Oszlop kiemelése - Megfordítva
-        isPlayerTurn = true;
-        lastSelectedColumn = selectedCell.column; // Az utoljára választott oszlop mentése
-        updateScoreDisplay();
+        let highestValue = 0;
+        let selectedCell = null;
+
+        // Keresse meg a legnagyobb számot tartalmazó cellát
+        for (let cell of availableCells) {
+            let cellValue = board.cells[cell.row][cell.column];
+            if (cellValue > highestValue) {
+                highestValue = cellValue;
+                selectedCell = cell;
+            }
+        }
+
+        // Ha van kiválasztott cella, lépjen rá
+        if (selectedCell) {
+            aiScore += highestValue;
+            board.cells[selectedCell.row][selectedCell.column] = '•';
+            highlightCell(selectedCell.row, selectedCell.column);
+            highlightColumn(selectedCell.column); // Oszlop kiemelése
+            isPlayerTurn = true;
+            lastSelectedColumn = selectedCell.column; // Az utoljára választott oszlop mentése
+            updateScoreDisplay();
+        }
     }
 }
 
@@ -109,6 +122,19 @@ function getAvailableCellsInColumn(column) {
     }
     return availableCells;
 }
+
+function getAvailableCells() {
+    let availableCells = [];
+    for (let i = 0; i < board.rows; i++) {
+        for (let j = 0; j < board.columns; j++) {
+            if (board.cells[i][j] !== '•') {
+                availableCells.push({ row: i, column: j });
+            }
+        }
+    }
+    return availableCells;
+}
+
 
 //--------------------------------------------------
 //--------------------------------------------------
