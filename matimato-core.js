@@ -145,7 +145,7 @@ function highlightCell(row, column) {
 function highlightColumn(column) {
     clearHighlights(); // Előző kiemelések törlése
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.style.border = '6px solid #00008B';
+        cell.style.border = '6px solid #8B8B8B';
         cell.style.boxSizing = 'border-box'; // A keretet is beleértve tartsa meg a méretét
     });
 }
@@ -153,7 +153,7 @@ function highlightColumn(column) {
 function highlightRow(row) {
     clearHighlights(); // Előző kiemelések törlése
     document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
-        cell.style.border = '6px solid #00008B';
+        cell.style.border = '6px solid #8B8B8B';
         cell.style.boxSizing = 'border-box'; // A keretet is beleértve tartsa meg a méretét
     });
 }
