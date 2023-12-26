@@ -192,52 +192,43 @@ document.addEventListener('DOMContentLoaded', () => {
 //--------------------------------------------------
 //--------------------------------------------------
 
+
 // #MM0005 Initialize Game
 document.addEventListener('DOMContentLoaded', () => {
-    // Elrejti a játéktáblát és az eredményjelzőt induláskor
-    document.getElementById('board').style.display = 'none';
-    document.getElementById('score').style.display = 'none';
-    document.getElementById('end-game-message').style.display = 'none';
-    
     // Start gomb eseménykezelője
-    document.getElementById('start-button').addEventListener('click', () => {
-        startGame();
+    document.getElementById('start-button').addEventListener('click', startGame);
+
+    // Restart gomb eseménykezelője: Az oldal újratöltése
+    document.getElementById('restart-button').addEventListener('click', () => {
+        window.location.reload();
     });
 
-    // Restart gomb eseménykezelője
-    document.getElementById('restart-button').addEventListener('click', () => {
-        restartGame();
-    });
+    // Játéktábla és eredményjelző elrejtése induláskor
+    document.getElementById('board').style.display = 'none';
+    document.getElementById('end-game-message').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'block';
 });
 
 function startGame() {
-    // Játéktábla, eredményjelző megjelenítése és a játék alaphelyzetbe állítása
-    resetGameVariables();
-    createBoard();
-    updateScoreDisplay();
+    // Játék kezdőképernyő és vége üzenet elrejtése
     document.getElementById('start-screen').style.display = 'none';
-    document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block';
-}
-
-function restartGame() {
-    // Játék újraindítása
-    resetGameVariables();
-    createBoard();
-    updateScoreDisplay();
     document.getElementById('end-game-message').style.display = 'none';
-    document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block';
+
+    // Új tábla létrehozása és a játék alaphelyzetbe állítása
+    resetGame();
 }
 
-function resetGameVariables() {
-    // Új tábla létrehozása és pontszámok visszaállítása
+function resetGame() {
+    // Új tábla létrehozása
     board = new Board(5, 5);
     playerScore = 0;
     aiScore = 0;
     isPlayerTurn = true;
     lastSelectedRow = null;
     lastSelectedColumn = null;
+
+    createBoard(); // Játéktábla újrarajzolása az új táblával
+    updateScoreDisplay(); // Pontszámok frissítése
 }
 
 //--------------------------------------------------
