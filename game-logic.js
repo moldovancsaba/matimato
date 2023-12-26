@@ -32,6 +32,7 @@ let isPlayerTurn = true; // A játékos kezdi
 function handleCellClick(row, column) {
     if (isPlayerTurn && board.cells[row][column] !== '•') {
         playerScore += board.cells[row][column];
+        highlightCell(row, column); // Meghívja a kiemelő függvényt
         board.cells[row][column] = '•';
         isPlayerTurn = false;
         updateScoreDisplay();
@@ -45,6 +46,7 @@ function computerMove() {
         let randomIndex = Math.floor(Math.random() * availableCells.length);
         let selectedCell = availableCells[randomIndex];
         aiScore += board.cells[selectedCell.row][selectedCell.column];
+        highlightCell(selectedCell.row, selectedCell.column); // Meghívja a kiemelő függvényt
         board.cells[selectedCell.row][selectedCell.column] = '•';
         isPlayerTurn = true;
         updateScoreDisplay();
