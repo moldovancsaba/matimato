@@ -6,6 +6,7 @@
 
 
 
+
 //------------------------------
 // #MM0001 Global variables
 //------------------------------
@@ -33,7 +34,8 @@ class Board {
 let board = new Board(5, 5);
 let playerScore = 0;
 let aiScore = 0;
-let isPlayerTurn = false; // A számítógép kezdi
+let isPlayerTurn = true; // A játékos kezdi
+
 
 
 
@@ -189,6 +191,7 @@ function updateScoreDisplay() {
 
 
 
+
 //------------------------------
 // #MM0005 Initialize Game
 //------------------------------
@@ -198,21 +201,19 @@ document.addEventListener('DOMContentLoaded', () => {
     resetGame();
     document.getElementById('board').style.display = 'grid';
     document.getElementById('score').style.display = 'block';
-    if (!isPlayerTurn) {
-        setTimeout(computerMove, 500); // Az AI első lépése, ha ő kezd
-    }
 });
 
 function resetGame() {
     board = new Board(5, 5);
     playerScore = 0;
     aiScore = 0;
-    isPlayerTurn = false; // A számítógép kezdi a játékot
+    isPlayerTurn = true; // A játékos kezdi
     lastSelectedRow = null;
     lastSelectedColumn = null;
     createBoard();
     updateScoreDisplay();
 }
+
 
 
 
