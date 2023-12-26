@@ -113,7 +113,10 @@ function getAvailableCellsInColumn(column) {
 //--------------------------------------------------
 //--------------------------------------------------
 
+
 // #MM0004 User Interface Functions
+
+// A cella kiemelése
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
@@ -125,33 +128,45 @@ function highlightCell(row, column) {
     }
 }
 
+// Oszlop kiemelése
 function highlightColumn(column) {
     clearHighlights(); // Előző kiemelések törlése
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
         cell.style.border = '3px solid white';
+        cell.style.boxSizing = 'border-box'; // A border méretét beleérti a számításba
     });
 }
 
+// Sor kiemelése
 function highlightRow(row) {
     clearHighlights(); // Előző kiemelések törlése
-    document.querySelector(`.row:nth-child(${row + 1})`).style.border = '3px solid white';
+    document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
+        cell.style.border = '3px solid white';
+        cell.style.boxSizing = 'border-box'; // A border méretét beleérti a számításba
+    });
 }
 
+// Előző kiemelések eltávolítása
 function clearHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
         cell.style.border = '';
-    });
-    document.querySelectorAll('.row').forEach(row => {
-        row.style.border = '';
+        cell.style.boxSizing = 'content-box'; // Alapértelmezett méretek visszaállítása
     });
 }
 
+// Pontszámok megjelenítése
 function updateScoreDisplay() {
     const playerScoreElement = document.getElementById('player-score');
     const aiScoreElement = document.getElementById('ai-score');
     playerScoreElement.textContent = `You: ${playerScore}`;
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
+
+// A képernyő méretének változására való reagálás
+window.addEventListener('resize', createBoard);
+
+// A játék indítása
+document.addEventListener('DOMContentLoaded', createBoard);
 
 //--------------------------------------------------
 //--------------------------------------------------
