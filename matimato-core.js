@@ -261,20 +261,26 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function startGame() {
+    resetGameVariables();
     createBoard();
     updateScoreDisplay();
-    document.getElementById('start-button').style.display = 'none'; // Elrejti a Start gombot
+    document.getElementById('start-screen').style.display = 'none'; // Elrejti a kezdőképernyőt
     document.getElementById('board').style.display = 'grid'; // Megjeleníti a játéktáblát
+    document.getElementById('score').style.display = 'block'; // Megjeleníti az eredményjelzőt
 }
 
 function restartGame() {
     resetGameVariables();
-    startGame();
+    createBoard();
+    updateScoreDisplay();
     document.getElementById('end-game-message').style.display = 'none'; // Elrejti a játék végi üzenetet
+    document.getElementById('board').style.display = 'grid'; // Megjeleníti a játéktáblát
+    document.getElementById('score').style.display = 'block'; // Megjeleníti az eredményjelzőt
 }
 
 function endGame() {
     document.getElementById('board').style.display = 'none'; // Elrejti a játéktáblát
+    document.getElementById('score').style.display = 'none'; // Elrejti az eredményjelzőt
     const winnerMessage = document.getElementById('winner-message');
     const winner = playerScore > aiScore ? 'You win!' : aiScore > playerScore ? 'AI wins!' : 'It\'s a tie!';
     winnerMessage.textContent = winner;
@@ -290,7 +296,6 @@ function resetGameVariables() {
     lastSelectedRow = null;
     lastSelectedColumn = null;
 }
-
 
 //--------------------------------------------------
 //--------------------------------------------------
