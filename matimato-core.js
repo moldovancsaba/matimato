@@ -204,7 +204,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Játéktábla, eredményjelző és vége üzenet elrejtése induláskor
     document.getElementById('board').style.display = 'none';
-    document.getElementById('score').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('start-screen').style.display = 'block';
 });
@@ -214,9 +213,8 @@ function startGame() {
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'none';
 
-    // Játéktábla és eredményjelző megjelenítése
+    // Játéktábla megjelenítése
     document.getElementById('board').style.display = 'block';
-    document.getElementById('score').style.display = 'block';
 
     // Új tábla létrehozása és a játék alaphelyzetbe állítása
     resetGame();
@@ -227,9 +225,8 @@ function endGame(winner) {
     document.getElementById('end-game-message').style.display = 'block';
     document.getElementById('end-game-message').textContent = winner === 'player' ? 'You win!' : 'AI wins!';
 
-    // Játéktábla és eredményjelző elrejtése
+    // Játéktábla elrejtése
     document.getElementById('board').style.display = 'none';
-    document.getElementById('score').style.display = 'none';
 }
 
 function resetGame() {
