@@ -237,7 +237,7 @@ function startGame() {
     updateScoreDisplay();
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block';
+    document.getElementById('score').style.display = 'block'; // Megjeleníti a pontszámot
 }
 
 function restartGame() {
@@ -246,7 +246,7 @@ function restartGame() {
     updateScoreDisplay();
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block';
+    document.getElementById('score').style.display = 'block'; // Megjeleníti a pontszámot
 }
 
 function resetGameVariables() {
