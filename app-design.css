@@ -44,6 +44,32 @@ h1 {
     margin: 5px 0;
 }
 
+.center-screen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    display: none; /* Alapértelmezetten el van rejtve */
+}
+
+.large-button {
+    background-color: #3399aa;
+    color: white;
+    padding: 15px 30px;
+    font-size: calc(3vw + 1vmin);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.end-game-text {
+    display: block;
+    font-size: calc(3vw + 1vmin);
+    color: #3399aa;
+}
+
 @media (orientation: portrait) {
     /* Álló módban a cím és az eredményjelző az alján */
     h1, .score-container {
