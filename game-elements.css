@@ -1,8 +1,8 @@
 /* game-elements.css */
 .board {
     display: grid;
-    grid-template-columns: repeat(5, 1fr); /* 5 oszlop */
-    gap: 1vw; /* A cellák közötti távolság */
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1vw; /* A gombok közötti távolság egyenlő lesz mindenhová */
     width: 90vw;
     margin: auto; /* Középre igazítás */
     aspect-ratio: 1 / 1;
@@ -26,6 +26,7 @@
     align-items: center;
     justify-content: center;
     user-select: none;
+    margin: 0.5vw; /* Kis térköz a cellák között */
 }
 
 /* AI és Játékos pontszámainak elhelyezése fekvő módban */
