@@ -1,3 +1,6 @@
+// matimato-core.js - Rész 1
+
+// #MM0001 Global variables
 class Board {
     constructor(rows, columns) {
         this.rows = rows;
@@ -21,8 +24,9 @@ class Board {
 const board = new Board(5, 5);
 let playerScore = 0;
 let aiScore = 0;
-let isPlayerTurn = true;
+let isPlayerTurn = true; // A játékos kezdi
 
+// #MM0002 Create Gamefield
 function createBoard() {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
@@ -38,12 +42,15 @@ function createBoard() {
         }
     }
 }
+// matimato-core.js - Rész 2
 
+// #MM0003 Game Logic
 function handleCellClick(row, column) {
     if (isPlayerTurn && board.cells[row][column] !== '•') {
         playerScore += board.cells[row][column];
-        highlightColumn(column);
         board.cells[row][column] = '•';
+        highlightCell(row, column); // Cell kiemelése
+        highlightColumn(column); // Oszlop kiemelése
         isPlayerTurn = false;
         updateScoreDisplay();
         setTimeout(computerMove, 1000);
@@ -56,8 +63,9 @@ function computerMove() {
         let randomIndex = Math.floor(Math.random() * availableCells.length);
         let selectedCell = availableCells[randomIndex];
         aiScore += board.cells[selectedCell.row][selectedCell.column];
-        highlightRow(selectedCell.row);
         board.cells[selectedCell.row][selectedCell.column] = '•';
+        highlightCell(selectedCell.row, selectedCell.column); // Cell kiemelése
+        highlightRow(selectedCell.row); // Sor kiemelése
         isPlayerTurn = true;
         updateScoreDisplay();
     }
@@ -75,25 +83,37 @@ function getAvailableCells() {
     return availableCells;
 }
 
+// #MM0004 User Interface Functions
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
         cellElement.style.backgroundColor = '#444444';
         setTimeout(() => {
             cellElement.textContent = '•';
+            cellElement.style.backgroundColor = ''; // Visszaállítás az alapszínre
         }, 500);
     }
 }
 
 function highlightColumn(column) {
-    document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.style.border = '2px solid white';
+    const cells = document.querySelectorAll('.cell');
+    cells.forEach(cell => {
+        if (cell.getAttribute('column') == column) {
+            cell.style.border = '3px solid white';
+        } else {
+            cell.style.border = '';
+        }
     });
 }
 
 function highlightRow(row) {
-    document.querySelectorAll(`.cell[row="${row}"]`).forEach(cell => {
-        cell.style.border = '2px solid white';
+    const rows = document.querySelectorAll('.row');
+    rows.forEach((rowDiv, rowIndex) => {
+        if (rowIndex === row) {
+            rowDiv.style.border = '3px solid white';
+        } else {
+            rowDiv.style.border = '';
+        }
     });
 }
 
@@ -104,6 +124,7 @@ function updateScoreDisplay() {
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
 
+// #MM0005 Initialize Game
 document.addEventListener('DOMContentLoaded', () => {
     createBoard();
     updateScoreDisplay();
