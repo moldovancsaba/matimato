@@ -1,3 +1,5 @@
+//firebase-logic.js
+
 function saveGameStats() {
     const gameId = generateGameId();
     const gameResult = generateGameResult();
