@@ -17,23 +17,13 @@ function createBoard() {
     }
 }
 
-// Cellákra kattintás kezelése
-function handleCellClick(row, column) {
-    if (board.cells[row][column] !== '•' && currentPlayer === humanPlayer) {
-        humanPlayer.makeMove(row, column);
-        highlightCell(row, column);
-        switchPlayer();
-    }
-}
-
-// A cella kiemelése a lépésekor
+// A cella kiemelése
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
         cellElement.style.backgroundColor = '#444444';
         setTimeout(() => {
             cellElement.textContent = '•';
-            cellElement.style.backgroundColor = '';
         }, 500);
     }
 }
@@ -42,14 +32,12 @@ function highlightCell(row, column) {
 function updateScoreDisplay() {
     const playerScoreElement = document.getElementById('player-score');
     const aiScoreElement = document.getElementById('ai-score');
-    playerScoreElement.textContent = `You: ${humanPlayer.score}`;
-    aiScoreElement.textContent = `AI: ${computerPlayer.score}`;
+    playerScoreElement.textContent = `You: ${playerScore}`;
+    aiScoreElement.textContent = `AI: ${aiScore}`;
 }
 
 // A képernyő méretének változására való reagálás
-window.addEventListener('resize', function() {
-    createBoard();
-});
+window.addEventListener('resize', createBoard);
 
 // A játék indítása
 document.addEventListener('DOMContentLoaded', createBoard);
