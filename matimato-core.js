@@ -67,6 +67,7 @@ function createBoard() {
 
 
 
+
 //------------------------------
 // #MM0003 Game Logic
 //------------------------------
@@ -102,7 +103,7 @@ function computerMove() {
             aiScore += board.cells[maxCell.row][maxCell.column];
             board.cells[maxCell.row][maxCell.column] = '•';
             highlightCell(maxCell.row, maxCell.column);
-            highlightColumn(maxCell.column);
+            highlightColumn(maxCell.column); // Oszlop kiemelése
             isPlayerTurn = true;
             updateScoreDisplay();
         } else {
@@ -141,6 +142,7 @@ function endGame() {
     document.getElementById('end-game-message').style.display = 'block';
     document.getElementById('winner-message').textContent = winner;
 }
+
 
 
 
