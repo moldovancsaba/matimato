@@ -136,14 +136,9 @@ function highlightColumn(column) {
 
 function highlightRow(row) {
     clearHighlights(); // Előző kiemelések törlése
-    document.querySelectorAll('.row').forEach((rowDiv, rowIndex) => {
-        if (rowIndex === row) {
-            rowDiv.style.border = '6px solid #00008B';
-            rowDiv.style.boxSizing = 'border-box'; // A keretet is beleértve tartsa meg a méretét
-        } else {
-            rowDiv.style.border = '';
-            rowDiv.style.boxSizing = '';
-        }
+    document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
+        cell.style.border = '6px solid #00008B';
+        cell.style.boxSizing = 'border-box'; // A keretet is beleértve tartsa meg a méretét
     });
 }
 
@@ -151,10 +146,6 @@ function clearHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
         cell.style.border = '';
         cell.style.boxSizing = ''; // Visszaállítja az alapértelmezett méretezést
-    });
-    document.querySelectorAll('.row').forEach(row => {
-        row.style.border = '';
-        row.style.boxSizing = ''; // Visszaállítja az alapértelmezett méretezést
     });
 }
 
@@ -170,7 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
     createBoard();
     updateScoreDisplay();
 });
-
 
 //--------------------------------------------------
 //--------------------------------------------------
