@@ -22,14 +22,12 @@ function createBoard() {
 
 // Oszlop kiemelése
 function highlightColumn(column) {
-    document.querySelectorAll('.row').forEach(row => {
-        row.childNodes.forEach((cell, cellIndex) => {
-            if (cellIndex === column) {
-                cell.style.backgroundColor = 'white';
-            } else {
-                cell.style.backgroundColor = '';
-            }
-        });
+    document.querySelectorAll('.cell').forEach(cell => {
+        if (cell.getAttribute('column') === String(column)) {
+            cell.style.border = '2px solid white';
+        } else {
+            cell.style.border = '';
+        }
     });
 }
 
@@ -39,11 +37,11 @@ function highlightRow(row) {
     rows.forEach((rowDiv, rowIndex) => {
         if (rowIndex === row) {
             rowDiv.childNodes.forEach(cell => {
-                cell.style.backgroundColor = 'white';
+                cell.style.border = '2px solid white';
             });
         } else {
             rowDiv.childNodes.forEach(cell => {
-                cell.style.backgroundColor = '';
+                cell.style.border = '';
             });
         }
     });
@@ -56,6 +54,7 @@ function highlightCell(row, column) {
         cellElement.style.backgroundColor = '#444444';
         setTimeout(() => {
             cellElement.textContent = '•';
+            cellElement.style.backgroundColor = '';
         }, 500);
     }
 }
@@ -79,6 +78,7 @@ function updateBoard() {
 function removeHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
         cell.style.backgroundColor = '';
+        cell.style.border = '';
     });
 }
 
