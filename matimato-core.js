@@ -1,5 +1,8 @@
 // matimato-core.js
 
+//--------------------------------------------------
+//--------------------------------------------------
+
 // #MM0001 Global variables
 class Board {
     constructor(rows, columns) {
@@ -26,6 +29,9 @@ let playerScore = 0;
 let aiScore = 0;
 let isPlayerTurn = true; // A játékos kezdi
 
+//--------------------------------------------------
+//--------------------------------------------------
+
 // #MM0002 Create Gamefield
 function createBoard() {
     const boardElement = document.getElementById('board');
@@ -48,21 +54,29 @@ function createBoard() {
     }
 }
 
+//--------------------------------------------------
+//--------------------------------------------------
+
 // #MM0003 Game Logic
+
+let lastSelectedRow = null; // Utoljára választott sor
+let lastSelectedColumn = null; // Utoljára választott oszlop
+
 function handleCellClick(row, column) {
-    if (isPlayerTurn && board.cells[row][column] !== '•') {
+    if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedColumn === null || lastSelectedColumn === column)) {
         playerScore += board.cells[row][column];
         board.cells[row][column] = '•';
         highlightCell(row, column);
         highlightColumn(column); // Oszlop kiemelése
         isPlayerTurn = false;
         updateScoreDisplay();
+        lastSelectedRow = row; // Az utoljára választott sor mentése
         setTimeout(computerMove, 1000);
     }
 }
 
 function computerMove() {
-    let availableCells = getAvailableCells();
+    let availableCells = lastSelectedRow != null ? getAvailableCellsInRow(lastSelectedRow) : getAvailableCells();
     if (availableCells.length > 0) {
         let randomIndex = Math.floor(Math.random() * availableCells.length);
         let selectedCell = availableCells[randomIndex];
@@ -71,21 +85,33 @@ function computerMove() {
         highlightCell(selectedCell.row, selectedCell.column);
         highlightRow(selectedCell.row); // Sor kiemelése
         isPlayerTurn = true;
+        lastSelectedColumn = selectedCell.column; // Az utoljára választott oszlop mentése
         updateScoreDisplay();
     }
 }
 
-function getAvailableCells() {
+function getAvailableCellsInRow(row) {
     let availableCells = [];
-    for (let i = 0; i < board.rows; i++) {
-        for (let j = 0; j < board.columns; j++) {
-            if (board.cells[i][j] !== '•') {
-                availableCells.push({ row: i, column: j });
-            }
+    for (let j = 0; j < board.columns; j++) {
+        if (board.cells[row][j] !== '•') {
+            availableCells.push({ row: row, column: j });
         }
     }
     return availableCells;
 }
+
+function getAvailableCellsInColumn(column) {
+    let availableCells = [];
+    for (let i = 0; i < board.rows; i++) {
+        if (board.cells[i][column] !== '•') {
+            availableCells.push({ row: i, column: column });
+        }
+    }
+    return availableCells;
+}
+
+//--------------------------------------------------
+//--------------------------------------------------
 
 // #MM0004 User Interface Functions
 function highlightCell(row, column) {
@@ -126,6 +152,9 @@ function updateScoreDisplay() {
     playerScoreElement.textContent = `You: ${playerScore}`;
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
+
+//--------------------------------------------------
+//--------------------------------------------------
 
 // #MM0005 Initialize Game
 document.addEventListener('DOMContentLoaded', () => {
