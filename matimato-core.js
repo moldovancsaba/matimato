@@ -82,24 +82,41 @@ function canPlayerMove() {
 }
 
 function computerMove() {
-    // Csak akkor lép, ha a játékos lépése után még vannak elérhető lépések
-    if (lastSelectedRow != null) {
-        let availableCells = getAvailableCellsInRow(lastSelectedRow);
+    let availableCells;
 
-        if (availableCells.length > 0) {
-            let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
-            aiScore += board.cells[maxCell.row][maxCell.column];
-            board.cells[maxCell.row][maxCell.column] = '•';
-            highlightCell(maxCell.row, maxCell.column);
-            highlightColumn(maxCell.column);
-            isPlayerTurn = true;
-            lastSelectedColumn = maxCell.column; // Frissíti az utoljára kiválasztott oszlopot
-            updateScoreDisplay();
-        } else {
-            // Ha a számítógép nem tud lépni, ellenőrizzük, hogy a játék véget ért-e
-            checkEndGame();
+    // Ha a játékos már lépett, akkor az AI csak az utoljára kiválasztott sorban lévő cellákból választhat
+    if (lastSelectedRow != null) {
+        availableCells = getAvailableCellsInRow(lastSelectedRow);
+    } else {
+        // Ha a játékos még nem lépett (első kör), akkor az AI az összes elérhető cella közül választhat
+        availableCells = getAvailableCells();
+    }
+
+    if (availableCells.length > 0) {
+        let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
+        aiScore += board.cells[maxCell.row][maxCell.column];
+        board.cells[maxCell.row][maxCell.column] = '•';
+        highlightCell(maxCell.row, maxCell.column);
+        highlightColumn(maxCell.column);
+        isPlayerTurn = true;
+        lastSelectedColumn = maxCell.column;
+        updateScoreDisplay();
+    } else {
+        // Ha a számítógép nem tud lépni, ellenőrizzük, hogy a játék véget ért-e
+        checkEndGame();
+    }
+}
+
+function getAvailableCells() {
+    let availableCells = [];
+    for (let i = 0; i < board.rows; i++) {
+        for (let j = 0; j < board.columns; j++) {
+            if (board.cells[i][j] !== '•') {
+                availableCells.push({ row: i, column: j });
+            }
         }
     }
+    return availableCells;
 }
 
 function canComputerMove() {
