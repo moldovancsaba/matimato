@@ -67,11 +67,23 @@ function handleCellClick(row, column) {
         playerScore += board.cells[row][column];
         board.cells[row][column] = '•';
         highlightCell(row, column);
-        highlightRow(row); // Sor kiemelése - Megfordítva
+        highlightRow(row); // Sor kiemelése
         isPlayerTurn = false;
         updateScoreDisplay();
-        lastSelectedRow = row; // Az utoljára választott sor mentése
+        lastSelectedRow = row;
         setTimeout(computerMove, 1000);
+    } else if (isPlayerTurn && !canPlayerMove()) {
+        // Ha a játékos nem tud lépni
+        endGame();
+    }
+}
+
+function canPlayerMove() {
+    // Ellenőrzi, hogy a játékosnak van-e léphető mezője
+    if (lastSelectedColumn === null) {
+        return getAvailableCells().length > 0;
+    } else {
+        return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
     }
 }
 
@@ -221,11 +233,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Kezdetben csak a Start gomb látható
     hideGame();
     document.getElementById('start-button').addEventListener('click', startGame);
-    document.getElementById('restart-button').addEventListener('click', restartGame);
+
+    // Restart gomb eseménykezelője: Az oldal újratöltése
+    document.getElementById('restart-button').addEventListener('click', () => {
+        window.location.reload();
+    });
 });
 
 function hideGame() {
     document.getElementById('board').style.display = 'none';
+    document.getElementById('score').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('start-screen').style.display = 'block';
 }
@@ -236,16 +253,7 @@ function startGame() {
     updateScoreDisplay();
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('board').style.display = 'grid';
-    // A pontszámok mindig láthatóak maradnak
-}
-
-function restartGame() {
-    resetGameVariables();
-    createBoard();
-    updateScoreDisplay();
-    document.getElementById('end-game-message').style.display = 'none';
-    document.getElementById('board').style.display = 'grid';
-    // A pontszámok mindig láthatóak maradnak
+    document.getElementById('score').style.display = 'block';
 }
 
 function resetGameVariables() {
