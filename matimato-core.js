@@ -69,84 +69,40 @@ function handleCellClick(row, column) {
         highlightCell(row, column);
         highlightRow(row); // Sor kiemelése
         isPlayerTurn = false;
-        updateScoreDisplay();
         lastSelectedRow = row;
         setTimeout(computerMove, 1000);
     } else if (isPlayerTurn && !canPlayerMove()) {
-        // Ha a játékos nem tud lépni
-        endGame();
+        endGame(); // Ha a játékos nem tud lépni, vége a játéknak
     }
+    updateScoreDisplay();
 }
 
 function canPlayerMove() {
-    // Ellenőrzi, hogy a játékosnak van-e léphető mezője
-    if (lastSelectedColumn === null) {
-        return getAvailableCells().length > 0;
-    } else {
-        return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
-    }
+    // Ellenőrzi, hogy a játékos tud-e lépni
+    return lastSelectedColumn === null ? getAvailableCells().length > 0 : getAvailableCellsInColumn(lastSelectedColumn).length > 0;
 }
 
 function computerMove() {
     let availableCells = lastSelectedRow != null ? getAvailableCellsInRow(lastSelectedRow) : getAvailableCells();
     if (availableCells.length > 0) {
-        // Válassza ki a legnagyobb számot
         let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
         aiScore += board.cells[maxCell.row][maxCell.column];
         board.cells[maxCell.row][maxCell.column] = '•';
         highlightCell(maxCell.row, maxCell.column);
-        highlightColumn(maxCell.column); // Oszlop kiemelése - Megfordítva
+        highlightColumn(maxCell.column); // Oszlop kiemelése
         isPlayerTurn = true;
-        updateScoreDisplay();
-        lastSelectedColumn = maxCell.column; // Az utoljára választott oszlop mentése
+        lastSelectedColumn = maxCell.column;
     } else {
-        // Ha nincsenek elérhető lépések, vége a játéknak
-        endGame();
+        endGame(); // Ha a számítógép nem tud lépni, vége a játéknak
     }
-}
-
-function endGame() {
-    // Az eredmények kiértékelése és a győztes meghatározása
-    let winner = playerScore > aiScore ? 'You win!' : (playerScore < aiScore ? 'AI wins!' : 'Draw!');
-    if (playerScore === aiScore) {
-        winner = isPlayerTurn ? 'AI wins!' : 'You win!';
-    }
-
-    // Játék végi üzenet megjelenítése
-    document.getElementById('board').style.display = 'none';
-    document.getElementById('end-game-message').style.display = 'block';
-    document.getElementById('winner-message').textContent = winner;
-}
-
-function resetGame() {
-    // Alaphelyzetbe állítja a játékot
-    playerScore = 0;
-    aiScore = 0;
-    isPlayerTurn = true;
-    lastSelectedRow = null;
-    lastSelectedColumn = null;
-    createBoard();
     updateScoreDisplay();
 }
 
-function getAvailableCellsInRow(row) {
-    let availableCells = [];
-    for (let j = 0; j < board.columns; j++) {
-        if (board.cells[row][j] !== '•') {
-            availableCells.push({ row: row, column: j });
-        }
-    }
-    return availableCells;
-}
-
-function getAvailableCellsInColumn(column) {
-    let availableCells = [];
-    for (let i = 0; i < board.rows; i++) {
-        if (board.cells[i][column] !== '•') {
-            availableCells.push({ row: i, column: column });
-        }
-    }
-    return availableCells;
+function endGame() {
+    let winner = playerScore > aiScore ? 'You win!' : playerScore < aiScore ? 'AI wins!' : 'Draw!';
+    document.getElementById('board').style.display = 'none';
+    document.getElementById('end-game-message').style.display = 'block';
+    document.getElementById('winner-message').textContent = winner;
 }
 
 //--------------------------------------------------
@@ -233,16 +189,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Kezdetben csak a Start gomb látható
     hideGame();
     document.getElementById('start-button').addEventListener('click', startGame);
-
-    // Restart gomb eseménykezelője: Az oldal újratöltése
-    document.getElementById('restart-button').addEventListener('click', () => {
-        window.location.reload();
-    });
+    document.getElementById('restart-button').addEventListener('click', restartGame);
 });
 
 function hideGame() {
     document.getElementById('board').style.display = 'none';
-    document.getElementById('score').style.display = 'none';
+    document.getElementById('score').style.display = 'block'; // Pontszám mindig látható
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('start-screen').style.display = 'block';
 }
@@ -253,7 +205,16 @@ function startGame() {
     updateScoreDisplay();
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block';
+    document.getElementById('score').style.display = 'block'; // Pontszám megjelenítése
+}
+
+function restartGame() {
+    resetGameVariables();
+    createBoard();
+    updateScoreDisplay();
+    document.getElementById('end-game-message').style.display = 'none';
+    document.getElementById('board').style.display = 'grid';
+    document.getElementById('score').style.display = 'block'; // Pontszám megjelenítése
 }
 
 function resetGameVariables() {
