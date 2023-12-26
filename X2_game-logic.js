@@ -27,13 +27,13 @@ class Board {
 const board = new Board(5, 5);
 let playerScore = 0;
 let aiScore = 0;
-let isPlayerTurn = true;
+let isPlayerTurn = true; // A játékos kezdi
 
 function handleCellClick(row, column) {
     if (isPlayerTurn && board.cells[row][column] !== '•') {
         playerScore += board.cells[row][column];
-        board.removeNumber(row, column);
-        highlightColumn(column); // Kiemeli az oszlopot
+        highlightCell(row, column); // Meghívja a kiemelő függvényt
+        board.cells[row][column] = '•';
         isPlayerTurn = false;
         updateScoreDisplay();
         setTimeout(computerMove, 1000);
@@ -46,8 +46,8 @@ function computerMove() {
         let randomIndex = Math.floor(Math.random() * availableCells.length);
         let selectedCell = availableCells[randomIndex];
         aiScore += board.cells[selectedCell.row][selectedCell.column];
-        board.removeNumber(selectedCell.row, selectedCell.column);
-        highlightRow(selectedCell.row); // Kiemeli a sort
+        highlightCell(selectedCell.row, selectedCell.column); // Meghívja a kiemelő függvényt
+        board.cells[selectedCell.row][selectedCell.column] = '•';
         isPlayerTurn = true;
         updateScoreDisplay();
     }
@@ -63,19 +63,4 @@ function getAvailableCells() {
         }
     }
     return availableCells;
-}
-
-function updateScoreDisplay() {
-    const playerScoreElement = document.getElementById('player-score');
-    const aiScoreElement = document.getElementById('ai-score');
-    playerScoreElement.textContent = `You: ${playerScore}`;
-    aiScoreElement.textContent = `AI: ${aiScore}`;
-}
-
-function highlightRow(row) {
-    // Implementálja a sor kiemelését
-}
-
-function highlightColumn(column) {
-    // Implementálja az oszlop kiemelését
 }
