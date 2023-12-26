@@ -1,9 +1,11 @@
+//------------------------------
 // matimato-core.js
-
-//--------------------------------------------------
-//--------------------------------------------------
-
+//------------------------------
+// CODE STARTS HERE
+//------------------------------
 // #MM0001 Global variables
+//------------------------------
+
 class Board {
     constructor(rows, columns) {
         this.rows = rows;
@@ -29,10 +31,10 @@ let playerScore = 0;
 let aiScore = 0;
 let isPlayerTurn = true; // A játékos kezdi
 
-//--------------------------------------------------
-//--------------------------------------------------
-
+//------------------------------
 // #MM0002 Create Gamefield
+//------------------------------
+
 function createBoard() {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
@@ -54,10 +56,9 @@ function createBoard() {
     }
 }
 
-//--------------------------------------------------
-//--------------------------------------------------
-
+//------------------------------
 // #MM0003 Game Logic
+//------------------------------
 
 let lastSelectedRow = null; // Utoljára választott sor
 let lastSelectedColumn = null; // Utoljára választott oszlop
@@ -71,8 +72,10 @@ function handleCellClick(row, column) {
         isPlayerTurn = false;
         lastSelectedRow = row;
         setTimeout(computerMove, 1000);
-    } else if (isPlayerTurn && !canPlayerMove()) {
-        endGame(); // Ha a játékos nem tud lépni, vége a játéknak
+    } else if (isPlayerTurn) {
+        if (!canPlayerMove()) {
+            endGame(); // Ha a játékos nem tud lépni, vége a játéknak
+        }
     }
     updateScoreDisplay();
 }
@@ -105,10 +108,29 @@ function endGame() {
     document.getElementById('winner-message').textContent = winner;
 }
 
-//--------------------------------------------------
-//--------------------------------------------------
+function getAvailableCellsInRow(row) {
+    let availableCells = [];
+    for (let j = 0; j < board.columns; j++) {
+        if (board.cells[row][j] !== '•') {
+            availableCells.push({ row: row, column: j });
+        }
+    }
+    return availableCells;
+}
 
-// #MM0004 User Interface Functions
+function getAvailableCellsInColumn(column) {
+    let availableCells = [];
+    for (let i = 0; i < board.rows; i++) {
+        if (board.cells[i][column] !== '•') {
+            availableCells.push({ row: i, column: column });
+        }
+    }
+    return availableCells;
+}
+
+//------------------------------
+// #MM0004 UI Functions
+//------------------------------
 
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
@@ -157,10 +179,10 @@ document.addEventListener('DOMContentLoaded', () => {
     updateScoreDisplay();
 });
 
-//--------------------------------------------------
-//--------------------------------------------------
-
+//------------------------------
 // #MM0005 Initialize Game
+//------------------------------
+
 document.addEventListener('DOMContentLoaded', () => {
     // Start gomb eseménykezelője
     document.getElementById('start-button').addEventListener('click', () => {
@@ -181,10 +203,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('end-game-message').style.display = 'none';
 });
 
-//--------------------------------------------------
-//--------------------------------------------------
+//------------------------------
+// #MM0006 Start and End Logic
+//------------------------------
 
-// #MM0006 Start and End Game Logic
 document.addEventListener('DOMContentLoaded', () => {
     // Kezdetben csak a Start gomb látható
     hideGame();
@@ -227,5 +249,6 @@ function resetGameVariables() {
     lastSelectedColumn = null;
 }
 
-//--------------------------------------------------
-//--------------------------------------------------
+//------------------------------
+// END OF CODE
+//------------------------------
