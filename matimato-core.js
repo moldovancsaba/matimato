@@ -1,4 +1,4 @@
-// matimato-core.js - Rész 1
+// matimato-core.js
 
 // #MM0001 Global variables
 class Board {
@@ -31,6 +31,8 @@ function createBoard() {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
     for (let i = 0; i < board.rows; i++) {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'row';
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
@@ -38,15 +40,13 @@ function createBoard() {
             cell.setAttribute('row', i);
             cell.setAttribute('column', j);
             cell.addEventListener('click', () => handleCellClick(i, j));
-            boardElement.appendChild(cell);
+            rowDiv.appendChild(cell);
         }
+        boardElement.appendChild(rowDiv);
     }
 }
 
-// matimato-core.js - Rész 2
-
 // #MM0003 Game Logic
-
 function handleCellClick(row, column) {
     if (isPlayerTurn && board.cells[row][column] !== '•') {
         playerScore += board.cells[row][column];
@@ -73,13 +73,19 @@ function computerMove() {
     }
 }
 
-// ...
+function getAvailableCells() {
+    let availableCells = [];
+    for (let i = 0; i < board.rows; i++) {
+        for (let j = 0; j < board.columns; j++) {
+            if (board.cells[i][j] !== '•') {
+                availableCells.push({ row: i, column: j });
+            }
+        }
+    }
+    return availableCells;
+}
 
 // #MM0004 User Interface Functions
-
-// ...
-
-// A cella kiemelése
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
@@ -91,7 +97,6 @@ function highlightCell(row, column) {
     }
 }
 
-// Oszlop kiemelése
 function highlightColumn(column) {
     clearHighlights(); // Előző kiemelések törlése
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
@@ -99,13 +104,11 @@ function highlightColumn(column) {
     });
 }
 
-// Sor kiemelése
 function highlightRow(row) {
     clearHighlights(); // Előző kiemelések törlése
     document.querySelector(`.row:nth-child(${row + 1})`).style.border = '3px solid white';
 }
 
-// Előző kiemelések eltávolítása
 function clearHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
         cell.style.border = '';
@@ -115,11 +118,12 @@ function clearHighlights() {
     });
 }
 
-// ...
-
-// #MM0005 Initialize Game
-// ...
-
+function updateScoreDisplay() {
+    const playerScoreElement = document.getElementById('player-score');
+    const aiScoreElement = document.getElementById('ai-score');
+    playerScoreElement.textContent = `You: ${playerScore}`;
+    aiScoreElement.textContent = `AI: ${aiScore}`;
+}
 
 // #MM0005 Initialize Game
 document.addEventListener('DOMContentLoaded', () => {
