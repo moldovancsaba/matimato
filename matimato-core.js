@@ -247,20 +247,18 @@ function resetGame() {
 
 // #MM0006 Start and End Game Logic
 document.addEventListener('DOMContentLoaded', () => {
-    // Start gomb eseménykezelője
-    const startButton = document.getElementById('start-button');
-    startButton.addEventListener('click', startGame);
-
-    // Restart gomb eseménykezelője
-    const restartButton = document.getElementById('restart-button');
-    restartButton.addEventListener('click', restartGame);
-
     // Kezdetben csak a Start gomb látható
+    hideGame();
+    document.getElementById('start-button').addEventListener('click', startGame);
+    document.getElementById('restart-button').addEventListener('click', restartGame);
+});
+
+function hideGame() {
     document.getElementById('board').style.display = 'none';
     document.getElementById('score').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('start-screen').style.display = 'block';
-});
+}
 
 function startGame() {
     resetGameVariables();
