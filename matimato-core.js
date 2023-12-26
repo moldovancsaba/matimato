@@ -82,20 +82,22 @@ function canPlayerMove() {
 }
 
 function computerMove() {
-    let availableCells = lastSelectedRow != null ? getAvailableCellsInRow(lastSelectedRow) : getAvailableCells();
+    if (!isPlayerTurn) {
+        let availableCells = getAvailableCells();
 
-    if (availableCells.length > 0) {
-        let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
-        aiScore += board.cells[maxCell.row][maxCell.column];
-        board.cells[maxCell.row][maxCell.column] = '•';
-        highlightCell(maxCell.row, maxCell.column);
-        highlightColumn(maxCell.column);
-        isPlayerTurn = true;
-        lastSelectedColumn = maxCell.column;
-        updateScoreDisplay();
-    } else {
-        // Ha a számítógép nem tud lépni, ellenőrizzük, hogy a játék véget ért-e
-        checkEndGame();
+        if (availableCells.length > 0) {
+            let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
+            aiScore += board.cells[maxCell.row][maxCell.column];
+            board.cells[maxCell.row][maxCell.column] = '•';
+            highlightCell(maxCell.row, maxCell.column);
+            highlightColumn(maxCell.column);
+            isPlayerTurn = true;
+            lastSelectedColumn = maxCell.column;
+            updateScoreDisplay();
+        } else {
+            // Ha a számítógép nem tud lépni, ellenőrizzük, hogy a játék véget ért-e
+            checkEndGame();
+        }
     }
 }
 
@@ -191,6 +193,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('start-screen').style.display = 'none';
         document.getElementById('board').style.display = 'grid';
         resetGame();
+        if (!isPlayerTurn) {
+            setTimeout(computerMove, 500); // Az AI első lépése, ha ő kezd
+        }
     });
 
     // Restart gomb eseménykezelője
@@ -198,12 +203,22 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('end-game-message').style.display = 'none';
         document.getElementById('board').style.display = 'grid';
         resetGame();
+        if (!isPlayerTurn) {
+            setTimeout(computerMove, 500); // Az AI első lépése, ha ő kezd
+        }
     });
-
-    // Játéktábla és eredményjelző elrejtése induláskor
-    document.getElementById('board').style.display = 'none';
-    document.getElementById('end-game-message').style.display = 'none';
 });
+
+function resetGame() {
+    board = new Board(5, 5);
+    playerScore = 0;
+    aiScore = 0;
+    isPlayerTurn = false; // A számítógép kezdi a játékot
+    lastSelectedRow = null;
+    lastSelectedColumn = null;
+    createBoard();
+    updateScoreDisplay();
+}
 
 //------------------------------
 // #MM0006 Start and End Game Logic
