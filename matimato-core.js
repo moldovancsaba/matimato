@@ -113,55 +113,57 @@ function getAvailableCellsInColumn(column) {
 //--------------------------------------------------
 //--------------------------------------------------
 
-
 // #MM0004 User Interface Functions
 
-// A cella kiemelése
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
         cellElement.style.backgroundColor = '#444444';
         setTimeout(() => {
             cellElement.textContent = '•';
-            cellElement.style.backgroundColor = ''; // Háttérszín visszaállítása
+            cellElement.style.backgroundColor = '#444444'; // Háttérszín megtartása
         }, 500);
     }
 }
 
-// Oszlop kiemelése
 function highlightColumn(column) {
     clearHighlights(); // Előző kiemelések törlése
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.style.border = '3px solid white';
+        cell.style.border = '6px solid #00008B';
+        cell.style.boxSizing = 'border-box'; // A keretet is beleértve tartsa meg a méretét
     });
 }
 
-// Sor kiemelése
 function highlightRow(row) {
     clearHighlights(); // Előző kiemelések törlése
-    document.querySelector(`.row:nth-child(${row + 1})`).style.border = '3px solid white';
+    document.querySelectorAll('.row').forEach((rowDiv, rowIndex) => {
+        if (rowIndex === row) {
+            rowDiv.style.border = '6px solid #00008B';
+            rowDiv.style.boxSizing = 'border-box'; // A keretet is beleértve tartsa meg a méretét
+        } else {
+            rowDiv.style.border = '';
+            rowDiv.style.boxSizing = '';
+        }
+    });
 }
 
-// Előző kiemelések eltávolítása
 function clearHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
         cell.style.border = '';
+        cell.style.boxSizing = ''; // Visszaállítja az alapértelmezett méretezést
     });
     document.querySelectorAll('.row').forEach(row => {
         row.style.border = '';
+        row.style.boxSizing = ''; // Visszaállítja az alapértelmezett méretezést
     });
 }
 
-// Pontszámok megjelenítése
 function updateScoreDisplay() {
     const playerScoreElement = document.getElementById('player-score');
     const aiScoreElement = document.getElementById('ai-score');
     playerScoreElement.textContent = `You: ${playerScore}`;
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
-
-// A képernyő méretének változására való reagálás
-window.addEventListener('resize', createBoard);
 
 // A játék indítása
 document.addEventListener('DOMContentLoaded', () => {
