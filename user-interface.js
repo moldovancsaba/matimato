@@ -55,6 +55,7 @@ function highlightCell(row, column) {
         setTimeout(() => {
             cellElement.textContent = '•';
             cellElement.style.backgroundColor = '';
+            cellElement.style.border = '';
         }, 500);
     }
 }
