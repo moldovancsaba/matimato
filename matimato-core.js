@@ -42,18 +42,20 @@ function createBoard() {
         }
     }
 }
-// matimato-core.js - Rész 2
 
-// #MM0003 Game Logic
-function handleCellClick(row, column) {
-    if (isPlayerTurn && board.cells[row][column] !== '•') {
-        playerScore += board.cells[row][column];
-        board.cells[row][column] = '•';
-        highlightCell(row, column); // Cell kiemelése
-        highlightColumn(column); // Oszlop kiemelése
-        isPlayerTurn = false;
+// #MM0003 Game Logic - Módosított rész
+
+function computerMove() {
+    let availableCells = getAvailableCells();
+    if (availableCells.length > 0) {
+        let randomIndex = Math.floor(Math.random() * availableCells.length);
+        let selectedCell = availableCells[randomIndex];
+        aiScore += board.cells[selectedCell.row][selectedCell.column];
+        board.cells[selectedCell.row][selectedCell.column] = '•';
+        highlightCell(selectedCell.row, selectedCell.column); // Cell kiemelése
+        highlightRow(selectedCell.row); // Sor kiemelése - Javítva
+        isPlayerTurn = true;
         updateScoreDisplay();
-        setTimeout(computerMove, 1000);
     }
 }
 
@@ -106,11 +108,12 @@ function highlightColumn(column) {
     });
 }
 
+
 function highlightRow(row) {
     const rows = document.querySelectorAll('.row');
     rows.forEach((rowDiv, rowIndex) => {
         if (rowIndex === row) {
-            rowDiv.style.border = '3px solid white';
+            rowDiv.style.border = '3px solid white'; // Sor kiemelése - Javítva
         } else {
             rowDiv.style.border = '';
         }
