@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function hideGame() {
     document.getElementById('board').style.display = 'none';
-    document.getElementById('score').style.display = 'block'; // Pontszám mindig látható
+    document.getElementById('score').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('start-screen').style.display = 'block';
 }
@@ -229,7 +229,8 @@ function startGame() {
     updateScoreDisplay();
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block'; // Pontszám megjelenítése
+    document.getElementById('score').style.display = 'block';
+    computerMove(); // Az AI első lépése
 }
 
 function restartGame() {
@@ -238,7 +239,8 @@ function restartGame() {
     updateScoreDisplay();
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block'; // Pontszám megjelenítése
+    document.getElementById('score').style.display = 'block';
+    computerMove(); // Az AI első lépése
 }
 
 function resetGameVariables() {
@@ -249,9 +251,12 @@ function resetGameVariables() {
     isPlayerTurn = false; // A számítógép kezdi a játékot
     lastSelectedRow = null;
     lastSelectedColumn = null;
+}
 
-    // Az AI első lépése
-    setTimeout(computerMove, 500);
+function computerMove() {
+    if (!isPlayerTurn) {
+        let availableCells = getAvailableCells();
+    }
 }
 
 //------------------------------
