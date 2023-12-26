@@ -67,7 +67,7 @@ function handleCellClick(row, column) {
         playerScore += board.cells[row][column];
         board.cells[row][column] = '•';
         highlightCell(row, column);
-        highlightRow(row); // Sor kiemelése
+        highlightRow(row); // Sor kiemelése - Megfordítva
         isPlayerTurn = false;
         updateScoreDisplay();
         lastSelectedRow = row; // Az utoljára választott sor mentése
@@ -78,29 +78,43 @@ function handleCellClick(row, column) {
 function computerMove() {
     let availableCells = lastSelectedRow != null ? getAvailableCellsInRow(lastSelectedRow) : getAvailableCells();
     if (availableCells.length > 0) {
-        let highestValue = 0;
-        let selectedCell = null;
-
-        // Keresse meg a legnagyobb számot tartalmazó cellát
-        for (let cell of availableCells) {
-            let cellValue = board.cells[cell.row][cell.column];
-            if (cellValue > highestValue) {
-                highestValue = cellValue;
-                selectedCell = cell;
-            }
-        }
-
-        // Ha van kiválasztott cella, lépjen rá
-        if (selectedCell) {
-            aiScore += highestValue;
-            board.cells[selectedCell.row][selectedCell.column] = '•';
-            highlightCell(selectedCell.row, selectedCell.column);
-            highlightColumn(selectedCell.column); // Oszlop kiemelése
-            isPlayerTurn = true;
-            lastSelectedColumn = selectedCell.column; // Az utoljára választott oszlop mentése
-            updateScoreDisplay();
-        }
+        // Válassza ki a legnagyobb számot
+        let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
+        aiScore += board.cells[maxCell.row][maxCell.column];
+        board.cells[maxCell.row][maxCell.column] = '•';
+        highlightCell(maxCell.row, maxCell.column);
+        highlightColumn(maxCell.column); // Oszlop kiemelése - Megfordítva
+        isPlayerTurn = true;
+        updateScoreDisplay();
+        lastSelectedColumn = maxCell.column; // Az utoljára választott oszlop mentése
+    } else {
+        // Ha nincsenek elérhető lépések, vége a játéknak
+        endGame();
     }
+}
+
+function endGame() {
+    // Az eredmények kiértékelése és a győztes meghatározása
+    let winner = playerScore > aiScore ? 'You win!' : (playerScore < aiScore ? 'AI wins!' : 'Draw!');
+    if (playerScore === aiScore) {
+        winner = isPlayerTurn ? 'AI wins!' : 'You win!';
+    }
+
+    // Játék végi üzenet megjelenítése
+    document.getElementById('board').style.display = 'none';
+    document.getElementById('end-game-message').style.display = 'block';
+    document.getElementById('winner-message').textContent = winner;
+}
+
+function resetGame() {
+    // Alaphelyzetbe állítja a játékot
+    playerScore = 0;
+    aiScore = 0;
+    isPlayerTurn = true;
+    lastSelectedRow = null;
+    lastSelectedColumn = null;
+    createBoard();
+    updateScoreDisplay();
 }
 
 function getAvailableCellsInRow(row) {
@@ -122,19 +136,6 @@ function getAvailableCellsInColumn(column) {
     }
     return availableCells;
 }
-
-function getAvailableCells() {
-    let availableCells = [];
-    for (let i = 0; i < board.rows; i++) {
-        for (let j = 0; j < board.columns; j++) {
-            if (board.cells[i][j] !== '•') {
-                availableCells.push({ row: i, column: j });
-            }
-        }
-    }
-    return availableCells;
-}
-
 
 //--------------------------------------------------
 //--------------------------------------------------
@@ -193,8 +194,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // #MM0005 Initialize Game
 document.addEventListener('DOMContentLoaded', () => {
-    createBoard();
-    updateScoreDisplay();
+    // Start gomb eseménykezelője
+    document.getElementById('start-button').addEventListener('click', () => {
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('board').style.display = 'grid';
+        resetGame();
+    });
+
+    // Restart gomb eseménykezelője
+    document.getElementById('restart-button').addEventListener('click', () => {
+        document.getElementById('end-game-message').style.display = 'none';
+        document.getElementById('board').style.display = 'grid';
+        resetGame();
+    });
+
+    // Játéktábla és eredményjelző elrejtése induláskor
+    document.getElementById('board').style.display = 'none';
+    document.getElementById('end-game-message').style.display = 'none';
 });
 
 //--------------------------------------------------
