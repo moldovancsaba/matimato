@@ -127,21 +127,25 @@ function highlightCell(row, column) {
 function highlightColumn(column) {
     clearHighlights(); // Előző kiemelések törlése
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.style.border = '6px solid #00008B'; // Sötét kék és dupla vastag keret
+        cell.style.border = '6px solid #00008B';
+        cell.style.boxSizing = 'border-box'; // A keretet is beleértve tartsa meg a méretét
     });
 }
 
 function highlightRow(row) {
     clearHighlights(); // Előző kiemelések törlése
-    document.querySelector(`.row:nth-child(${row + 1})`).style.border = '6px solid #00008B'; // Sötét kék és dupla vastag keret
+    document.querySelector(`.row:nth-child(${row + 1})`).style.border = '6px solid #00008B';
+    document.querySelector(`.row:nth-child(${row + 1})`).style.boxSizing = 'border-box'; // A keretet is beleértve tartsa meg a méretét
 }
 
 function clearHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
-        cell.style.border = ''; // Keret eltávolítása
+        cell.style.border = '';
+        cell.style.boxSizing = ''; // Visszaállítja az alapértelmezett méretezést
     });
     document.querySelectorAll('.row').forEach(row => {
-        row.style.border = ''; // Keret eltávolítása
+        row.style.border = '';
+        row.style.boxSizing = ''; // Visszaállítja az alapértelmezett méretezést
     });
 }
 
@@ -157,7 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
     createBoard();
     updateScoreDisplay();
 });
-
 
 //--------------------------------------------------
 //--------------------------------------------------
