@@ -30,8 +30,10 @@ let isPlayerTurn = true; // A játékos kezdi
 function createBoard() {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
+    boardElement.style.gridTemplateRows = `repeat(${board.rows}, 1fr)`; // Adjuk hozzá a sorokat
+
     for (let i = 0; i < board.rows; i++) {
-        const rowDiv = document.createElement('div');
+        const rowDiv = document.createElement('div'); // Létrehozzuk a sor div-et
         rowDiv.className = 'row';
         for (let j = 0; j < board.columns; j++) {
             const cell = document.createElement('div');
@@ -40,9 +42,9 @@ function createBoard() {
             cell.setAttribute('row', i);
             cell.setAttribute('column', j);
             cell.addEventListener('click', () => handleCellClick(i, j));
-            rowDiv.appendChild(cell);
+            rowDiv.appendChild(cell); // Adjuk hozzá a cellát a sor div-hez
         }
-        boardElement.appendChild(rowDiv);
+        boardElement.appendChild(rowDiv); // Adjuk hozzá a sor div-et a táblához
     }
 }
 
