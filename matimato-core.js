@@ -64,21 +64,23 @@ function createBoard() {
 
 
 
+
 //------------------------------
 // #MM0003 Game Logic
 //------------------------------
 
-let lastSelectedRow = null; 
-let lastSelectedColumn = null; 
+let lastSelectedRow = null; // Utoljára választott sor
+let lastSelectedColumn = null; // Utoljára választott oszlop
 
 function handleCellClick(row, column) {
     if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedColumn === null || lastSelectedColumn === column)) {
         playerScore += board.cells[row][column];
         board.cells[row][column] = '•';
         highlightCell(row, column);
-        highlightRow(row); 
+        highlightRow(row); // Sor kiemelése
         isPlayerTurn = false;
         lastSelectedRow = row;
+        lastSelectedColumn = column; // Frissíti az utoljára választott oszlopot
         setTimeout(computerMove, 500);
     }
     updateScoreDisplay();
@@ -91,7 +93,7 @@ function canPlayerMove() {
 
 function computerMove() {
     if (!isPlayerTurn) {
-        let availableCells = getAvailableCells();
+        let availableCells = getAvailableCellsInColumn(lastSelectedColumn); // Csak az utoljára választott oszlopból választhat
 
         if (availableCells.length > 0) {
             let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
@@ -100,7 +102,6 @@ function computerMove() {
             highlightCell(maxCell.row, maxCell.column);
             highlightColumn(maxCell.column);
             isPlayerTurn = true;
-            lastSelectedColumn = maxCell.column;
             updateScoreDisplay();
         } else {
             checkEndGame();
@@ -108,20 +109,14 @@ function computerMove() {
     }
 }
 
-function getAvailableCells() {
+function getAvailableCellsInColumn(column) {
     let availableCells = [];
     for (let i = 0; i < board.rows; i++) {
-        for (let j = 0; j < board.columns; j++) {
-            if (board.cells[i][j] !== '•') {
-                availableCells.push({ row: i, column: j });
-            }
+        if (board.cells[i][column] !== '•') {
+            availableCells.push({ row: i, column: column });
         }
     }
     return availableCells;
-}
-
-function canComputerMove() {
-    return getAvailableCellsInRow(lastSelectedRow).length > 0;
 }
 
 function checkEndGame() {
