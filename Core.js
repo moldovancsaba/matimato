@@ -1,3 +1,4 @@
+// Core.js
 class Board {
     constructor(rows, columns) {
         this.rows = rows;
@@ -18,20 +19,10 @@ class Board {
     }
 }
 
-class Player {
-    constructor() {
-        this.score = 0;
-    }
-
-    addScore(value) {
-        this.score += value;
-    }
-}
-
 // Globális változók
 const board = new Board(5, 5);
-const humanPlayer = new Player();
-const computerPlayer = new Player();
+let playerScore = 0;
+let aiScore = 0;
 let isPlayerTurn = true; // A játékos kezdi
 
 // Játéktábla létrehozása
@@ -43,6 +34,8 @@ function createBoard() {
             const cell = document.createElement('div');
             cell.className = 'cell';
             cell.textContent = board.cells[i][j];
+            cell.setAttribute('row', i);
+            cell.setAttribute('column', j);
             cell.addEventListener('click', () => handleCellClick(i, j));
             boardElement.appendChild(cell);
         }
@@ -52,24 +45,25 @@ function createBoard() {
 // Cellákra kattintás kezelése
 function handleCellClick(row, column) {
     if (isPlayerTurn && board.cells[row][column] !== '•') {
-        humanPlayer.addScore(board.cells[row][column]);
-        updateCell(row, column);
-        updateScoreDisplay();
+        playerScore += board.cells[row][column];
+        highlightCell(row, column);
+        board.cells[row][column] = '•';
         isPlayerTurn = false;
+        updateScoreDisplay();
         setTimeout(() => computerMove(), 1000);
     }
 }
-
 // A számítógép lépése
 function computerMove() {
     let availableCells = getAvailableCells();
     if (availableCells.length > 0) {
         let randomIndex = Math.floor(Math.random() * availableCells.length);
         let selectedCell = availableCells[randomIndex];
-        computerPlayer.addScore(board.cells[selectedCell.row][selectedCell.column]);
-        updateCell(selectedCell.row, selectedCell.column);
-        updateScoreDisplay();
+        aiScore += board.cells[selectedCell.row][selectedCell.column];
+        highlightCell(selectedCell.row, selectedCell.column);
+        board.cells[selectedCell.row][selectedCell.column] = '•';
         isPlayerTurn = true;
+        updateScoreDisplay();
     }
 }
 
@@ -86,20 +80,13 @@ function getAvailableCells() {
     return availableCells;
 }
 
-// Cella frissítése
-function updateCell(row, column) {
-    highlightCell(row, column);
-    board.cells[row][column] = '•';
-}
-
-// Cella kiemelése
+// A cella kiemelése
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
         cellElement.style.backgroundColor = '#444444';
         setTimeout(() => {
             cellElement.textContent = '•';
-            cellElement.style.backgroundColor = '';
         }, 500);
     }
 }
@@ -108,19 +95,12 @@ function highlightCell(row, column) {
 function updateScoreDisplay() {
     const playerScoreElement = document.getElementById('player-score');
     const aiScoreElement = document.getElementById('ai-score');
-    playerScoreElement.textContent = `You: ${humanPlayer.score}`;
-    aiScoreElement.textContent = `AI: ${computerPlayer.score}`;
+    playerScoreElement.textContent = `You: ${playerScore}`;
+    aiScoreElement.textContent = `AI: ${aiScore}`;
 }
-
-// A képernyő méretének változására való reagálás
-window.addEventListener('resize', createBoard);
 
 // A játék indítása
 document.addEventListener('DOMContentLoaded', () => {
     createBoard();
-    if (isPlayerTurn) {
-        // A játékos kezdi a játékot
-    } else {
-        setTimeout(computerMove, 1000); // A számítógép kezdi
-    }
+    updateScoreDisplay();
 });
