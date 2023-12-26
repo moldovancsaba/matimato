@@ -67,7 +67,6 @@ function createBoard() {
 
 
 
-
 //------------------------------
 // #MM0003 Game Logic
 //------------------------------
@@ -96,7 +95,15 @@ function canPlayerMove() {
 
 function computerMove() {
     if (!isPlayerTurn) {
-        let availableCells = getAvailableCellsInColumn(lastSelectedColumn); // Csak az utoljára választott oszlopból választhat
+        let availableCells;
+
+        if (lastSelectedColumn !== null) {
+            // Ha a játékos már lépett, csak az utoljára választott oszlopból választhat
+            availableCells = getAvailableCellsInColumn(lastSelectedColumn);
+        } else {
+            // Ha a játékos még nem lépett, az AI az összes elérhető cella közül választhat
+            availableCells = getAvailableCells();
+        }
 
         if (availableCells.length > 0) {
             let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
@@ -122,6 +129,18 @@ function getAvailableCellsInColumn(column) {
     return availableCells;
 }
 
+function getAvailableCells() {
+    let availableCells = [];
+    for (let i = 0; i < board.rows; i++) {
+        for (let j = 0; j < board.columns; j++) {
+            if (board.cells[i][j] !== '•') {
+                availableCells.push({ row: i, column: j });
+            }
+        }
+    }
+    return availableCells;
+}
+
 function checkEndGame() {
     if (!isPlayerTurn && !canComputerMove() || isPlayerTurn && !canPlayerMove()) {
         endGame();
@@ -142,6 +161,8 @@ function endGame() {
     document.getElementById('end-game-message').style.display = 'block';
     document.getElementById('winner-message').textContent = winner;
 }
+
+
 
 
 
