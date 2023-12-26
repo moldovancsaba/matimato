@@ -82,7 +82,9 @@ function canPlayerMove() {
 }
 
 function computerMove() {
-    let availableCells = lastSelectedRow != null ? getAvailableCellsInRow(lastSelectedRow) : getAvailableCells();
+    // Csak az utoljára kiválasztott sorban lévő cellák közül választhat
+    let availableCells = lastSelectedRow != null ? getAvailableCellsInRow(lastSelectedRow) : [];
+
     if (availableCells.length > 0) {
         let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
         aiScore += board.cells[maxCell.row][maxCell.column];
@@ -90,7 +92,7 @@ function computerMove() {
         highlightCell(maxCell.row, maxCell.column);
         highlightColumn(maxCell.column); // Oszlop kiemelése
         isPlayerTurn = true;
-        lastSelectedColumn = maxCell.column;
+        lastSelectedColumn = maxCell.column; // Frissíti az utoljára kiválasztott oszlopot
         updateScoreDisplay();
     } else {
         // Ha a számítógép nem tud lépni, ellenőrizzük, hogy a játék véget ért-e
