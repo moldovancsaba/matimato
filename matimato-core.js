@@ -67,7 +67,7 @@ function handleCellClick(row, column) {
         playerScore += board.cells[row][column];
         board.cells[row][column] = '•';
         highlightCell(row, column);
-        highlightColumn(column); // Oszlop kiemelése
+        highlightRow(row); // Sor kiemelése - Megfordítva
         isPlayerTurn = false;
         updateScoreDisplay();
         lastSelectedRow = row; // Az utoljára választott sor mentése
@@ -83,7 +83,7 @@ function computerMove() {
         aiScore += board.cells[selectedCell.row][selectedCell.column];
         board.cells[selectedCell.row][selectedCell.column] = '•';
         highlightCell(selectedCell.row, selectedCell.column);
-        highlightRow(selectedCell.row); // Sor kiemelése
+        highlightColumn(selectedCell.column); // Oszlop kiemelése - Megfordítva
         isPlayerTurn = true;
         lastSelectedColumn = selectedCell.column; // Az utoljára választott oszlop mentése
         updateScoreDisplay();
