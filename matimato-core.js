@@ -209,6 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // #MM0006 Start and End Game Logic
 //------------------------------
 
+// #MM0006 Start and End Game Logic
 document.addEventListener('DOMContentLoaded', () => {
     // Kezdetben csak a Start gomb látható
     hideGame();
@@ -218,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function hideGame() {
     document.getElementById('board').style.display = 'none';
-    document.getElementById('score').style.display = 'none';
+    document.getElementById('score').style.display = 'none'; // Kezdetben elrejtjük az eredmény kijelzőt
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('start-screen').style.display = 'block';
 }
@@ -229,8 +230,10 @@ function startGame() {
     updateScoreDisplay();
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block';
-    computerMove(); // Az AI első lépése
+    document.getElementById('score').style.display = 'block'; // Megjelenítjük az eredmény kijelzőt
+    if (!isPlayerTurn) {
+        computerMove(); // Az AI első lépése, ha ő kezd
+    }
 }
 
 function restartGame() {
@@ -239,8 +242,10 @@ function restartGame() {
     updateScoreDisplay();
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block';
-    computerMove(); // Az AI első lépése
+    document.getElementById('score').style.display = 'block'; // Megjelenítjük az eredmény kijelzőt
+    if (!isPlayerTurn) {
+        computerMove(); // Az AI első lépése, ha ő kezd
+    }
 }
 
 function resetGameVariables() {
@@ -256,6 +261,8 @@ function resetGameVariables() {
 function computerMove() {
     if (!isPlayerTurn) {
         let availableCells = getAvailableCells();
+
+        // További logika...
     }
 }
 
