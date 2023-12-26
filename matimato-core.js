@@ -196,3 +196,56 @@ document.addEventListener('DOMContentLoaded', () => {
     createBoard();
     updateScoreDisplay();
 });
+
+//--------------------------------------------------
+//--------------------------------------------------
+
+// #MM0006 Start and End Game Logic
+document.addEventListener('DOMContentLoaded', () => {
+    // Start gomb eseménykezelője
+    const startButton = document.getElementById('start-button');
+    startButton.addEventListener('click', () => {
+        startGame();
+    });
+
+    // Restart gomb eseménykezelője
+    const restartButton = document.getElementById('restart-button');
+    restartButton.addEventListener('click', () => {
+        restartGame();
+    });
+});
+
+function startGame() {
+    createBoard();
+    updateScoreDisplay();
+    document.getElementById('start-button').style.display = 'none'; // Elrejti a Start gombot
+    document.getElementById('board').style.display = 'grid'; // Megjeleníti a játéktáblát
+}
+
+function restartGame() {
+    resetGameVariables();
+    startGame();
+    document.getElementById('end-game-message').style.display = 'none'; // Elrejti a játék végi üzenetet
+}
+
+function endGame() {
+    document.getElementById('board').style.display = 'none'; // Elrejti a játéktáblát
+    const winnerMessage = document.getElementById('winner-message');
+    const winner = playerScore > aiScore ? 'You win!' : aiScore > playerScore ? 'AI wins!' : 'It\'s a tie!';
+    winnerMessage.textContent = winner;
+    document.getElementById('end-game-message').style.display = 'block'; // Megjeleníti a játék végi üzenetet
+}
+
+function resetGameVariables() {
+    // Újraindítja a játékot a kezdeti állapotba
+    board = new Board(5, 5);
+    playerScore = 0;
+    aiScore = 0;
+    isPlayerTurn = true;
+    lastSelectedRow = null;
+    lastSelectedColumn = null;
+}
+
+
+//--------------------------------------------------
+//--------------------------------------------------
