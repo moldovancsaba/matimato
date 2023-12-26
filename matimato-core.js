@@ -29,7 +29,7 @@ class Board {
 const board = new Board(5, 5);
 let playerScore = 0;
 let aiScore = 0;
-let isPlayerTurn = true; // A játékos kezdi
+let isPlayerTurn = false; // A számítógép kezdi
 
 //------------------------------
 // #MM0002 Create Gamefield
@@ -71,7 +71,7 @@ function handleCellClick(row, column) {
         highlightRow(row); // Sor kiemelése
         isPlayerTurn = false;
         lastSelectedRow = row;
-        setTimeout(computerMove, 1000);
+        setTimeout(computerMove, 500);
     }
     updateScoreDisplay();
     checkEndGame();
@@ -82,15 +82,7 @@ function canPlayerMove() {
 }
 
 function computerMove() {
-    let availableCells;
-
-    // Ha a játékos már lépett, akkor az AI csak az utoljára kiválasztott sorban lévő cellákból választhat
-    if (lastSelectedRow != null) {
-        availableCells = getAvailableCellsInRow(lastSelectedRow);
-    } else {
-        // Ha a játékos még nem lépett (első kör), akkor az AI az összes elérhető cella közül választhat
-        availableCells = getAvailableCells();
-    }
+    let availableCells = lastSelectedRow != null ? getAvailableCellsInRow(lastSelectedRow) : getAvailableCells();
 
     if (availableCells.length > 0) {
         let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
@@ -145,7 +137,7 @@ function endGame() {
 }
 
 //------------------------------
-// #MM0004 UI Functions
+// #MM0004 User Interface Functions
 //------------------------------
 
 function highlightCell(row, column) {
@@ -189,12 +181,6 @@ function updateScoreDisplay() {
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
 
-// A játék indítása
-document.addEventListener('DOMContentLoaded', () => {
-    createBoard();
-    updateScoreDisplay();
-});
-
 //------------------------------
 // #MM0005 Initialize Game
 //------------------------------
@@ -220,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 //------------------------------
-// #MM0006 Start and End Logic
+// #MM0006 Start and End Game Logic
 //------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -260,9 +246,12 @@ function resetGameVariables() {
     board = new Board(5, 5);
     playerScore = 0;
     aiScore = 0;
-    isPlayerTurn = true;
+    isPlayerTurn = false; // A számítógép kezdi a játékot
     lastSelectedRow = null;
     lastSelectedColumn = null;
+
+    // Az AI első lépése
+    setTimeout(computerMove, 500);
 }
 
 //------------------------------
