@@ -197,8 +197,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start gomb eseménykezelője
     document.getElementById('start-button').addEventListener('click', startGame);
 
-    // Restart gomb eseménykezelője
-    document.getElementById('restart-button').addEventListener('click', startGame);
+    // Restart gomb eseménykezelője: Az oldal újratöltése
+    document.getElementById('restart-button').addEventListener('click', () => {
+        window.location.reload();
+    });
 
     // Játéktábla és eredményjelző elrejtése induláskor
     document.getElementById('board').style.display = 'none';
