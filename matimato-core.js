@@ -226,7 +226,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function hideGame() {
     document.getElementById('board').style.display = 'none';
-    document.getElementById('score').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('start-screen').style.display = 'block';
 }
@@ -237,7 +236,7 @@ function startGame() {
     updateScoreDisplay();
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block'; // Megjeleníti a pontszámot
+    // A pontszámok mindig láthatóak maradnak
 }
 
 function restartGame() {
@@ -246,7 +245,7 @@ function restartGame() {
     updateScoreDisplay();
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block'; // Megjeleníti a pontszámot
+    // A pontszámok mindig láthatóak maradnak
 }
 
 function resetGameVariables() {
