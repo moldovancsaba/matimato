@@ -249,42 +249,35 @@ function resetGame() {
 document.addEventListener('DOMContentLoaded', () => {
     // Start gomb eseménykezelője
     const startButton = document.getElementById('start-button');
-    startButton.addEventListener('click', () => {
-        startGame();
-    });
+    startButton.addEventListener('click', startGame);
 
     // Restart gomb eseménykezelője
     const restartButton = document.getElementById('restart-button');
-    restartButton.addEventListener('click', () => {
-        restartGame();
-    });
+    restartButton.addEventListener('click', restartGame);
+
+    // Kezdetben csak a Start gomb látható
+    document.getElementById('board').style.display = 'none';
+    document.getElementById('score').style.display = 'none';
+    document.getElementById('end-game-message').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'block';
 });
 
 function startGame() {
     resetGameVariables();
     createBoard();
     updateScoreDisplay();
-    document.getElementById('start-screen').style.display = 'none'; // Elrejti a kezdőképernyőt
-    document.getElementById('board').style.display = 'grid'; // Megjeleníti a játéktáblát
-    document.getElementById('score').style.display = 'block'; // Megjeleníti az eredményjelzőt
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('board').style.display = 'grid';
+    document.getElementById('score').style.display = 'block';
 }
 
 function restartGame() {
     resetGameVariables();
     createBoard();
     updateScoreDisplay();
-    document.getElementById('end-game-message').style.display = 'none'; // Elrejti a játék végi üzenetet
-    document.getElementById('board').style.display = 'grid'; // Megjeleníti a játéktáblát
-    document.getElementById('score').style.display = 'block'; // Megjeleníti az eredményjelzőt
-}
-
-function endGame() {
-    document.getElementById('board').style.display = 'none'; // Elrejti a játéktáblát
-    document.getElementById('score').style.display = 'none'; // Elrejti az eredményjelzőt
-    const winnerMessage = document.getElementById('winner-message');
-    const winner = playerScore > aiScore ? 'You win!' : aiScore > playerScore ? 'AI wins!' : 'It\'s a tie!';
-    winnerMessage.textContent = winner;
-    document.getElementById('end-game-message').style.display = 'block'; // Megjeleníti a játék végi üzenetet
+    document.getElementById('end-game-message').style.display = 'none';
+    document.getElementById('board').style.display = 'grid';
+    document.getElementById('score').style.display = 'block';
 }
 
 function resetGameVariables() {
