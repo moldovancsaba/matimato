@@ -195,23 +195,25 @@ document.addEventListener('DOMContentLoaded', () => {
 // #MM0005 Initialize Game
 document.addEventListener('DOMContentLoaded', () => {
     // Start gomb eseménykezelője
-    document.getElementById('start-button').addEventListener('click', () => {
-        document.getElementById('start-screen').style.display = 'none';
-        document.getElementById('board').style.display = 'grid';
-        resetGame();
-    });
+    document.getElementById('start-button').addEventListener('click', startGame);
 
     // Restart gomb eseménykezelője
-    document.getElementById('restart-button').addEventListener('click', () => {
-        document.getElementById('end-game-message').style.display = 'none';
-        document.getElementById('board').style.display = 'grid';
-        resetGame();
-    });
+    document.getElementById('restart-button').addEventListener('click', startGame);
 
     // Játéktábla és eredményjelző elrejtése induláskor
     document.getElementById('board').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'block';
 });
+
+function startGame() {
+    // Játék kezdőképernyő és vége üzenet elrejtése
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('end-game-message').style.display = 'none';
+
+    // Új tábla létrehozása és a játék alaphelyzetbe állítása
+    resetGame();
+}
 
 function resetGame() {
     // Új tábla létrehozása
@@ -219,6 +221,9 @@ function resetGame() {
     playerScore = 0;
     aiScore = 0;
     isPlayerTurn = true;
+    lastSelectedRow = null;
+    lastSelectedColumn = null;
+
     createBoard(); // Játéktábla újrarajzolása az új táblával
     updateScoreDisplay(); // Pontszámok frissítése
 }
