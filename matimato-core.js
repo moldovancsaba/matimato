@@ -43,19 +43,17 @@ function createBoard() {
     }
 }
 
-// #MM0003 Game Logic - Módosított rész
+// #MM0003 Game Logic
 
-function computerMove() {
-    let availableCells = getAvailableCells();
-    if (availableCells.length > 0) {
-        let randomIndex = Math.floor(Math.random() * availableCells.length);
-        let selectedCell = availableCells[randomIndex];
-        aiScore += board.cells[selectedCell.row][selectedCell.column];
-        board.cells[selectedCell.row][selectedCell.column] = '•';
-        highlightCell(selectedCell.row, selectedCell.column); // Cell kiemelése
-        highlightRow(selectedCell.row); // Sor kiemelése - Javítva
-        isPlayerTurn = true;
+function handleCellClick(row, column) {
+    if (isPlayerTurn && board.cells[row][column] !== '•') {
+        playerScore += board.cells[row][column];
+        board.cells[row][column] = '•';
+        highlightCell(row, column);
+        highlightColumn(column); // Oszlop kiemelése
+        isPlayerTurn = false;
         updateScoreDisplay();
+        setTimeout(computerMove, 1000);
     }
 }
 
@@ -66,7 +64,7 @@ function computerMove() {
         let selectedCell = availableCells[randomIndex];
         aiScore += board.cells[selectedCell.row][selectedCell.column];
         board.cells[selectedCell.row][selectedCell.column] = '•';
-        highlightCell(selectedCell.row, selectedCell.column); // Cell kiemelése
+        highlightCell(selectedCell.row, selectedCell.column);
         highlightRow(selectedCell.row); // Sor kiemelése
         isPlayerTurn = true;
         updateScoreDisplay();
