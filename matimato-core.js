@@ -108,7 +108,7 @@ function computerMove() {
         let availableCells = getAvailableCellsInRow(lastSelectedRow); // Csak az utoljára választott sorból választhat
 
         if (availableCells.length > 0) {
-            let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
+            let maxCell = availableCells[Math.floor(Math.random() * availableCells.length)]; // Véletlenszerű választás
             aiScore += board.cells[maxCell.row][maxCell.column];
             board.cells[maxCell.row][maxCell.column] = '•';
             highlightCell(maxCell.row, maxCell.column);
@@ -136,6 +136,24 @@ function checkEndGame() {
     if (!isPlayerTurn && !canComputerMove() || isPlayerTurn && !canPlayerMove()) {
         endGame();
     }
+}
+
+function canComputerMove() {
+    return getAvailableCellsInRow(lastSelectedRow).length > 0;
+}
+
+function canPlayerMove() {
+    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
+}
+
+function getAvailableCellsInColumn(column) {
+    let availableCells = [];
+    for (let i = 0; i < board.rows; i++) {
+        if (board.cells[i][column] !== '•') {
+            availableCells.push({ row: i, column: column });
+        }
+    }
+    return availableCells;
 }
 
 function endGame() {
