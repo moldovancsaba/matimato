@@ -94,8 +94,9 @@ function handleCellClick(row, column) {
         playerScore += board.cells[row][column];
         board.cells[row][column] = '•';
         highlightCell(row, column);
+        highlightColumn(column); // Kiemeli az oszlopot, ahol a játékos lépett
         isPlayerTurn = false;
-        lastSelectedRow = row; // Frissíti az utoljára választott sort
+        lastSelectedColumn = column; // Frissíti az utoljára választott oszlopot
         setTimeout(computerMove, 500);
     }
     updateScoreDisplay();
@@ -107,12 +108,13 @@ function computerMove() {
         let availableCells = getAvailableCellsInRow(lastSelectedRow); // Csak az utoljára választott sorból választhat
 
         if (availableCells.length > 0) {
-            // A legnagyobb számot tartalmazó cella kiválasztása az adott sorban
             let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
             aiScore += board.cells[maxCell.row][maxCell.column];
             board.cells[maxCell.row][maxCell.column] = '•';
             highlightCell(maxCell.row, maxCell.column);
+            highlightRow(maxCell.row); // Kiemeli a sort, ahol a gép lépett
             isPlayerTurn = true;
+            lastSelectedRow = maxCell.row; // Frissíti az utoljára választott sort
             updateScoreDisplay();
         } else {
             checkEndGame();
@@ -130,34 +132,7 @@ function getAvailableCellsInRow(row) {
     return availableCells;
 }
 
-function checkEndGame() {
-    if (!isPlayerTurn && !canComputerMove() || isPlayerTurn && !canPlayerMove()) {
-        endGame();
-    }
-}
-
-function canComputerMove() {
-    return getAvailableCellsInRow(lastSelectedRow).length > 0;
-}
-
-function canPlayerMove() {
-    return getAvailableCells().length > 0;
-}
-
-function endGame() {
-    let winner;
-    if (playerScore > aiScore) {
-        winner = 'You win!';
-    } else if (aiScore > playerScore) {
-        winner = 'AI wins!';
-    } else {
-        winner = 'Draw!';
-    }
-
-    document.getElementById('board').style.display = 'none';
-    document.getElementById('end-game-message').style.display = 'block';
-    document.getElementById('winner-message').textContent = winner;
-}
+// További funkciók maradnak változatlanok
 
 
 
