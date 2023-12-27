@@ -88,35 +88,27 @@ let lastSelectedRow = null; // Utoljára választott sor
 let lastSelectedColumn = null; // Utoljára választott oszlop
 
 function handleCellClick(row, column) {
-    if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedRow === null || lastSelectedRow === row)) {
+    if (isPlayerTurn && board.cells[row][column] !== '•') {
         playerScore += board.cells[row][column];
         board.cells[row][column] = '•';
         highlightCell(row, column);
-        highlightRow(row); // Sor kiemelése
         isPlayerTurn = false;
-        lastSelectedRow = row; // Frissíti az utoljára választott sort
         setTimeout(computerMove, 500);
     }
     updateScoreDisplay();
     checkEndGame();
 }
 
-function canPlayerMove() {
-    return lastSelectedRow === null ? getAvailableCells().length > 0 : getAvailableCellsInRow(lastSelectedRow).length > 0;
-}
-
 function computerMove() {
     if (!isPlayerTurn) {
-        let availableCells = getAvailableCellsInColumn(lastSelectedColumn);
+        let availableCells = getAvailableCells();
 
         if (availableCells.length > 0) {
             let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
             aiScore += board.cells[maxCell.row][maxCell.column];
             board.cells[maxCell.row][maxCell.column] = '•';
             highlightCell(maxCell.row, maxCell.column);
-            highlightColumn(maxCell.column);
             isPlayerTurn = true;
-            lastSelectedRow = maxCell.row; // Frissíti az utoljára választott sort
             updateScoreDisplay();
         } else {
             checkEndGame();
@@ -124,24 +116,30 @@ function computerMove() {
     }
 }
 
-function getAvailableCellsInColumn(column) {
+function getAvailableCells() {
     let availableCells = [];
     for (let i = 0; i < board.rows; i++) {
-        if (board.cells[i][column] !== '•') {
-            availableCells.push({ row: i, column: column });
+        for (let j = 0; j < board.columns; j++) {
+            if (board.cells[i][j] !== '•') {
+                availableCells.push({ row: i, column: j });
+            }
         }
     }
     return availableCells;
-}
-
-function canComputerMove() {
-    return getAvailableCellsInRow(lastSelectedRow).length > 0;
 }
 
 function checkEndGame() {
     if (!isPlayerTurn && !canComputerMove() || isPlayerTurn && !canPlayerMove()) {
         endGame();
     }
+}
+
+function canComputerMove() {
+    return getAvailableCells().length > 0;
+}
+
+function canPlayerMove() {
+    return getAvailableCells().length > 0;
 }
 
 function endGame() {
@@ -151,13 +149,14 @@ function endGame() {
     } else if (aiScore > playerScore) {
         winner = 'AI wins!';
     } else {
-        winner = isPlayerTurn ? 'AI wins!' : 'You win!';
+        winner = 'Draw!';
     }
 
     document.getElementById('board').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'block';
     document.getElementById('winner-message').textContent = winner;
 }
+
 
 
 
