@@ -1,7 +1,7 @@
 //------------------------------
 // matimato-core.js
 //------------------------------
-// CODE STARTS HERE
+// JAVASCRIPT STARTS HERE
 //------------------------------
 
 
@@ -344,5 +344,5 @@ function hideGame() {
 //------------------------------
 // CREATED BY MOLDOVAN
 //------------------------------
-// CODE WRITTEN BY GPT
+// JAVASCRIPT CODE WRITTEN BY GPT
 //------------------------------

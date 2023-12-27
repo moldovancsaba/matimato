@@ -1,3 +1,10 @@
+/*----------------------------*/
+/* environment.css */
+/*----------------------------*/
+/* CSS STARTS HERE */
+/*----------------------------*/
+
+
 /* environment.css */
 html, body {
     overflow: hidden; /* Görgetés letiltása */
@@ -11,3 +18,12 @@ html, body {
     -moz-user-select: none; /* Firefox */
     -ms-user-select: none; /* Internet Explorer/Edge */
 }
+
+
+/*----------------------------*/
+/* END OF CSS */
+/*----------------------------*/
+/* CREATED BY MOLDOVAN */
+/*----------------------------*/
+/* CSS WRITTEN BY GPT */
+/*----------------------------*/

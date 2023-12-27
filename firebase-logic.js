@@ -1,7 +1,7 @@
 //------------------------------
 // firebase-logic.js
 //------------------------------
-// CODE STARTS HERE
+// JAVASCRIPT STARTS HERE
 //------------------------------
 
 
@@ -39,9 +39,9 @@ export { saveGameStats };
 
 
 //------------------------------
-// END OF CODE
+// END OF JAVASCRIPT
 //------------------------------
 // CREATED BY MOLDOVAN
 //------------------------------
-// CODE WRITTEN BY GPT
+// JAVASCRIPT WRITTEN BY GPT
 //------------------------------
