@@ -4,8 +4,6 @@
 /* CSS STARTS HERE ------------*/
 /* ----------------------------*/
 
-
-
 .board {
     display: grid;
     grid-template-columns: repeat(5, 1fr); /* Equal columns */
@@ -74,8 +72,6 @@
     font-size: 8vw; /* Very large font size */
     font-weight: bold; /* Bold text */
 }
-
-
 
 /*-----------------------------*/
 /* END OF CSS -----------------*/
