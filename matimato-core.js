@@ -7,6 +7,8 @@
 
 
 
+
+
 //------------------------------
 // #MM0001 Global variables
 //------------------------------
@@ -39,6 +41,8 @@ let isPlayerTurn = true; // A játékos kezdi
 
 
 
+
+
 //------------------------------
 // #MM0002 Create Gamefield
 //------------------------------
@@ -63,6 +67,8 @@ function createBoard() {
         boardElement.appendChild(rowDiv);
     }
 }
+
+
 
 
 
@@ -126,6 +132,8 @@ function canComputerMove() {
 
 
 
+
+
 //------------------------------
 // #MM0004 User Interface Functions
 //------------------------------
@@ -174,6 +182,8 @@ function updateScoreDisplay() {
 
 
 
+
+
 //------------------------------
 // #MM0005 Initialize Game
 //------------------------------
@@ -195,6 +205,8 @@ function resetGame() {
     createBoard();
     updateScoreDisplay();
 }
+
+
 
 
 
