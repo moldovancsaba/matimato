@@ -1,3 +1,12 @@
+//------------------------------
+// firebase.js
+//------------------------------
+// CODE STARTS HERE
+//------------------------------
+
+
+
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
@@ -13,3 +22,14 @@ const firebaseConfig = {
 
 const firebaseApp = initializeApp(firebaseConfig);
 const database = getDatabase(firebaseApp);
+
+
+
+
+//------------------------------
+// END OF CODE
+//------------------------------
+// CREATED BY MOLDOVAN
+//------------------------------
+// CODE WRITTEN BY GPT
+//------------------------------
