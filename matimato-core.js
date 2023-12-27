@@ -12,9 +12,9 @@
 
 
 
-//------------------------------
+//--------------------------------------------------------------------
 // #MM0001 Global variables
-//------------------------------
+//--------------------------------------------------------------------
 
 class Board {
     constructor(rows, columns) {
@@ -49,9 +49,9 @@ let isPlayerTurn = true; // A játékos kezdi
 
 
 
-//------------------------------
+//--------------------------------------------------------------------
 // #MM0002 Create Gamefield
-//------------------------------
+//--------------------------------------------------------------------
 
 function createBoard() {
     const boardElement = document.getElementById('board');
@@ -82,9 +82,9 @@ function createBoard() {
 
 
 
-//------------------------------
+//--------------------------------------------------------------------
 // #MM0003 Game Logic
-//------------------------------
+//--------------------------------------------------------------------
 
 let lastSelectedRow = null; // Utoljára választott sor
 let lastSelectedColumn = null; // Utoljára választott oszlop
@@ -199,9 +199,9 @@ function getAvailableCells() {
 
 
 
-//------------------------------
+//--------------------------------------------------------------------
 // #MM0004 UI Functions
-//------------------------------
+//--------------------------------------------------------------------
 
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
@@ -251,9 +251,9 @@ function updateScoreDisplay() {
 
 
 
-//------------------------------
+//--------------------------------------------------------------------
 // #MM0005 Initialize Game and Firebase Logic
-//------------------------------
+//--------------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
     // Display the game board and score when the page loads
@@ -322,9 +322,9 @@ function saveToFirebase(gameResult) {
 
 
 
-//------------------------------
+//--------------------------------------------------------------------
 // #MM0006 Start & End
-//------------------------------
+//--------------------------------------------------------------------
 
 function hideGame() {
     document.getElementById('board').style.display = 'none';
