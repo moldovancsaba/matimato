@@ -90,13 +90,11 @@ let lastSelectedRow = null; // Utoljára választott sor
 let lastSelectedColumn = null; // Utoljára választott oszlop
 
 function handleCellClick(row, column) {
-    if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedColumn === null || lastSelectedColumn === column)) {
+    if (isPlayerTurn && board.cells[row][column] !== '•') {
         playerScore += board.cells[row][column];
         board.cells[row][column] = '•';
         highlightCell(row, column);
-        highlightColumn(column); // Kiemeli az oszlopot
         isPlayerTurn = false;
-        lastSelectedColumn = column; // Frissíti az utoljára választott oszlopot
         setTimeout(computerMove, 500);
     }
     updateScoreDisplay();
@@ -105,16 +103,15 @@ function handleCellClick(row, column) {
 
 function computerMove() {
     if (!isPlayerTurn) {
-        let availableCells = getAvailableCellsInRow(lastSelectedRow); // Csak az utoljára választott sorból választhat
+        let availableCells = getAvailableCells();
 
         if (availableCells.length > 0) {
-            let maxCell = availableCells[Math.floor(Math.random() * availableCells.length)]; // Véletlenszerű választás
-            aiScore += board.cells[maxCell.row][maxCell.column];
-            board.cells[maxCell.row][maxCell.column] = '•';
-            highlightCell(maxCell.row, maxCell.column);
-            highlightRow(maxCell.row); // Kiemeli a sort
+            let randomIndex = Math.floor(Math.random() * availableCells.length);
+            let selectedCell = availableCells[randomIndex];
+            aiScore += board.cells[selectedCell.row][selectedCell.column];
+            board.cells[selectedCell.row][selectedCell.column] = '•';
+            highlightCell(selectedCell.row, selectedCell.column);
             isPlayerTurn = true;
-            lastSelectedRow = maxCell.row; // Frissíti az utoljára választott sort
             updateScoreDisplay();
         } else {
             checkEndGame();
@@ -122,11 +119,13 @@ function computerMove() {
     }
 }
 
-function getAvailableCellsInRow(row) {
+function getAvailableCells() {
     let availableCells = [];
-    for (let j = 0; j < board.columns; j++) {
-        if (board.cells[row][j] !== '•') {
-            availableCells.push({ row: row, column: j });
+    for (let i = 0; i < board.rows; i++) {
+        for (let j = 0; j < board.columns; j++) {
+            if (board.cells[i][j] !== '•') {
+                availableCells.push({ row: i, column: j });
+            }
         }
     }
     return availableCells;
@@ -139,21 +138,11 @@ function checkEndGame() {
 }
 
 function canComputerMove() {
-    return getAvailableCellsInRow(lastSelectedRow).length > 0;
+    return getAvailableCells().length > 0;
 }
 
 function canPlayerMove() {
-    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
-}
-
-function getAvailableCellsInColumn(column) {
-    let availableCells = [];
-    for (let i = 0; i < board.rows; i++) {
-        if (board.cells[i][column] !== '•') {
-            availableCells.push({ row: i, column: column });
-        }
-    }
-    return availableCells;
+    return getAvailableCells().length > 0;
 }
 
 function endGame() {
