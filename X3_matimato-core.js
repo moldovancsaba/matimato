@@ -90,41 +90,49 @@ let lastSelectedRow = null; // Utoljára választott sor
 let lastSelectedColumn = null; // Utoljára választott oszlop
 
 function handleCellClick(row, column) {
-    if (isPlayerTurn && board.cells[row][column] !== '•') {
+    if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedRow === null || lastSelectedRow === row)) {
         playerScore += board.cells[row][column];
         board.cells[row][column] = '•';
         highlightCell(row, column);
+        highlightColumn(column); // Kiemeli az oszlopot, ahol a játékos lépett
         isPlayerTurn = false;
-        lastSelectedRow = row; // Frissíti az utoljára választott sort
+        lastSelectedColumn = column; // Frissíti az utoljára választott oszlopot
         setTimeout(computerMove, 500);
     }
     updateScoreDisplay();
-    checkEndGame();
 }
 
 function computerMove() {
     if (!isPlayerTurn) {
-        let availableCells = getAvailableCellsInRow(lastSelectedRow); // Csak az utoljára választott sorból választhat
+        let availableCells = getAvailableCellsInColumn(lastSelectedColumn); // Csak az utoljára választott oszlopból választhat
 
         if (availableCells.length > 0) {
-            // A legnagyobb számot tartalmazó cella kiválasztása az adott sorban
             let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
             aiScore += board.cells[maxCell.row][maxCell.column];
             board.cells[maxCell.row][maxCell.column] = '•';
             highlightCell(maxCell.row, maxCell.column);
+            highlightRow(maxCell.row); // Kiemeli a sort, ahol a gép lépett
             isPlayerTurn = true;
+            lastSelectedRow = maxCell.row; // Frissíti az utoljára választott sort
             updateScoreDisplay();
+            checkPlayerMovePossibility(); // Ellenőrzi, hogy a játékos léphet-e
         } else {
             checkEndGame();
         }
     }
 }
 
-function getAvailableCellsInRow(row) {
+function checkPlayerMovePossibility() {
+    if (!canPlayerMove()) {
+        endGame();
+    }
+}
+
+function getAvailableCellsInColumn(column) {
     let availableCells = [];
-    for (let j = 0; j < board.columns; j++) {
-        if (board.cells[row][j] !== '•') {
-            availableCells.push({ row: row, column: j });
+    for (let i = 0; i < board.rows; i++) {
+        if (board.cells[i][column] !== '•') {
+            availableCells.push({ row: i, column: column });
         }
     }
     return availableCells;
@@ -134,14 +142,6 @@ function checkEndGame() {
     if (!isPlayerTurn && !canComputerMove() || isPlayerTurn && !canPlayerMove()) {
         endGame();
     }
-}
-
-function canComputerMove() {
-    return getAvailableCellsInRow(lastSelectedRow).length > 0;
-}
-
-function canPlayerMove() {
-    return getAvailableCells().length > 0;
 }
 
 function endGame() {
@@ -158,6 +158,37 @@ function endGame() {
     document.getElementById('end-game-message').style.display = 'block';
     document.getElementById('winner-message').textContent = winner;
 }
+
+function canComputerMove() {
+    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
+}
+
+function canPlayerMove() {
+    return getAvailableCellsInRow(lastSelectedRow).length > 0;
+}
+
+function getAvailableCellsInRow(row) {
+    let availableCells = [];
+    for (let j = 0; j < board.columns; j++) {
+        if (board.cells[row][j] !== '•') {
+            availableCells.push({ row: row, column: j });
+        }
+    }
+    return availableCells;
+}
+
+function getAvailableCells() {
+    let availableCells = [];
+    for (let i = 0; i < board.rows; i++) {
+        for (let j = 0; j < board.columns; j++) {
+            if (board.cells[i][j] !== '•') {
+                availableCells.push({ row: i, column: j });
+            }
+        }
+    }
+    return availableCells;
+}
+
 
 
 

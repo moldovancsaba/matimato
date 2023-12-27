@@ -252,19 +252,19 @@ function updateScoreDisplay() {
 
 
 
-
 //------------------------------
 // #MM0005 Initialize Game
 //------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Játéktábla és eredményjelző megjelenítése az oldal betöltésekor
+    // Display the game board and score when the page loads
     resetGame();
     document.getElementById('board').style.display = 'grid';
     document.getElementById('score').style.display = 'block';
 
-    // Restart gomb eseménykezelője
-    document.getElementById('restart-button').addEventListener('click', () => {
+    // Event handler for the Save and Restart button
+    document.getElementById('save-and-restart-button').addEventListener('click', () => {
+        saveGameResult();
         resetGame();
         document.getElementById('board').style.display = 'grid';
         document.getElementById('score').style.display = 'block';
@@ -276,12 +276,42 @@ function resetGame() {
     board = new Board(5, 5);
     playerScore = 0;
     aiScore = 0;
-    isPlayerTurn = true; // A játékos kezdi
+    isPlayerTurn = true; // Player starts the game
     lastSelectedRow = null;
     lastSelectedColumn = null;
     createBoard();
     updateScoreDisplay();
 }
+
+function saveGameResult() {
+    const playerNameInput = document.getElementById('player-name');
+    const playerName = playerNameInput.value.trim() || generateRandomName();
+    const gameResult = {
+        playerName: playerName,
+        timestamp: new Date().toISOString(),
+        score: `Player: ${playerScore}, AI: ${aiScore}`
+    };
+
+    // Save to Firebase database
+    saveToFirebase(gameResult);
+    playerNameInput.value = ''; // Clear the input field
+}
+
+function generateRandomName() {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let randomName = '';
+    for (let i = 0; i < 3; i++) {
+        randomName += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+    }
+    return randomName;
+}
+
+// Firebase save function (to be implemented later)
+function saveToFirebase(gameResult) {
+    // Firebase saving logic will be implemented here
+}
+
+
 
 
 
@@ -297,12 +327,16 @@ function resetGame() {
 
 function hideGame() {
     document.getElementById('board').style.display = 'none';
-    document.getElementById('score').style.display = 'none'; // Kezdetben elrejtjük az eredmény kijelzőt
+    document.getElementById('score').style.display = 'none'; // Hide the score initially
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('start-screen').style.display = 'block';
 }
 
-// A "startGame" és "restartGame" funkciók törlése, mivel már nincs rájuk szükség
+
+
+
+
+
 
 //------------------------------
 // END OF CODE
