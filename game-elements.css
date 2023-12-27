@@ -32,6 +32,7 @@
     align-items: center;
     justify-content: center;
     user-select: none;
+    margin: 0.5vw; /* Margin added to create space between rows */
 }
 
 /* Adjustments for landscape orientation */
