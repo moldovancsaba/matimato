@@ -82,7 +82,6 @@ function createBoard() {
 
 
 
-
 //------------------------------
 // #MM0003 Game Logic
 //------------------------------
@@ -101,7 +100,6 @@ function handleCellClick(row, column) {
         setTimeout(computerMove, 500);
     }
     updateScoreDisplay();
-    checkEndGame();
 }
 
 function computerMove() {
@@ -117,9 +115,16 @@ function computerMove() {
             isPlayerTurn = true;
             lastSelectedRow = maxCell.row; // Frissíti az utoljára választott sort
             updateScoreDisplay();
+            checkPlayerMovePossibility(); // Ellenőrzi, hogy a játékos léphet-e
         } else {
             checkEndGame();
         }
+    }
+}
+
+function checkPlayerMovePossibility() {
+    if (!canPlayerMove()) {
+        endGame();
     }
 }
 
@@ -183,6 +188,7 @@ function getAvailableCells() {
     }
     return availableCells;
 }
+
 
 
 
