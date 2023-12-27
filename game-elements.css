@@ -1,14 +1,16 @@
 /* ----------------------------*/
-/* game-elements.css */
+/* game-elements.css ----------*/
 /* ----------------------------*/
-/* CSS STARTS HERE */
+/* CSS STARTS HERE ------------*/
 /* ----------------------------*/
+
+
 
 .board {
     display: grid;
     grid-template-columns: repeat(5, 1fr); /* Equal columns */
     grid-template-rows: repeat(5, 1fr); /* Equal rows */
-    gap: 1vw; /* Uniform gap between cells */
+    gap: 1vw; /* Uniform gap between cells both vertically and horizontally */
     width: 90vw;
     max-width: 90vh; /* Limit width to maintain square shape */
     margin: auto; /* Center the board */
@@ -73,10 +75,12 @@
     font-weight: bold; /* Bold text */
 }
 
+
+
 /*-----------------------------*/
-/* END OF CSS */
+/* END OF CSS -----------------*/
 /* ----------------------------*/
-/* CREATED BY MOLDOVAN */
+/* CREATED BY MOLDOVAN --------*/
 /* ----------------------------*/
-/* CSS CODE WRITTEN BY GPT */
+/* CSS CODE WRITTEN BY GPT ----*/
 /* ----------------------------*/
