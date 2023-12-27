@@ -4,40 +4,37 @@
 /* CSS STARTS HERE */
 /* ----------------------------*/
 
-
-
-
 .board {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 1vw; /* A gombok közötti távolság egyenlő lesz mindenhová */
+    grid-template-columns: repeat(5, 1fr); /* Equal columns */
+    grid-template-rows: repeat(5, 1fr); /* Equal rows */
+    gap: 1vw; /* Uniform gap between cells */
     width: 90vw;
-    margin: auto; /* Középre igazítás */
-    aspect-ratio: 1 / 1;
-    position: absolute; /* Abszolút pozícionálás */
-    top: 50%; /* A képernyő közepén */
-    left: 50%;
-    transform: translate(-50%, -50%); /* Középre igazítás */
+    max-width: 90vh; /* Limit width to maintain square shape */
+    margin: auto; /* Center the board */
+    position: absolute; /* Absolute positioning */
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Centering adjustment */
 }
 
 .cell {
     position: relative;
     cursor: pointer;
     background-color: #063b5f;
-    border-radius: 10%; /* Dinamikus lekerekítés */
-    box-shadow: 0 8% 8% rgba(0, 0, 0, 0.7); /* Dinamikus árnyék */
-    aspect-ratio: 1 / 1; /* Négyzet alakú gombok */
+    border-radius: 10%; /* Rounded corners */
+    box-shadow: 0 8% 8% rgba(0, 0, 0, 0.7); /* Cell shadow */
+    aspect-ratio: 1 / 1; /* Square cells */
     display: flex;
-    font-size: 6vw; /* Dinamikus betűméret */
-    font-weight: 800; /* ExtraBold */
+    font-size: 6vw; /* Responsive font size */
+    font-weight: 800; /* Bold font */
     color: white;
     align-items: center;
     justify-content: center;
     user-select: none;
-    margin: 0.5vw; /* Kis térköz a cellák között */
 }
 
-/* AI és Játékos pontszámainak elhelyezése fekvő módban */
+/* Adjustments for landscape orientation */
 @media (orientation: landscape) {
     .board {
         width: 40vw;
@@ -45,7 +42,7 @@
     }
 
     .cell {
-        font-size: 5vh; /* Kisebb betűméret fekvő módban */
+        font-size: 5vh; /* Smaller font size in landscape */
     }
 
     #ai-score, #player-score {
@@ -55,34 +52,31 @@
     }
 
     #ai-score {
-        right: 15%; /* Jobb oldalon */
+        right: 15%; /* Align to the right */
     }
 
     #player-score {
-        left: 15%; /* Bal oldalon */
+        left: 15%; /* Align to the left */
     }
 }
 
-/* Győztes üzenet megjelenítése */
+/* End game message styling */
 #end-game-message {
-    font-size: 3vw; /* Nagyobb betűméret */
-    color: #ffcc00; /* Fényes szín */
-    text-shadow: 0 0 8px #000; /* Árnyék a jobb láthatóságért */
+    font-size: 3vw; /* Larger font size */
+    color: #ffcc00; /* Bright color */
+    text-shadow: 0 0 8px #000; /* Text shadow for visibility */
 }
 
-/* Nagy méretű győztes üzenet */
+/* Large end game text */
 #end-game-message .end-game-text {
-    font-size: 8vw; /* Nagyon nagy betűméret */
-    font-weight: bold; /* Félkövér betűtípus */
-    color: #ffffff; /* Piros szín a hangsúlyozáshoz */
+    font-size: 8vw; /* Very large font size */
+    font-weight: bold; /* Bold text */
 }
-
-
 
 /*-----------------------------*/
 /* END OF CSS */
 /* ----------------------------*/
 /* CREATED BY MOLDOVAN */
 /* ----------------------------*/
-/* CODE WRITTEN BY GPT */
+/* CSS CODE WRITTEN BY GPT */
 /* ----------------------------*/
