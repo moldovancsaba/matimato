@@ -251,9 +251,8 @@ function updateScoreDisplay() {
 
 
 
-
 //------------------------------
-// #MM0005 Initialize Game
+// #MM0005 Initialize Game and Firebase Logic
 //------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -306,10 +305,12 @@ function generateRandomName() {
     return randomName;
 }
 
-// Firebase save function (to be implemented later)
 function saveToFirebase(gameResult) {
-    // Firebase saving logic will be implemented here
+    const dbRef = firebase.database().ref('games');
+    const newGameRef = dbRef.push();
+    newGameRef.set(gameResult);
 }
+
 
 
 
