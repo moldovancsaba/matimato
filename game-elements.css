@@ -1,7 +1,7 @@
 /* ----------------------------*/
-/* game-elements.css ----------*/
+/* game-elements.css */
 /* ----------------------------*/
-/* CSS STARTS HERE ------------*/
+/* CSS STARTS HERE */
 /* ----------------------------*/
 
 .board {
@@ -10,6 +10,7 @@
     grid-template-rows: repeat(5, 1fr); /* Equal rows */
     gap: 1vw; /* Uniform gap between cells both vertically and horizontally */
     width: 90vw;
+    height: auto; /* Auto height for maintaining aspect ratio */
     max-width: 90vh; /* Limit width to maintain square shape */
     margin: auto; /* Center the board */
     position: absolute; /* Absolute positioning */
@@ -75,9 +76,9 @@
 }
 
 /*-----------------------------*/
-/* END OF CSS -----------------*/
+/* END OF CSS */
 /* ----------------------------*/
-/* CREATED BY MOLDOVAN --------*/
+/* CREATED BY MOLDOVAN */
 /* ----------------------------*/
-/* CSS CODE WRITTEN BY GPT ----*/
+/* CSS CODE WRITTEN BY GPT */
 /* ----------------------------*/
