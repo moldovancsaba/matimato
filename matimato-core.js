@@ -91,7 +91,7 @@ let lastSelectedRow = null; // Utoljára választott sor
 let lastSelectedColumn = null; // Utoljára választott oszlop
 
 function handleCellClick(row, column) {
-    if (isPlayerTurn && board.cells[row][column] !== '•') {
+    if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedRow === null || lastSelectedRow === row)) {
         playerScore += board.cells[row][column];
         board.cells[row][column] = '•';
         highlightCell(row, column);
@@ -159,7 +159,17 @@ function canComputerMove() {
 }
 
 function canPlayerMove() {
-    return getAvailableCells().length > 0;
+    return getAvailableCellsInRow(lastSelectedRow).length > 0;
+}
+
+function getAvailableCellsInRow(row) {
+    let availableCells = [];
+    for (let j = 0; j < board.columns; j++) {
+        if (board.cells[row][j] !== '•') {
+            availableCells.push({ row: row, column: j });
+        }
+    }
+    return availableCells;
 }
 
 function getAvailableCells() {
