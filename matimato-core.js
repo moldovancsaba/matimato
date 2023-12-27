@@ -164,9 +164,8 @@ function endGame() {
 
 
 
-
 //------------------------------
-// #MM0004 User Interface Functions
+// #MM0004 UI Functions
 //------------------------------
 
 function highlightCell(row, column) {
@@ -228,6 +227,14 @@ document.addEventListener('DOMContentLoaded', () => {
     resetGame();
     document.getElementById('board').style.display = 'grid';
     document.getElementById('score').style.display = 'block';
+
+    // Restart gomb eseménykezelője
+    document.getElementById('restart-button').addEventListener('click', () => {
+        resetGame();
+        document.getElementById('board').style.display = 'grid';
+        document.getElementById('score').style.display = 'block';
+        document.getElementById('end-game-message').style.display = 'none';
+    });
 });
 
 function resetGame() {
@@ -250,7 +257,7 @@ function resetGame() {
 
 
 //------------------------------
-// #MM0006 Start and End Game Logic
+// #MM0006 Start & End
 //------------------------------
 
 function hideGame() {
