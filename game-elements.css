@@ -1,4 +1,12 @@
+/* ----------------------------*/
 /* game-elements.css */
+/* ----------------------------*/
+/* CSS STARTS HERE */
+/* ----------------------------*/
+
+
+
+
 .board {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -54,3 +62,26 @@
         left: 15%; /* Bal oldalon */
     }
 }
+
+/* Győztes üzenet megjelenítése */
+#end-game-message {
+    font-size: 3vw; /* Nagyobb betűméret */
+    color: #ffcc00; /* Fényes szín */
+    text-shadow: 0 0 8px #000; /* Árnyék a jobb láthatóságért */
+}
+
+/* Nagy méretű győztes üzenet */
+#end-game-message .end-game-text {
+    font-size: 8vw; /* Nagyon nagy betűméret */
+    font-weight: bold; /* Félkövér betűtípus */
+    color: #ffffff; /* Piros szín a hangsúlyozáshoz */
+}
+
+
+/*-----------------------------*/
+/* END OF CSS */
+/* ----------------------------*/
+/* CREATED BY MOLDOVAN */
+/* ----------------------------*/
+/* CODE WRITTEN BY GPT */
+/* ----------------------------*/
