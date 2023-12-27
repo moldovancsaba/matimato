@@ -1,7 +1,7 @@
 //------------------------------
-// matimato-core.js
+// matimato-core.js ------------
 //------------------------------
-// JAVASCRIPT STARTS HERE
+// JAVASCRIPT STARTS HERE ------
 //------------------------------
 
 
@@ -13,7 +13,7 @@
 
 
 //--------------------------------------------------------------------
-// #MM0001 Global variables
+// #MM0001 Global variables ------------------------------------------
 //--------------------------------------------------------------------
 
 class Board {
@@ -50,7 +50,7 @@ let isPlayerTurn = true; // A játékos kezdi
 
 
 //--------------------------------------------------------------------
-// #MM0002 Create Gamefield
+// #MM0002 Create Gamefield ------------------------------------------
 //--------------------------------------------------------------------
 
 function createBoard() {
@@ -83,7 +83,7 @@ function createBoard() {
 
 
 //--------------------------------------------------------------------
-// #MM0003 Game Logic
+// #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
 
 let lastSelectedRow = null; // Utoljára választott sor
@@ -200,7 +200,7 @@ function getAvailableCells() {
 
 
 //--------------------------------------------------------------------
-// #MM0004 UI Functions
+// #MM0004 UI Functions ----------------------------------------------
 //--------------------------------------------------------------------
 
 function highlightCell(row, column) {
@@ -252,7 +252,7 @@ function updateScoreDisplay() {
 
 
 //--------------------------------------------------------------------
-// #MM0005 Initialize Game and Firebase Logic
+// #MM0005 Initialize Game and Firebase Logic ------------------------
 //--------------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -261,9 +261,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('board').style.display = 'grid';
     document.getElementById('score').style.display = 'block';
 
-    // Event handler for the Save and Restart button
-    document.getElementById('save-and-restart-button').addEventListener('click', () => {
-        saveGameResult();
+    // Event handler for the Restart button
+    document.getElementById('restart-button').addEventListener('click', () => {
         resetGame();
         document.getElementById('board').style.display = 'grid';
         document.getElementById('score').style.display = 'block';
@@ -282,37 +281,6 @@ function resetGame() {
     updateScoreDisplay();
 }
 
-function saveGameResult() {
-    const playerNameInput = document.getElementById('player-name');
-    const playerName = playerNameInput.value.trim() || generateRandomName();
-    const gameResult = {
-        playerName: playerName,
-        timestamp: new Date().toISOString(),
-        score: `Player: ${playerScore}, AI: ${aiScore}`
-    };
-
-    // Save to Firebase database
-    saveToFirebase(gameResult);
-    playerNameInput.value = ''; // Clear the input field
-}
-
-function generateRandomName() {
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let randomName = '';
-    for (let i = 0; i < 3; i++) {
-        randomName += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-    }
-    return randomName;
-}
-
-function saveToFirebase(gameResult) {
-    const dbRef = firebase.database().ref('games');
-    const newGameRef = dbRef.push();
-    newGameRef.set(gameResult);
-}
-
-
-
 
 
 
@@ -323,7 +291,7 @@ function saveToFirebase(gameResult) {
 
 
 //--------------------------------------------------------------------
-// #MM0006 Start & End
+// #MM0006 Start & End -----------------------------------------------
 //--------------------------------------------------------------------
 
 function hideGame() {
@@ -340,9 +308,9 @@ function hideGame() {
 
 
 //------------------------------
-// END OF CODE
+// END OF CODE -----------------
 //------------------------------
-// CREATED BY MOLDOVAN
+// CREATED BY MOLDOVAN ---------
 //------------------------------
-// JAVASCRIPT CODE WRITTEN BY GPT
+// JAVASCRIPT WRITTEN BY GPT ---
 //------------------------------
