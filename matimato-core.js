@@ -9,6 +9,9 @@
 
 
 
+
+
+
 //------------------------------
 // #MM0001 Global variables
 //------------------------------
@@ -37,6 +40,8 @@ let board = new Board(5, 5);
 let playerScore = 0;
 let aiScore = 0;
 let isPlayerTurn = true; // A játékos kezdi
+
+
 
 
 
@@ -73,6 +78,8 @@ function createBoard() {
 
 
 
+
+
 //------------------------------
 // #MM0003 Game Logic
 //------------------------------
@@ -81,13 +88,13 @@ let lastSelectedRow = null; // Utoljára választott sor
 let lastSelectedColumn = null; // Utoljára választott oszlop
 
 function handleCellClick(row, column) {
-    if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedColumn === null || lastSelectedColumn === column)) {
-        playerScore += parseInt(board.cells[row][column]); // Biztosítjuk, hogy a pontszám szám legyen
+    if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedRow === null || lastSelectedRow === row)) {
+        playerScore += board.cells[row][column];
         board.cells[row][column] = '•';
         highlightCell(row, column);
-        highlightColumn(column); // Az oszlop kiemelése
+        highlightRow(row); // Sor kiemelése
         isPlayerTurn = false;
-        lastSelectedColumn = column; // Frissíti az utoljára választott oszlopot
+        lastSelectedRow = row; // Frissíti az utoljára választott sort
         setTimeout(computerMove, 500);
     }
     updateScoreDisplay();
@@ -95,20 +102,19 @@ function handleCellClick(row, column) {
 }
 
 function canPlayerMove() {
-    return lastSelectedColumn === null ? getAvailableCells().length > 0 : getAvailableCellsInColumn(lastSelectedColumn).length > 0;
+    return lastSelectedRow === null ? getAvailableCells().length > 0 : getAvailableCellsInRow(lastSelectedRow).length > 0;
 }
 
 function computerMove() {
     if (!isPlayerTurn) {
-        // Az első lépésnél minden cella elérhető
-        let availableCells = lastSelectedRow == null ? getAvailableCells() : getAvailableCellsInRow(lastSelectedRow);
+        let availableCells = getAvailableCellsInColumn(lastSelectedColumn);
 
         if (availableCells.length > 0) {
             let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
-            aiScore += parseInt(board.cells[maxCell.row][maxCell.column]); // Biztosítjuk, hogy a pontszám szám legyen
+            aiScore += board.cells[maxCell.row][maxCell.column];
             board.cells[maxCell.row][maxCell.column] = '•';
             highlightCell(maxCell.row, maxCell.column);
-            highlightRow(maxCell.row); // A sor kiemelése
+            highlightColumn(maxCell.column);
             isPlayerTurn = true;
             lastSelectedRow = maxCell.row; // Frissíti az utoljára választott sort
             updateScoreDisplay();
@@ -128,14 +134,8 @@ function getAvailableCellsInColumn(column) {
     return availableCells;
 }
 
-function getAvailableCellsInRow(row) {
-    let availableCells = [];
-    for (let j = 0; j < board.columns; j++) {
-        if (board.cells[row][j] !== '•') {
-            availableCells.push({ row: row, column: j });
-        }
-    }
-    return availableCells;
+function canComputerMove() {
+    return getAvailableCellsInRow(lastSelectedRow).length > 0;
 }
 
 function checkEndGame() {
@@ -158,7 +158,6 @@ function endGame() {
     document.getElementById('end-game-message').style.display = 'block';
     document.getElementById('winner-message').textContent = winner;
 }
-
 
 
 
@@ -217,6 +216,10 @@ function updateScoreDisplay() {
 
 
 
+
+
+
+
 //------------------------------
 // #MM0005 Initialize Game
 //------------------------------
@@ -238,6 +241,9 @@ function resetGame() {
     createBoard();
     updateScoreDisplay();
 }
+
+
+
 
 
 
