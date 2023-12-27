@@ -106,11 +106,11 @@ function computerMove() {
         let availableCells = getAvailableCells();
 
         if (availableCells.length > 0) {
-            let randomIndex = Math.floor(Math.random() * availableCells.length);
-            let selectedCell = availableCells[randomIndex];
-            aiScore += board.cells[selectedCell.row][selectedCell.column];
-            board.cells[selectedCell.row][selectedCell.column] = '•';
-            highlightCell(selectedCell.row, selectedCell.column);
+            // A legnagyobb számot tartalmazó cella kiválasztása
+            let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
+            aiScore += board.cells[maxCell.row][maxCell.column];
+            board.cells[maxCell.row][maxCell.column] = '•';
+            highlightCell(maxCell.row, maxCell.column);
             isPlayerTurn = true;
             updateScoreDisplay();
         } else {
