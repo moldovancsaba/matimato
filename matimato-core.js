@@ -82,6 +82,7 @@ function createBoard() {
 
 
 
+
 //------------------------------
 // #MM0003 Game Logic
 //------------------------------
@@ -105,7 +106,7 @@ function handleCellClick(row, column) {
 
 function computerMove() {
     if (!isPlayerTurn) {
-        let availableCells = getAvailableCellsInRow(lastSelectedRow); // Csak az utoljára választott sorból választhat
+        let availableCells = getAvailableCellsInColumn(lastSelectedColumn); // Csak az utoljára választott oszlopból választhat
 
         if (availableCells.length > 0) {
             let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
@@ -122,17 +123,56 @@ function computerMove() {
     }
 }
 
-function getAvailableCellsInRow(row) {
+function getAvailableCellsInColumn(column) {
     let availableCells = [];
-    for (let j = 0; j < board.columns; j++) {
-        if (board.cells[row][j] !== '•') {
-            availableCells.push({ row: row, column: j });
+    for (let i = 0; i < board.rows; i++) {
+        if (board.cells[i][column] !== '•') {
+            availableCells.push({ row: i, column: column });
         }
     }
     return availableCells;
 }
 
-// További funkciók maradnak változatlanok
+function checkEndGame() {
+    if (!isPlayerTurn && !canComputerMove() || isPlayerTurn && !canPlayerMove()) {
+        endGame();
+    }
+}
+
+function endGame() {
+    let winner;
+    if (playerScore > aiScore) {
+        winner = 'You win!';
+    } else if (aiScore > playerScore) {
+        winner = 'AI wins!';
+    } else {
+        winner = 'Draw!';
+    }
+
+    document.getElementById('board').style.display = 'none';
+    document.getElementById('end-game-message').style.display = 'block';
+    document.getElementById('winner-message').textContent = winner;
+}
+
+function canComputerMove() {
+    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
+}
+
+function canPlayerMove() {
+    return getAvailableCells().length > 0;
+}
+
+function getAvailableCells() {
+    let availableCells = [];
+    for (let i = 0; i < board.rows; i++) {
+        for (let j = 0; j < board.columns; j++) {
+            if (board.cells[i][j] !== '•') {
+                availableCells.push({ row: i, column: j });
+            }
+        }
+    }
+    return availableCells;
+}
 
 
 
