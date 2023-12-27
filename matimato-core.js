@@ -73,19 +73,21 @@ function createBoard() {
 
 
 
+//------------------------------
 // #MM0003 Game Logic
+//------------------------------
 
 let lastSelectedRow = null; // Utoljára választott sor
 let lastSelectedColumn = null; // Utoljára választott oszlop
 
 function handleCellClick(row, column) {
-    if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedRow === null || lastSelectedRow === row)) {
-        playerScore += board.cells[row][column];
+    if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedColumn === null || lastSelectedColumn === column)) {
+        playerScore += parseInt(board.cells[row][column]); // Biztosítjuk, hogy a pontszám szám legyen
         board.cells[row][column] = '•';
         highlightCell(row, column);
-        highlightRow(row); // Sor kiemelése
+        highlightColumn(column); // Az oszlop kiemelése
         isPlayerTurn = false;
-        lastSelectedRow = row; // Frissíti az utoljára választott sort
+        lastSelectedColumn = column; // Frissíti az utoljára választott oszlopot
         setTimeout(computerMove, 500);
     }
     updateScoreDisplay();
@@ -93,21 +95,22 @@ function handleCellClick(row, column) {
 }
 
 function canPlayerMove() {
-    return lastSelectedRow === null ? getAvailableCells().length > 0 : getAvailableCellsInRow(lastSelectedRow).length > 0;
+    return lastSelectedColumn === null ? getAvailableCells().length > 0 : getAvailableCellsInColumn(lastSelectedColumn).length > 0;
 }
 
 function computerMove() {
     if (!isPlayerTurn) {
-        let availableCells = getAvailableCellsInColumn(lastSelectedColumn); // Csak az utoljára választott oszlopból választhat
+        // Az első lépésnél minden cella elérhető
+        let availableCells = lastSelectedRow == null ? getAvailableCells() : getAvailableCellsInRow(lastSelectedRow);
 
         if (availableCells.length > 0) {
             let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
-            aiScore += board.cells[maxCell.row][maxCell.column];
+            aiScore += parseInt(board.cells[maxCell.row][maxCell.column]); // Biztosítjuk, hogy a pontszám szám legyen
             board.cells[maxCell.row][maxCell.column] = '•';
             highlightCell(maxCell.row, maxCell.column);
-            highlightColumn(maxCell.column); // Oszlop kiemelése
+            highlightRow(maxCell.row); // A sor kiemelése
             isPlayerTurn = true;
-            lastSelectedColumn = maxCell.column; // Frissíti az utoljára választott oszlopot
+            lastSelectedRow = maxCell.row; // Frissíti az utoljára választott sort
             updateScoreDisplay();
         } else {
             checkEndGame();
@@ -125,9 +128,39 @@ function getAvailableCellsInColumn(column) {
     return availableCells;
 }
 
-function canComputerMove() {
-    return getAvailableCellsInRow(lastSelectedRow).length > 0;
+function getAvailableCellsInRow(row) {
+    let availableCells = [];
+    for (let j = 0; j < board.columns; j++) {
+        if (board.cells[row][j] !== '•') {
+            availableCells.push({ row: row, column: j });
+        }
+    }
+    return availableCells;
 }
+
+function checkEndGame() {
+    if (!isPlayerTurn && !canComputerMove() || isPlayerTurn && !canPlayerMove()) {
+        endGame();
+    }
+}
+
+function endGame() {
+    let winner;
+    if (playerScore > aiScore) {
+        winner = 'You win!';
+    } else if (aiScore > playerScore) {
+        winner = 'AI wins!';
+    } else {
+        winner = isPlayerTurn ? 'AI wins!' : 'You win!';
+    }
+
+    document.getElementById('board').style.display = 'none';
+    document.getElementById('end-game-message').style.display = 'block';
+    document.getElementById('winner-message').textContent = winner;
+}
+
+
+
 
 
 
