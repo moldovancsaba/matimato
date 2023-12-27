@@ -1,34 +1,47 @@
-//firebase-logic.js
+//------------------------------
+// firebase-logic.js
+//------------------------------
+// CODE STARTS HERE
+//------------------------------
 
-function saveGameStats() {
+
+
+
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+// Function to save game statistics to Firebase
+function saveGameStats(playerName, playerScore, aiScore) {
     const gameId = generateGameId();
-    const gameResult = generateGameResult();
-    const lastPlayer = getLastPlayer();
+    const timestamp = new Date().toISOString();
+    const gameResult = {
+        playerName: playerName,
+        playerScore: playerScore,
+        aiScore: aiScore,
+        timestamp: timestamp
+    };
 
-    firebase.database().ref('games/' + gameId).set({
-        result: gameResult,
-        lastPlayer: lastPlayer,
-        timestamp: new Date().toISOString()
-    });
+    const db = getDatabase();
+    set(ref(db, 'games/' + gameId), gameResult);
 }
 
+// Generate a unique Game ID
 function generateGameId() {
     const now = new Date();
-    const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
-    const randomPart = String(Math.floor(Math.random() * 100000000)).padStart(8, '0');
+    const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    const randomPart = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
     return datePart + randomPart;
 }
 
-function generateGameResult() {
-    const winner = humanPlayer.score > computerPlayer.score ? 1 : (humanPlayer.score < computerPlayer.score ? 2 : 0);
-    const humanScore = String(humanPlayer.score).padStart(3, '0');
-    const computerScore = String(computerPlayer.score).padStart(3, '0');
-    return `${winner}${humanScore}${computerScore}`;
-}
+// Export the function for use in other modules
+export { saveGameStats };
 
-function getLastPlayer() {
-    // Az utoljára lépő játékos azonosításához szükséges logika
-    // Például: 'human' vagy 'computer'
-    // Ez a logika a GameLogic.js-ből származhat
-    return lastPlayer; // A változó, ami a GameLogic.js-ben van definiálva
-}
+
+
+
+//------------------------------
+// END OF CODE
+//------------------------------
+// CREATED BY MOLDOVAN
+//------------------------------
+// CODE WRITTEN BY GPT
+//------------------------------
