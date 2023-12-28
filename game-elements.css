@@ -87,11 +87,11 @@
     }
 
     #player-score {
-        top: 15%; /* Place player's score at the top */
+        top: 10%; /* Place player's score at the top */
     }
 
     #ai-score {
-        bottom: 15%; /* Place AI's score at the bottom */
+        bottom: 10%; /* Place AI's score at the bottom */
     }
 }
 
