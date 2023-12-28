@@ -9,8 +9,6 @@
     grid-template-columns: repeat(5, 1fr); /* Equal columns */
     grid-template-rows: repeat(5, 1fr); /* Equal rows */
     gap: 0; /* No gap between cells */
-    width: 90vw;
-    height: 90vw; /* Height equal to width to maintain square shape */
     margin: auto; /* Center the board */
     position: absolute; /* Absolute positioning */
     top: 50%; /* Center vertically */
@@ -23,7 +21,7 @@
     cursor: pointer;
     background-color: #002255;
     border-radius: 10%; /* Rounded corners */
-    box-shadow: 0 8% 8% rgba(0, 0, 0, 0.9); /* Cell shadow */
+    box-shadow: 1 5% 5% rgba(0, 0, 0, 1); /* Cell shadow */
     aspect-ratio: 1 / 1; /* Square cells */
     display: flex;
     font-size: 6vw; /* Responsive font size */
@@ -37,12 +35,8 @@
 /* Adjustments for landscape orientation */
 @media (orientation: landscape) {
     .board {
-        width: 40vw;
-        height: 40vw; /* Adjust height to match width */
-    }
-
-    .cell {
-        font-size: 5vh; /* Smaller font size in landscape */
+        width: 90vh;
+        height: 90vh; /* Adjust height to match width */
     }
 
     /* Positioning scores */
@@ -52,26 +46,26 @@
         transform: translateY(-50%);
     }
 
-    #ai-score {
-        right: 15%;
-    }
-
     #player-score {
         left: 15%;
+    }
+
+    #ai-score {
+        right: 15%;
     }
 }
 
 /* End game message styling */
 #end-game-message {
     font-size: 3vw; /* Larger font size */
-    color: #ffcc00; /* Bright color */
-    text-shadow: 0 0 8px #000; /* Text shadow */
+    color: #ffffff; /* Bright color */
+    text-shadow: 0 0 2px #000; /* Text shadow */
 }
 
 /* Large end game text */
 #end-game-message .end-game-text {
-    font-size: 6vw; /* Large font size */
-    font-weight: bold; /* Bold text */
+    font-size: 6vw;
+    font-weight: 800;
 }
 
 /* Adjustments for portrait orientation */
@@ -81,11 +75,6 @@
         height: 90vw; /* Adjust board height to match width */
     }
 
-    .cell {
-        font-size: 6vw; /* Adjust font size in portrait mode */
-    }
-
-    /* Position player's and AI's score */
     #ai-score, #player-score {
         position: fixed; /* Fix position */
         left: 50%;
