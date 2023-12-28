@@ -39,6 +39,10 @@
         height: 90vh; /* Adjust height to match width */
     }
 
+    .cell {
+        font-size: 5vw; /* Responsive font size */
+    }
+
     /* Positioning scores */
     #ai-score, #player-score {
         position: absolute;
