@@ -67,7 +67,7 @@ h1 {
     padding: 15px 30px;
     font-size: calc(3vw + 1vmin);
     border: none;
-    border-radius: 10%;
+    border-radius: 1vh;
     cursor: pointer;
     margin-top: 5%;
 }
