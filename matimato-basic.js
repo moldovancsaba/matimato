@@ -13,13 +13,13 @@
 
 
 //--------------------------------------------------------------------
-// #MM0001 Global variables ------------------------------------------
+// #MM0001 Global variables
 //--------------------------------------------------------------------
 
 class Board {
     constructor(rows, columns) {
-        this.rows = rows;
-        this.columns = columns;
+        this.rows = rows;        // Rows of the grid
+        this.columns = columns;  // Columns of the grid
         this.cells = this.createInitialBoard();
     }
 
@@ -28,6 +28,7 @@ class Board {
         for (let i = 0; i < this.rows; i++) {
             let row = [];
             for (let j = 0; j < this.columns; j++) {
+                // Random number between 1 and 9 for each cell
                 row.push(Math.floor(Math.random() * 9) + 1);
             }
             board.push(row);
@@ -36,10 +37,13 @@ class Board {
     }
 }
 
-let board = new Board(5, 5);
-let playerScore = 0;
-let aiScore = 0;
-let isPlayerTurn = true; // A játékos kezdi
+// Initializing the game board with 4 rows and 4 columns for Basic mode
+let board = new Board(4, 4);
+let playerScore = 0; // Player's score
+let aiScore = 0;     // AI's score
+let isPlayerTurn = true; // Flag to check if it's player's turn
+
+
 
 
 
