@@ -1,5 +1,5 @@
 //------------------------------
-// matimato-core.js ------------
+// matimato-basic.js -----------
 //------------------------------
 // JAVASCRIPT STARTS HERE ------
 //------------------------------
@@ -254,22 +254,15 @@ function updateScoreDisplay() {
 
 
 
+
+
+
 //--------------------------------------------------------------------
 // #MM0005 Initialize Game and Firebase Logic
 //--------------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initially hide the game board and score
-    hideGame();
-
-    // Event handler for the Start button
-    document.getElementById('start-button').addEventListener('click', startGame);
-
-    // Event handler for the Restart button
-    document.getElementById('restart-button').addEventListener('click', () => {
-        resetGame();
-        startGame();
-    });
+    startGame(); // Start the game immediately when the page loads
 });
 
 function startGame() {
@@ -290,6 +283,7 @@ function resetGame() {
     createBoard();
     updateScoreDisplay();
 }
+
 
 
 
