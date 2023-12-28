@@ -252,30 +252,23 @@ function updateScoreDisplay() {
 
 
 //--------------------------------------------------------------------
-// #MM0005 Initialize Game and Firebase Logic
+// #MM0005 Initialize Game and Firebase Logic ------------------------
 //--------------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initially hide the game board and score
-    document.getElementById('board').style.display = 'none';
-    document.getElementById('score').style.display = 'none';
-
-    // Event handler for the Start button
-    document.getElementById('start-button').addEventListener('click', startGame);
+    // Display the game board and score when the page loads
+    resetGame();
+    document.getElementById('board').style.display = 'grid';
+    document.getElementById('score').style.display = 'block';
 
     // Event handler for the Restart button
     document.getElementById('restart-button').addEventListener('click', () => {
         resetGame();
-        startGame();
+        document.getElementById('board').style.display = 'grid';
+        document.getElementById('score').style.display = 'block';
+        document.getElementById('end-game-message').style.display = 'none';
     });
 });
-
-function startGame() {
-    resetGame();
-    document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block';
-    document.getElementById('start-screen').style.display = 'none';
-}
 
 function resetGame() {
     board = new Board(5, 5);
