@@ -8,10 +8,9 @@
     display: grid;
     grid-template-columns: repeat(5, 1fr); /* Equal columns */
     grid-template-rows: repeat(5, 1fr); /* Equal rows */
-    gap: 1vw; /* Uniform gap between cells both vertically and horizontally */
-    width: 90vw;
-    height: auto; /* Auto height for maintaining aspect ratio */
-    max-width: 90vh; /* Limit width to maintain square shape */
+    gap: 1vw; /* Uniform gap between cells */
+    width: 80vw; /* Width adjusted */
+    height: 80vw; /* Height same as width to maintain square shape */
     margin: auto; /* Center the board */
     position: absolute; /* Absolute positioning */
     top: 50%; /* Center vertically */
@@ -33,20 +32,20 @@
     align-items: center;
     justify-content: center;
     user-select: none;
-    margin: 0.5vw; /* Margin added to create space between rows */
 }
 
 /* Adjustments for landscape orientation */
 @media (orientation: landscape) {
     .board {
         width: 40vw;
-        aspect-ratio: 1 / 1;
+        height: 40vw; /* Adjust height to match width */
     }
 
     .cell {
         font-size: 5vh; /* Smaller font size in landscape */
     }
 
+    /* Positioning scores */
     #ai-score, #player-score {
         position: absolute;
         top: 50%;
@@ -54,11 +53,11 @@
     }
 
     #ai-score {
-        right: 15%; /* Align to the right */
+        right: 15%;
     }
 
     #player-score {
-        left: 15%; /* Align to the left */
+        left: 15%;
     }
 }
 
@@ -66,7 +65,7 @@
 #end-game-message {
     font-size: 3vw; /* Larger font size */
     color: #ffcc00; /* Bright color */
-    text-shadow: 0 0 8px #000; /* Text shadow for visibility */
+    text-shadow: 0 0 8px #000; /* Text shadow */
 }
 
 /* Large end game text */
@@ -78,12 +77,8 @@
 /* Adjustments for portrait orientation */
 @media (orientation: portrait) {
     .board {
-        width: 80vw; /* Adjust board width in portrait mode */
-        height: auto; /* Adjust height automatically */
-        max-width: 80vh; /* Limit width to maintain square shape */
-        aspect-ratio: 1 / 1; /* Maintain square aspect ratio */
-        top: 50%; /* Center board vertically */
-        transform: translate(-50%, -50%); /* Adjust vertical centering */
+        width: 80vw; /* Adjust board width */
+        height: 80vw; /* Adjust board height to match width */
     }
 
     .cell {
@@ -92,10 +87,10 @@
 
     /* Position player's and AI's score */
     #ai-score, #player-score {
-        position: fixed; /* Fix position on the screen */
-        left: 50%; /* Center horizontally */
+        position: fixed; /* Fix position */
+        left: 50%;
         transform: translateX(-50%);
-        z-index: 10; /* Ensure it's above other elements */
+        z-index: 10;
     }
 
     #player-score {
