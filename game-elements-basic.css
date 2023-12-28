@@ -1,0 +1,106 @@
+/* ----------------------------*/
+/* game-elements.css ----------*/
+/* ----------------------------*/
+/* CSS STARTS HERE ------------*/
+/* ----------------------------*/
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* Adjusted for 4x4 grid in Basic mode */
+    grid-template-rows: repeat(4, 1fr); /* Adjusted for 4x4 grid */
+    gap: 0; /* No gap between cells */
+    width: 80vw; /* Adjusted width for 4x4 grid */
+    height: 80vw; /* Adjusted height to match width */
+    margin: auto; /* Center the board */
+    position: absolute; /* Absolute positioning */
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Centering adjustment */
+}
+
+.cell {
+    position: relative;
+    cursor: pointer;
+    background-color: #002255;
+    border-radius: 10%; /* Rounded corners */
+    box-shadow: 1 5% 5% rgba(0, 0, 0, 1); /* Cell shadow */
+    aspect-ratio: 1 / 1; /* Square cells */
+    display: flex;
+    font-size: 6vw; /* Responsive font size */
+    font-weight: 800; /* Bold font */
+    color: white;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+}
+
+/* Adjustments for landscape orientation */
+@media (orientation: landscape) {
+    .board {
+        width: 85vh;
+        height: 85vh; /* Adjust height to match width */
+    }
+
+    .cell {
+        font-size: 5vw; /* Responsive font size */
+    }
+
+    /* Positioning scores */
+    #ai-score, #player-score {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    #player-score {
+        left: 8%;
+    }
+
+    #ai-score {
+        right: 8%;
+    }
+}
+
+/* End game message styling */
+#end-game-message {
+    font-size: 3vw; /* Larger font size */
+    color: #ffffff; /* Bright color */
+    text-shadow: 0 0 2px #000; /* Text shadow */
+}
+
+/* Large end game text */
+#end-game-message .end-game-text {
+    font-size: 6vw;
+    font-weight: 800;
+}
+
+/* Adjustments for portrait orientation */
+@media (orientation: portrait) {
+    .board {
+        width: 90vw; /* Adjust board width */
+        height: 90vw; /* Adjust board height to match width */
+    }
+
+    #ai-score, #player-score {
+        position: fixed; /* Fix position */
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+    }
+
+    #player-score {
+        top: 8%; /* Place player's score at the top */
+    }
+
+    #ai-score {
+        bottom: 8%; /* Place AI's score at the bottom */
+    }
+}
+
+/*-----------------------------*/
+/* END OF CSS -----------------*/
+/* ----------------------------*/
+/* CREATED BY MOLDOVAN --------*/
+/* ----------------------------*/
+/* CSS CODE WRITTEN BY GPT ----*/
+/* ----------------------------*/
