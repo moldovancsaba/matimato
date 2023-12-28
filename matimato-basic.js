@@ -252,7 +252,6 @@ function updateScoreDisplay() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0005 Initialize Game and Firebase Logic
 //--------------------------------------------------------------------
@@ -269,8 +268,8 @@ function startGame() {
 }
 
 function resetGame() {
-    // Create a new 4x4 board for Basic mode
-    board = new Board(4, 4);
+    board = new Board(4, 4); // Create a new 4x4 board
+    board.cells = board.createInitialBoard(); // Generate new cell values
     playerScore = 0;
     aiScore = 0;
     isPlayerTurn = true;
@@ -288,17 +287,22 @@ function resetGame() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0006 Start & End -----------------------------------------------
 //--------------------------------------------------------------------
 
 function hideGame() {
     document.getElementById('board').style.display = 'none';
-    document.getElementById('score').style.display = 'none'; // Hide the score initially
+    document.getElementById('score').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('start-screen').style.display = 'block';
 }
+
+// Event handler for the Restart button
+document.getElementById('restart-button').addEventListener('click', () => {
+    resetGame();
+    startGame();
+});
 
 
 
