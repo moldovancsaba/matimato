@@ -254,36 +254,44 @@ function updateScoreDisplay() {
 
 
 
-
 //--------------------------------------------------------------------
-// #MM0005 Initialize Game and Firebase Logic ------------------------
+// #MM0005 Initialize Game and Firebase Logic
 //--------------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Display the game board and score when the page loads
-    resetGame();
-    document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block';
+    // Initially hide the game board and score
+    hideGame();
+
+    // Event handler for the Start button
+    document.getElementById('start-button').addEventListener('click', startGame);
 
     // Event handler for the Restart button
     document.getElementById('restart-button').addEventListener('click', () => {
         resetGame();
-        document.getElementById('board').style.display = 'grid';
-        document.getElementById('score').style.display = 'block';
-        document.getElementById('end-game-message').style.display = 'none';
+        startGame();
     });
 });
 
+function startGame() {
+    resetGame();
+    document.getElementById('board').style.display = 'grid';
+    document.getElementById('score').style.display = 'block';
+    document.getElementById('start-screen').style.display = 'none';
+}
+
 function resetGame() {
-    board = new Board(5, 5);
+    // Create a new 4x4 board for Basic mode
+    board = new Board(4, 4);
     playerScore = 0;
     aiScore = 0;
-    isPlayerTurn = true; // Player starts the game
+    isPlayerTurn = true;
     lastSelectedRow = null;
     lastSelectedColumn = null;
     createBoard();
     updateScoreDisplay();
 }
+
+
 
 
 
