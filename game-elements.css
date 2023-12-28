@@ -35,8 +35,8 @@
 /* Adjustments for landscape orientation */
 @media (orientation: landscape) {
     .board {
-        width: 90vh;
-        height: 90vh; /* Adjust height to match width */
+        width: 85vh;
+        height: 85vh; /* Adjust height to match width */
     }
 
     .cell {
@@ -51,11 +51,11 @@
     }
 
     #player-score {
-        left: 15%;
+        left: 8%;
     }
 
     #ai-score {
-        right: 15%;
+        right: 8%;
     }
 }
 
@@ -87,11 +87,11 @@
     }
 
     #player-score {
-        top: 10%; /* Place player's score at the top */
+        top: 8%; /* Place player's score at the top */
     }
 
     #ai-score {
-        bottom: 10%; /* Place AI's score at the bottom */
+        bottom: 8%; /* Place AI's score at the bottom */
     }
 }
 

@@ -20,7 +20,7 @@ h1 {
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
-    background-color: #3399aa;
+    background-color: #002255;
     text-align: center;
     font-size: calc(3vw + 1vmin);
     padding: 2% 0;
@@ -42,12 +42,12 @@ h1 {
 }
 
 .score {
-    background-color: #474e50;
+    background-color: #002255;
     padding: 10px;
     border-radius: 10px;
     color: white;
-    font-size: calc(3vw + 1vmin);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    font-size: calc(2vw + 1vmin);
+    box-shadow: 2 2px 4px rgba(0, 0, 0, 1);
     margin: 5px 0;
 }
 
@@ -61,20 +61,20 @@ h1 {
 }
 
 .large-button {
-    background-color: #3399aa;
+    background-color: #002255;
     color: white;
     padding: 15px 30px;
     font-size: calc(3vw + 1vmin);
     border: none;
-    border-radius: 10px;
+    border-radius: 10%;
     cursor: pointer;
-    margin-top: 20px;
+    margin-top: 5%;
 }
 
 .end-game-text {
     display: block;
-    font-size: calc(3vw + 1vmin);
-    color: #3399aa;
+    font-size: calc(2vw + 1vmin);
+    color: #002255;
 }
 
 @media (orientation: portrait) {
