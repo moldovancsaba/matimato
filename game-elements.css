@@ -8,9 +8,9 @@
     display: grid;
     grid-template-columns: repeat(5, 1fr); /* Equal columns */
     grid-template-rows: repeat(5, 1fr); /* Equal rows */
-    gap: 1vw; /* Uniform gap between cells */
-    width: 80vw; /* Width adjusted */
-    height: 80vw; /* Height same as width to maintain square shape */
+    gap: 0; /* No gap between cells */
+    width: 90vw;
+    height: 90vw; /* Height equal to width to maintain square shape */
     margin: auto; /* Center the board */
     position: absolute; /* Absolute positioning */
     top: 50%; /* Center vertically */
@@ -77,8 +77,8 @@
 /* Adjustments for portrait orientation */
 @media (orientation: portrait) {
     .board {
-        width: 80vw; /* Adjust board width */
-        height: 80vw; /* Adjust board height to match width */
+        width: 90vw; /* Adjust board width */
+        height: 90vw; /* Adjust board height to match width */
     }
 
     .cell {
