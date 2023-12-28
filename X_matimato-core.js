@@ -1,7 +1,7 @@
 //------------------------------
-// matimato-core.js
+// matimato-core.js ------------
 //------------------------------
-// CODE STARTS HERE
+// JAVASCRIPT STARTS HERE ------
 //------------------------------
 
 
@@ -12,9 +12,9 @@
 
 
 
-//------------------------------
-// #MM0001 Global variables
-//------------------------------
+//--------------------------------------------------------------------
+// #MM0001 Global variables ------------------------------------------
+//--------------------------------------------------------------------
 
 class Board {
     constructor(rows, columns) {
@@ -49,9 +49,9 @@ let isPlayerTurn = true; // A játékos kezdi
 
 
 
-//------------------------------
-// #MM0002 Create Gamefield
-//------------------------------
+//--------------------------------------------------------------------
+// #MM0002 Create Gamefield ------------------------------------------
+//--------------------------------------------------------------------
 
 function createBoard() {
     const boardElement = document.getElementById('board');
@@ -82,9 +82,9 @@ function createBoard() {
 
 
 
-//------------------------------
-// #MM0003 Game Logic
-//------------------------------
+//--------------------------------------------------------------------
+// #MM0003 Game Logic ------------------------------------------------
+//--------------------------------------------------------------------
 
 let lastSelectedRow = null; // Utoljára választott sor
 let lastSelectedColumn = null; // Utoljára választott oszlop
@@ -199,9 +199,9 @@ function getAvailableCells() {
 
 
 
-//------------------------------
-// #MM0004 UI Functions
-//------------------------------
+//--------------------------------------------------------------------
+// #MM0004 UI Functions ----------------------------------------------
+//--------------------------------------------------------------------
 
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
@@ -217,7 +217,7 @@ function highlightCell(row, column) {
 function highlightColumn(column) {
     clearHighlights();
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.style.border = '6px solid #8B8B8B';
+        cell.style.border = '4px solid #DDDDDD';
         cell.style.boxSizing = 'border-box';
     });
 }
@@ -225,7 +225,7 @@ function highlightColumn(column) {
 function highlightRow(row) {
     clearHighlights();
     document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
-        cell.style.border = '6px solid #8B8B8B';
+        cell.style.border = '4px solid #DDDDDD';
         cell.style.boxSizing = 'border-box';
     });
 }
@@ -251,19 +251,17 @@ function updateScoreDisplay() {
 
 
 
-
-
-//------------------------------
-// #MM0005 Initialize Game
-//------------------------------
+//--------------------------------------------------------------------
+// #MM0005 Initialize Game and Firebase Logic ------------------------
+//--------------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Játéktábla és eredményjelző megjelenítése az oldal betöltésekor
+    // Display the game board and score when the page loads
     resetGame();
     document.getElementById('board').style.display = 'grid';
     document.getElementById('score').style.display = 'block';
 
-    // Restart gomb eseménykezelője
+    // Event handler for the Restart button
     document.getElementById('restart-button').addEventListener('click', () => {
         resetGame();
         document.getElementById('board').style.display = 'grid';
@@ -276,7 +274,7 @@ function resetGame() {
     board = new Board(5, 5);
     playerScore = 0;
     aiScore = 0;
-    isPlayerTurn = true; // A játékos kezdi
+    isPlayerTurn = true; // Player starts the game
     lastSelectedRow = null;
     lastSelectedColumn = null;
     createBoard();
@@ -291,23 +289,28 @@ function resetGame() {
 
 
 
-//------------------------------
-// #MM0006 Start & End
-//------------------------------
+
+//--------------------------------------------------------------------
+// #MM0006 Start & End -----------------------------------------------
+//--------------------------------------------------------------------
 
 function hideGame() {
     document.getElementById('board').style.display = 'none';
-    document.getElementById('score').style.display = 'none'; // Kezdetben elrejtjük az eredmény kijelzőt
+    document.getElementById('score').style.display = 'none'; // Hide the score initially
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('start-screen').style.display = 'block';
 }
 
-// A "startGame" és "restartGame" funkciók törlése, mivel már nincs rájuk szükség
+
+
+
+
+
 
 //------------------------------
-// END OF CODE
+// END OF CODE -----------------
 //------------------------------
-// CREATED BY MOLDOVAN
+// CREATED BY MOLDOVAN ---------
 //------------------------------
-// CODE WRITTEN BY GPT
+// JAVASCRIPT WRITTEN BY GPT ---
 //------------------------------
