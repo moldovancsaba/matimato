@@ -7,20 +7,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>matimato (v1419)</title>
-    <link rel="stylesheet" type="text/css" href="environment.css?v=1419">
-    <link rel="stylesheet" type="text/css" href="app-design.css?v=1419">
-    <script>
-        // Ensure the buttons are visible when the page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelector('.center-screen').style.display = 'flex';
-        });
-    </script>
+    <title>matimato (v1420)</title>
+    <link rel="stylesheet" type="text/css" href="environment.css?v=1420">
+    <link rel="stylesheet" type="text/css" href="app-design.css?v=1420">
 </head>
 <body>
     <div class="center-screen">
-        <p>Challenge your strategy skills! 🎮 Tap a cell on the grid, collect points, and outsmart the AI. Each cell has a number. Take turns with the AI and pick the best cells. Aim to beat the AI's score! 🏆 Choose your level and let the fun begin! 🌟</p>
-        <div>
+        <p class="end-game-text">Challenge your strategy skills! 🎮 Tap a cell on the grid, collect points, and outsmart the AI. Each cell has a number. Take turns with the AI and pick the best cells. Aim to beat the AI's score! 🏆 Choose your level and let the fun begin! 🌟</p>
+        <div class="button-container">
             <button id="basic-game" class="large-button" onclick="window.location.href='game.html';">Basic</button>
             <button id="expert-game" class="large-button" onclick="window.location.href='expert.html';">Expert</button>
         </div>
