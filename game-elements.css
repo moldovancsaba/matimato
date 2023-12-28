@@ -75,6 +75,28 @@
     font-weight: bold; /* Bold text */
 }
 
+/* Adjustments for portrait orientation */
+@media (orientation: portrait) {
+    .board {
+        width: 90vw; /* Adjust board width in portrait mode */
+        height: auto; /* Adjust height automatically */
+        max-width: 90vh; /* Limit width to maintain square shape */
+        aspect-ratio: 1 / 1; /* Maintain square aspect ratio */
+    }
+
+    .cell {
+        font-size: 6vw; /* Adjust font size in portrait mode */
+    }
+
+    /* Adjust score position in portrait mode */
+    #ai-score, #player-score {
+        position: absolute;
+        bottom: 10%; /* Align to the bottom */
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
 /*-----------------------------*/
 /* END OF CSS */
 /* ----------------------------*/
