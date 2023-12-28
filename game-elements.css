@@ -22,9 +22,9 @@
 .cell {
     position: relative;
     cursor: pointer;
-    background-color: #063b5f;
+    background-color: #002255;
     border-radius: 10%; /* Rounded corners */
-    box-shadow: 0 8% 8% rgba(0, 0, 0, 0.7); /* Cell shadow */
+    box-shadow: 0 8% 8% rgba(0, 0, 0, 0.9); /* Cell shadow */
     aspect-ratio: 1 / 1; /* Square cells */
     display: flex;
     font-size: 6vw; /* Responsive font size */
@@ -71,39 +71,39 @@
 
 /* Large end game text */
 #end-game-message .end-game-text {
-    font-size: 8vw; /* Very large font size */
+    font-size: 6vw; /* Large font size */
     font-weight: bold; /* Bold text */
 }
 
 /* Adjustments for portrait orientation */
 @media (orientation: portrait) {
     .board {
-        width: 90vw; /* Adjust board width in portrait mode */
+        width: 80vw; /* Adjust board width in portrait mode */
         height: auto; /* Adjust height automatically */
-        max-width: 90vh; /* Limit width to maintain square shape */
+        max-width: 80vh; /* Limit width to maintain square shape */
         aspect-ratio: 1 / 1; /* Maintain square aspect ratio */
-        margin-top: 20vh; /* Provide space for the player's score above the board */
-        margin-bottom: 20vh; /* Provide space for the AI's score below the board */
+        top: 50%; /* Center board vertically */
+        transform: translate(-50%, -50%); /* Adjust vertical centering */
     }
 
     .cell {
         font-size: 6vw; /* Adjust font size in portrait mode */
     }
 
-    /* Position player's score above the board */
-    #player-score {
-        position: absolute;
-        top: 5%; /* Align to the top */
-        left: 50%;
+    /* Position player's and AI's score */
+    #ai-score, #player-score {
+        position: fixed; /* Fix position on the screen */
+        left: 50%; /* Center horizontally */
         transform: translateX(-50%);
+        z-index: 10; /* Ensure it's above other elements */
     }
 
-    /* Position AI's score below the board */
+    #player-score {
+        top: 15%; /* Place player's score at the top */
+    }
+
     #ai-score {
-        position: absolute;
-        bottom: 5%; /* Align to the bottom */
-        left: 50%;
-        transform: translateX(-50%);
+        bottom: 15%; /* Place AI's score at the bottom */
     }
 }
 
