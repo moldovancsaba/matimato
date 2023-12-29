@@ -274,33 +274,29 @@ function updateScoreDisplay() {
 //--------------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
-    resetGame(); // Start the game immediately when the page loads
+    // Display the game board and score when the page loads
+    resetGame();
+    document.getElementById('board').style.display = 'grid';
+    document.getElementById('score').style.display = 'block';
+
+    // Event handler for the Restart button
+    document.getElementById('restart-button').addEventListener('click', () => {
+        resetGame();
+        document.getElementById('board').style.display = 'grid';
+        document.getElementById('score').style.display = 'block';
+        document.getElementById('end-game-message').style.display = 'none';
+    });
 });
 
 function resetGame() {
-    // Determine the board size based on the current level
-    let nextLevel = determineNextLevel();
-    board = new Board(nextLevel, nextLevel);
+    board = new Board(5, 5);
     playerScore = 0;
     aiScore = 0;
-    isPlayerTurn = true;
+    isPlayerTurn = true; // Player starts the game
     lastSelectedRow = null;
     lastSelectedColumn = null;
     createBoard();
     updateScoreDisplay();
-    showGame();
-}
-
-function determineNextLevel() {
-    // Increment the level if the player wins, otherwise start from level 2
-    return gameWon ? Math.min(currentLevel + 1, maxLevel) : 2;
-}
-
-function showGame() {
-    // Display the game board and score
-    document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block';
-    document.getElementById('start-screen').style.display = 'none';
 }
 
 
@@ -318,62 +314,56 @@ function showGame() {
 // #MM0006 Start & End -----------------------------------------------
 //--------------------------------------------------------------------
 
-let currentLevel = 2; // Kezdeti szint 2x2-es táblával
-const maxLevel = 9; // Maximum szint 9x9-es tábláig
+function hideGame() {
+    document.getElementById('board').style.display = 'none';
+    document.getElementById('score').style.display = 'none'; // Hide the score initially
+    document.getElementById('end-game-message').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'block';
+}
 
 function endGame() {
     let winner;
     if (playerScore > aiScore) {
         winner = 'You win!';
-        if (currentLevel < maxLevel) {
-            // Ha még nem érte el a maximum szintet, lépjen a következő szintre
-            currentLevel++;
-            resetGame();
-        } else {
-            // Ha a maximum szinten is nyer, vége a játéknak
-            winner = 'Congratulations! You have completed all levels!';
-            gameOver();
-        }
-    } else {
+    } else if (aiScore > playerScore) {
         winner = 'AI wins!';
-        gameOver();
+    } else {
+        winner = 'Draw!';
     }
 
-    document.getElementById('winner-message').textContent = winner;
     document.getElementById('board').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'block';
-    addMainMenuButton();
+    document.getElementById('winner-message').textContent = winner;
 }
 
-function resetGame() {
-    // Új tábla létrehozása az aktuális szint szerint
-    board = new Board(currentLevel, currentLevel);
-    playerScore = 0;
-    aiScore = 0;
-    isPlayerTurn = true;
-    lastSelectedRow = null;
-    lastSelectedColumn = null;
-    createBoard();
-    updateScoreDisplay();
+function canComputerMove() {
+    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
 }
 
-function gameOver() {
-    // Játék visszaállítása az első szintre
-    currentLevel = 2;
-    resetGame();
+function canPlayerMove() {
+    return getAvailableCellsInRow(lastSelectedRow).length > 0;
 }
 
-function addMainMenuButton() {
-    // A 'Main Menu' gomb hozzáadása
-    const endGameContainer = document.getElementById('end-game-message');
-    const mainMenuButton = document.createElement('button');
-    mainMenuButton.id = 'main-menu-button';
-    mainMenuButton.className = 'large-button';
-    mainMenuButton.textContent = 'Main Menu';
-    mainMenuButton.addEventListener('click', () => {
-        window.location.href = 'index.html';
-    });
-    endGameContainer.appendChild(mainMenuButton);
+function getAvailableCellsInRow(row) {
+    let availableCells = [];
+    for (let j = 0; j < board.columns; j++) {
+        if (board.cells[row][j] !== '•') {
+            availableCells.push({ row: row, column: j });
+        }
+    }
+    return availableCells;
+}
+
+function getAvailableCells() {
+    let availableCells = [];
+    for (let i = 0; i < board.rows; i++) {
+        for (let j = 0; j < board.columns; j++) {
+            if (board.cells[i][j] !== '•') {
+                availableCells.push({ row: i, column: j });
+            }
+        }
+    }
+    return availableCells;
 }
 
 
