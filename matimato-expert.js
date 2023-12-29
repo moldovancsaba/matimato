@@ -276,6 +276,7 @@ function updateScoreDisplay() {
 
 document.addEventListener('DOMContentLoaded', () => {
     // Display the game board and score when the page loads
+    createBoard(); // Hozzáadva a tábla létrehozásához
     resetGame();
     document.getElementById('board').style.display = 'grid';
     document.getElementById('score').style.display = 'block';
@@ -298,7 +299,7 @@ function resetGame() {
     isPlayerTurn = true;
     lastSelectedRow = null;
     lastSelectedColumn = null;
-    createBoard();
+    createBoard(); // Hozzáadva a tábla újra létrehozásához
     updateScoreDisplay();
 }
 
@@ -306,12 +307,10 @@ function determineNextLevel() {
     // Logic to determine the next level of the game
     // This is where you'll add the logic to escalate the game difficulty
     // after each win, up to the maximum level
-    return 2; // Placeholder for the next level logic
+    return currentLevel; // Módosítva az aktuális szint meghatározásához
 }
 
-// Additional logic for escalating the game difficulty will be added here
-
-
+// További logika az itt lesz hozzáadva a játék nehézségének növeléséhez
 
 
 
@@ -330,7 +329,7 @@ function determineNextLevel() {
 
 function hideGame() {
     document.getElementById('board').style.display = 'none';
-    document.getElementById('score')..style.display = 'none'; // Hide the score initially
+    document.getElementById('score').style.display = 'none'; // Hide the score initially
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('start-screen').style.display = 'block';
 }
@@ -339,29 +338,24 @@ function endGame() {
     let winner;
     if (playerScore > aiScore) {
         winner = 'You win!';
-        // Logic for progressing to the next level
         advanceToNextLevel();
     } else {
         winner = 'AI wins!';
-        // Logic to handle game over and reset the game to the first level
         gameOver();
     }
 
     document.getElementById('winner-message').textContent = winner;
     document.getElementById('board').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'block';
-    // Add Main Menu button to the end game message
     addMainMenuButton();
 }
 
 function advanceToNextLevel() {
     // Increment level and reset the game for the next level
-    // This logic will be expanded to check if the maximum level is reached
 }
 
 function gameOver() {
     // Reset game to the first level
-    // Additional game over logic will be added here
 }
 
 function addMainMenuButton() {
@@ -371,11 +365,13 @@ function addMainMenuButton() {
     mainMenuButton.className = 'large-button';
     mainMenuButton.textContent = 'Main Menu';
     mainMenuButton.addEventListener('click', () => {
-        // Redirect to the main menu (index.html)
         window.location.href = 'index.html';
     });
     endGameContainer.appendChild(mainMenuButton);
 }
+
+
+
 
 
 
