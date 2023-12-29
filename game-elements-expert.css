@@ -1,13 +1,11 @@
 /* ----------------------------*/
-/* game-elements.css ----------*/
+/* game-elements-expert.css ---*/
 /* ----------------------------*/
 /* CSS STARTS HERE ------------*/
 /* ----------------------------*/
 
 .board {
     display: grid;
-    grid-template-columns: repeat(5, 1fr); /* Equal columns */
-    grid-template-rows: repeat(5, 1fr); /* Equal rows */
     gap: 0; /* No gap between cells */
     margin: auto; /* Center the board */
     position: absolute; /* Absolute positioning */
