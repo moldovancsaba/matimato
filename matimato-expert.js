@@ -1,20 +1,3 @@
-//------------------------------
-// matimato-expert.js ----------
-//------------------------------
-// JAVASCRIPT STARTS HERE ------
-//------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
 //--------------------------------------------------------------------
 // #MM0001 Global variables ------------------------------------------
 //--------------------------------------------------------------------
@@ -83,10 +66,6 @@ function createBoard() {
         boardElement.appendChild(rowDiv);
     }
 }
-
-
-
-
 
 
 
@@ -188,12 +167,6 @@ function endGame() {
 
 
 
-
-
-
-
-
-
 //--------------------------------------------------------------------
 // #MM0004 UI Functions ----------------------------------------------
 //--------------------------------------------------------------------
@@ -248,13 +221,6 @@ function updateScoreDisplay() {
 
 
 
-
-
-
-
-
-
-
 //--------------------------------------------------------------------
 // #MM0005 Initialize Game and Firebase Logic ------------------------
 //--------------------------------------------------------------------
@@ -265,18 +231,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('board').style.display = 'grid';
     document.getElementById('score').style.display = 'block';
 
-    // Event handler for the button
+    // Event handler for the Restart button
     document.getElementById('restart-button').addEventListener('click', () => {
-        if (currentLevel < maxLevel && playerScore > aiScore) {
-            // If player won the round but hasn't reached the max level
-            currentLevel++;
-            resetGame();
-        } else {
-            // Otherwise, restart the game from level 2
-            gameWon = false;
-            currentLevel = 2;
-            resetGame();
-        }
+        resetGame();
         document.getElementById('board').style.display = 'grid';
         document.getElementById('score').style.display = 'block';
         document.getElementById('end-game-message').style.display = 'none';
@@ -294,7 +251,6 @@ function resetGame() {
     createBoard();
     updateScoreDisplay();
     showGame(); // Make sure to show the game board
-    updateButtonLabel(); // Update button label based on game state
 }
 
 function showGame() {
@@ -303,22 +259,6 @@ function showGame() {
     document.getElementById('score').style.display = 'block';
     document.getElementById('start-screen').style.display = 'none';
 }
-
-function updateButtonLabel() {
-    const restartButton = document.getElementById('restart-button');
-    if (currentLevel < maxLevel && playerScore > aiScore) {
-        restartButton.textContent = 'Next Level';
-    } else {
-        restartButton.textContent = 'Restart';
-    }
-}
-
-
-
-
-
-
-
 
 
 
@@ -394,11 +334,6 @@ function getAvailableCells() {
     }
     return availableCells;
 }
-
-
-
-
-
 
 
 
