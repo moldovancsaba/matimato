@@ -148,6 +148,8 @@ function checkEndGame() {
     }
 }
 
+
+
 function endGame() {
     let winner;
     if (playerScore > aiScore) {
@@ -158,20 +160,21 @@ function endGame() {
         } else {
             winner = 'Congratulations! You have won the game!';
             gameWon = true;
-            // Additional end game logic here
+            resetGame(); // Reset the game for a new start
         }
-    } else if (aiScore > playerScore) {
-        winner = 'AI wins!';
-        // Game over logic here
     } else {
-        winner = 'Draw!';
-        // Handle draw condition here
+        winner = aiScore > playerScore ? 'AI wins!' : 'Draw!';
+        gameWon = false; // Reset gameWon for a new start
+        currentLevel = 2;
+        resetGame(); // Reset the game to the initial level
     }
 
     document.getElementById('board').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'block';
     document.getElementById('winner-message').textContent = winner;
 }
+
+
 
 function canComputerMove() {
     return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
