@@ -255,7 +255,6 @@ function updateScoreDisplay() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0005 Initialize Game and Firebase Logic ------------------------
 //--------------------------------------------------------------------
@@ -313,8 +312,6 @@ function updateButtonLabel() {
         restartButton.textContent = 'Restart';
     }
 }
-
-
 
 
 
