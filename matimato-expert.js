@@ -273,12 +273,10 @@ function updateScoreDisplay() {
 // #MM0005 Initialize Game and Firebase Logic ------------------------
 //--------------------------------------------------------------------
 
-// This event listener ensures the game starts as soon as the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    resetGame(); // Start the game immediately
+    resetGame(); // Start the game immediately when the page loads
 });
 
-// This function resets the game and prepares the next level
 function resetGame() {
     // Determine the board size based on the current level
     let nextLevel = determineNextLevel();
@@ -293,19 +291,18 @@ function resetGame() {
     showGame();
 }
 
-// This function determines the next level of the game
 function determineNextLevel() {
     // Increment the level if the player wins, otherwise start from level 2
     return gameWon ? Math.min(currentLevel + 1, maxLevel) : 2;
 }
 
-// This function shows the game board and score
 function showGame() {
     // Display the game board and score
     document.getElementById('board').style.display = 'grid';
     document.getElementById('score').style.display = 'block';
     document.getElementById('start-screen').style.display = 'none';
 }
+
 
 
 
