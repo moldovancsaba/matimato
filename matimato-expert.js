@@ -13,12 +13,15 @@
 
 
 
+
+
 //--------------------------------------------------------------------
 // #MM0001 Global variables ------------------------------------------
 //--------------------------------------------------------------------
 
-let currentLevel = 2;  // Jelenlegi szint, kezdetben 2x2-es tábla
-let gameWon = false;   // Jelzi, ha a játékos megnyerte az összes szintet
+let currentLevel = 2; // Current level, starting with a 2x2 board
+let maxLevel = 9; // Maximum level, up to a 9x9 board
+let gameWon = false; // Indicates if the player has won all levels
 
 class Board {
     constructor(rows, columns) {
@@ -80,6 +83,7 @@ function createBoard() {
         boardElement.appendChild(rowDiv);
     }
 }
+
 
 
 
@@ -175,35 +179,8 @@ function endGame() {
     document.getElementById('winner-message').textContent = winner;
 }
 
-function canComputerMove() {
-    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
-}
 
-function canPlayerMove() {
-    return getAvailableCellsInRow(lastSelectedRow).length > 0;
-}
 
-function getAvailableCellsInRow(row) {
-    let availableCells = [];
-    for (let j = 0; j < board.columns; j++) {
-        if (board.cells[row][j] !== '•') {
-            availableCells.push({ row: row, column: j });
-        }
-    }
-    return availableCells;
-}
-
-function getAvailableCells() {
-    let availableCells = [];
-    for (let i = 0; i < board.rows; i++) {
-        for (let j = 0; j < board.columns; j++) {
-            if (board.cells[i][j] !== '•') {
-                availableCells.push({ row: i, column: j });
-            }
-        }
-    }
-    return availableCells;
-}
 
 
 
@@ -273,6 +250,10 @@ function updateScoreDisplay() {
 
 
 
+
+
+
+
 //--------------------------------------------------------------------
 // #MM0005 Initialize Game and Firebase Logic ------------------------
 //--------------------------------------------------------------------
@@ -325,6 +306,9 @@ function showGame() {
 
 
 
+
+
+
 //--------------------------------------------------------------------
 // #MM0006 Start & End -----------------------------------------------
 //--------------------------------------------------------------------
@@ -339,11 +323,21 @@ function hideGame() {
 function endGame() {
     let winner;
     if (playerScore > aiScore) {
-        winner = 'You win!';
-    } else if (aiScore > playerScore) {
-        winner = 'AI wins!';
+        if (currentLevel < maxLevel) {
+            // If the player wins, but hasn't reached the max level yet
+            winner = 'You win this round! Moving to next level...';
+            currentLevel++;
+            resetGame(); // Start the next level
+        } else {
+            // If the player wins at the max level
+            winner = 'Congratulations! You have won the game!';
+            gameWon = true;
+        }
     } else {
-        winner = 'Draw!';
+        // If AI wins or it's a draw
+        winner = aiScore > playerScore ? 'AI wins!' : 'Draw!';
+        gameWon = false; // Reset gameWon for a new start
+        currentLevel = 2; // Reset to the initial level for a new game
     }
 
     document.getElementById('board').style.display = 'none';
@@ -380,6 +374,8 @@ function getAvailableCells() {
     }
     return availableCells;
 }
+
+
 
 
 
