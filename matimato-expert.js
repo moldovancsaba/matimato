@@ -87,6 +87,7 @@ function createBoard() {
 
 
 
+
 //--------------------------------------------------------------------
 // #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
@@ -156,6 +157,7 @@ function endGame() {
         if (currentLevel < maxLevel) {
             winner = 'You win this round! Moving to next level...';
             currentLevel++;
+            gameWon = false; // This is important to allow the game to continue to the next level
         } else {
             winner = 'Congratulations! You have won the game!';
             gameWon = true;
@@ -302,13 +304,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function resetGame() {
-    // If the player wins, increase the level, otherwise reset to level 2
-    if (gameWon) {
-        currentLevel = Math.min(currentLevel + 1, maxLevel);
-    } else {
-        currentLevel = 2; // Always start from 2x2 board on reset
-    }
-    
     // Create a new board based on the current level
     board = new Board(currentLevel, currentLevel);
     playerScore = 0;
@@ -318,6 +313,7 @@ function resetGame() {
     lastSelectedColumn = null;
     createBoard();
     updateScoreDisplay();
+    showGame(); // Make sure to show the game board
 }
 
 function showGame() {
