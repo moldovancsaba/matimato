@@ -92,7 +92,6 @@ function createBoard() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
@@ -154,47 +153,27 @@ function checkEndGame() {
     }
 }
 
-
-
 function endGame() {
     let winner;
     if (playerScore > aiScore) {
         if (currentLevel < maxLevel) {
             winner = 'You win this round! Moving to next level...';
             currentLevel++;
-            gameWon = false;
-            resetGame(); // Move to next level
+            resetGame(); // Start the next level
         } else {
             winner = 'Congratulations! You have won the game!';
             gameWon = true;
-            resetGame(); // End of the game, reset
         }
     } else {
         winner = aiScore > playerScore ? 'AI wins!' : 'Draw!';
-        gameWon = false;
+        gameWon = false; // Reset gameWon for a new start
         currentLevel = 2; // Reset to the initial level for a new game
-        resetGame(); // Reset the game after AI win or draw
     }
 
     document.getElementById('board').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'block';
     document.getElementById('winner-message').textContent = winner;
 }
-
-
-function resetGame() {
-    board = new Board(currentLevel, currentLevel);
-    playerScore = 0;
-    aiScore = 0;
-    isPlayerTurn = true;
-    lastSelectedRow = null;
-    lastSelectedColumn = null;
-    createBoard();
-    updateScoreDisplay();
-    showGame(); // Make sure to show the game board
-}
-
-
 
 function canComputerMove() {
     return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
@@ -225,7 +204,6 @@ function getAvailableCells() {
     }
     return availableCells;
 }
-
 
 
 
