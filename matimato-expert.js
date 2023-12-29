@@ -1,5 +1,5 @@
 //------------------------------
-// matimato-expert.js ------------
+// matimato-expert.js ----------
 //------------------------------
 // JAVASCRIPT STARTS HERE ------
 //------------------------------
@@ -11,10 +11,12 @@
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0001 Global variables ------------------------------------------
 //--------------------------------------------------------------------
+
+let currentLevel = 2;  // Jelenlegi szint, kezdetben 2x2-es tábla
+let gameWon = false;   // Jelzi, ha a játékos megnyerte az összes szintet
 
 class Board {
     constructor(rows, columns) {
@@ -36,10 +38,11 @@ class Board {
     }
 }
 
-let board = new Board(5, 5);
+let board = new Board(currentLevel, currentLevel);
 let playerScore = 0;
 let aiScore = 0;
-let isPlayerTurn = true; // A játékos kezdi
+let isPlayerTurn = true;
+
 
 
 
@@ -56,7 +59,8 @@ let isPlayerTurn = true; // A játékos kezdi
 function createBoard() {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
-    boardElement.style.gridTemplateRows = `repeat(${board.rows}, 1fr)`; 
+    boardElement.style.gridTemplateRows = `repeat(${board.rows}, 1fr)`;
+    boardElement.style.gridTemplateColumns = `repeat(${board.columns}, 1fr)`;
 
     for (let i = 0; i < board.rows; i++) {
         const rowDiv = document.createElement('div');
@@ -73,6 +77,9 @@ function createBoard() {
         boardElement.appendChild(rowDiv);
     }
 }
+
+
+
 
 
 
@@ -157,6 +164,14 @@ function endGame() {
     document.getElementById('board').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'block';
     document.getElementById('winner-message').textContent = winner;
+    if (winner === 'You win!') {
+        currentLevel++;
+        if (currentLevel > maxLevel) {
+            endSequence();
+        }
+    } else {
+        endSequence();
+    }
 }
 
 function canComputerMove() {
@@ -188,6 +203,7 @@ function getAvailableCells() {
     }
     return availableCells;
 }
+
 
 
 
@@ -251,6 +267,9 @@ function updateScoreDisplay() {
 
 
 
+
+
+
 //--------------------------------------------------------------------
 // #MM0005 Initialize Game and Firebase Logic ------------------------
 //--------------------------------------------------------------------
@@ -271,15 +290,30 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function resetGame() {
-    board = new Board(5, 5);
+    // Logic for determining the board size based on game progress
+    let nextLevel = determineNextLevel();
+    board = new Board(nextLevel, nextLevel);
     playerScore = 0;
     aiScore = 0;
-    isPlayerTurn = true; // Player starts the game
+    isPlayerTurn = true;
     lastSelectedRow = null;
     lastSelectedColumn = null;
     createBoard();
     updateScoreDisplay();
 }
+
+function determineNextLevel() {
+    // Logic to determine the next level of the game
+    // This is where you'll add the logic to escalate the game difficulty
+    // after each win, up to the maximum level
+    return 2; // Placeholder for the next level logic
+}
+
+// Additional logic for escalating the game difficulty will be added here
+
+
+
+
 
 
 
@@ -296,10 +330,54 @@ function resetGame() {
 
 function hideGame() {
     document.getElementById('board').style.display = 'none';
-    document.getElementById('score').style.display = 'none'; // Hide the score initially
+    document.getElementById('score')..style.display = 'none'; // Hide the score initially
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('start-screen').style.display = 'block';
 }
+
+function endGame() {
+    let winner;
+    if (playerScore > aiScore) {
+        winner = 'You win!';
+        // Logic for progressing to the next level
+        advanceToNextLevel();
+    } else {
+        winner = 'AI wins!';
+        // Logic to handle game over and reset the game to the first level
+        gameOver();
+    }
+
+    document.getElementById('winner-message').textContent = winner;
+    document.getElementById('board').style.display = 'none';
+    document.getElementById('end-game-message').style.display = 'block';
+    // Add Main Menu button to the end game message
+    addMainMenuButton();
+}
+
+function advanceToNextLevel() {
+    // Increment level and reset the game for the next level
+    // This logic will be expanded to check if the maximum level is reached
+}
+
+function gameOver() {
+    // Reset game to the first level
+    // Additional game over logic will be added here
+}
+
+function addMainMenuButton() {
+    const endGameContainer = document.getElementById('end-game-message');
+    const mainMenuButton = document.createElement('button');
+    mainMenuButton.id = 'main-menu-button';
+    mainMenuButton.className = 'large-button';
+    mainMenuButton.textContent = 'Main Menu';
+    mainMenuButton.addEventListener('click', () => {
+        // Redirect to the main menu (index.html)
+        window.location.href = 'index.html';
+    });
+    endGameContainer.appendChild(mainMenuButton);
+}
+
+
 
 
 
