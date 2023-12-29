@@ -327,18 +327,22 @@ function determineNextLevel() {
 // #MM0006 Start & End -----------------------------------------------
 //--------------------------------------------------------------------
 
-function hideGame() {
-    document.getElementById('board').style.display = 'none';
-    document.getElementById('score').style.display = 'none'; // Hide the score initially
-    document.getElementById('end-game-message').style.display = 'none';
-    document.getElementById('start-screen').style.display = 'block';
-}
+let currentLevel = 2; // Kezdeti szint 2x2-es táblával
+const maxLevel = 9; // Maximum szint 9x9-es tábláig
 
 function endGame() {
     let winner;
     if (playerScore > aiScore) {
         winner = 'You win!';
-        advanceToNextLevel();
+        if (currentLevel < maxLevel) {
+            // Ha még nem érte el a maximum szintet, lépjen a következő szintre
+            currentLevel++;
+            resetGame();
+        } else {
+            // Ha a maximum szinten is nyer, vége a játéknak
+            winner = 'Congratulations! You have completed all levels!';
+            gameOver();
+        }
     } else {
         winner = 'AI wins!';
         gameOver();
@@ -350,15 +354,26 @@ function endGame() {
     addMainMenuButton();
 }
 
-function advanceToNextLevel() {
-    // Increment level and reset the game for the next level
+function resetGame() {
+    // Új tábla létrehozása az aktuális szint szerint
+    board = new Board(currentLevel, currentLevel);
+    playerScore = 0;
+    aiScore = 0;
+    isPlayerTurn = true;
+    lastSelectedRow = null;
+    lastSelectedColumn = null;
+    createBoard();
+    updateScoreDisplay();
 }
 
 function gameOver() {
-    // Reset game to the first level
+    // Játék visszaállítása az első szintre
+    currentLevel = 2;
+    resetGame();
 }
 
 function addMainMenuButton() {
+    // A 'Main Menu' gomb hozzáadása
     const endGameContainer = document.getElementById('end-game-message');
     const mainMenuButton = document.createElement('button');
     mainMenuButton.id = 'main-menu-button';
@@ -369,10 +384,6 @@ function addMainMenuButton() {
     });
     endGameContainer.appendChild(mainMenuButton);
 }
-
-
-
-
 
 
 
