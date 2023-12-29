@@ -11,6 +11,8 @@
 
 
 
+
+
 //--------------------------------------------------------------------
 // #MM0001 Global variables ------------------------------------------
 //--------------------------------------------------------------------
@@ -52,6 +54,7 @@ let isPlayerTurn = true;
 
 
 
+
 //--------------------------------------------------------------------
 // #MM0002 Create Gamefield ------------------------------------------
 //--------------------------------------------------------------------
@@ -77,6 +80,8 @@ function createBoard() {
         boardElement.appendChild(rowDiv);
     }
 }
+
+
 
 
 
@@ -157,22 +162,25 @@ function endGame() {
         if (currentLevel < maxLevel) {
             winner = 'You win this round! Moving to next level...';
             currentLevel++;
-            gameWon = false; // This is important to allow the game to continue to the next level
+            gameWon = false;
+            resetGame(); // Move to next level
         } else {
             winner = 'Congratulations! You have won the game!';
             gameWon = true;
+            resetGame(); // End of the game, reset
         }
     } else {
         winner = aiScore > playerScore ? 'AI wins!' : 'Draw!';
-        gameWon = false; // Reset gameWon for a new start
+        gameWon = false;
         currentLevel = 2; // Reset to the initial level for a new game
+        resetGame(); // Reset the game after AI win or draw
     }
 
-    resetGame(); // Call resetGame here to apply the level changes
     document.getElementById('board').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'block';
     document.getElementById('winner-message').textContent = winner;
 }
+
 
 function resetGame() {
     board = new Board(currentLevel, currentLevel);
@@ -217,6 +225,7 @@ function getAvailableCells() {
     }
     return availableCells;
 }
+
 
 
 
@@ -284,6 +293,8 @@ function updateScoreDisplay() {
 
 
 
+
+
 //--------------------------------------------------------------------
 // #MM0005 Initialize Game and Firebase Logic ------------------------
 //--------------------------------------------------------------------
@@ -322,6 +333,7 @@ function showGame() {
     document.getElementById('score').style.display = 'block';
     document.getElementById('start-screen').style.display = 'none';
 }
+
 
 
 
@@ -390,6 +402,10 @@ function getAvailableCells() {
     }
     return availableCells;
 }
+
+
+
+
 
 
 
