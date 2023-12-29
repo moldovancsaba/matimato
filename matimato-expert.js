@@ -269,29 +269,18 @@ function updateScoreDisplay() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0005 Initialize Game and Firebase Logic ------------------------
 //--------------------------------------------------------------------
 
+// This event listener ensures the game starts as soon as the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    // Display the game board and score when the page loads
-    createBoard(); // Hozzáadva a tábla létrehozásához
-    resetGame();
-    document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block';
-
-    // Event handler for the Restart button
-    document.getElementById('restart-button').addEventListener('click', () => {
-        resetGame();
-        document.getElementById('board').style.display = 'grid';
-        document.getElementById('score').style.display = 'block';
-        document.getElementById('end-game-message').style.display = 'none';
-    });
+    resetGame(); // Start the game immediately
 });
 
+// This function resets the game and prepares the next level
 function resetGame() {
-    // Logic for determining the board size based on game progress
+    // Determine the board size based on the current level
     let nextLevel = determineNextLevel();
     board = new Board(nextLevel, nextLevel);
     playerScore = 0;
@@ -299,19 +288,24 @@ function resetGame() {
     isPlayerTurn = true;
     lastSelectedRow = null;
     lastSelectedColumn = null;
-    createBoard(); // Hozzáadva a tábla újra létrehozásához
+    createBoard();
     updateScoreDisplay();
+    showGame();
 }
 
+// This function determines the next level of the game
 function determineNextLevel() {
-    // Logic to determine the next level of the game
-    // This is where you'll add the logic to escalate the game difficulty
-    // after each win, up to the maximum level
-    return currentLevel; // Módosítva az aktuális szint meghatározásához
+    // Increment the level if the player wins, otherwise start from level 2
+    return gameWon ? Math.min(currentLevel + 1, maxLevel) : 2;
 }
 
-// További logika az itt lesz hozzáadva a játék nehézségének növeléséhez
-
+// This function shows the game board and score
+function showGame() {
+    // Display the game board and score
+    document.getElementById('board').style.display = 'grid';
+    document.getElementById('score').style.display = 'block';
+    document.getElementById('start-screen').style.display = 'none';
+}
 
 
 
