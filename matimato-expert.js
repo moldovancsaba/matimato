@@ -269,6 +269,7 @@ function updateScoreDisplay() {
 
 
 
+
 //--------------------------------------------------------------------
 // #MM0005 Initialize Game and Firebase Logic ------------------------
 //--------------------------------------------------------------------
@@ -289,7 +290,15 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function resetGame() {
-    board = new Board(5, 5);
+    // If the player wins, increase the level, otherwise reset to level 2
+    if (gameWon) {
+        currentLevel = Math.min(currentLevel + 1, maxLevel);
+    } else {
+        currentLevel = 2; // Always start from 2x2 board on reset
+    }
+    
+    // Create a new board based on the current level
+    board = new Board(currentLevel, currentLevel);
     playerScore = 0;
     aiScore = 0;
     isPlayerTurn = true; // Player starts the game
@@ -298,6 +307,7 @@ function resetGame() {
     createBoard();
     updateScoreDisplay();
 }
+
 
 
 
