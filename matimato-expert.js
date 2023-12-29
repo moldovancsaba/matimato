@@ -87,7 +87,6 @@ function createBoard() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
@@ -111,7 +110,6 @@ function handleCellClick(row, column) {
 function computerMove() {
     if (!isPlayerTurn) {
         let availableCells = getAvailableCellsInColumn(lastSelectedColumn); // Choose only from the last selected column
-
         if (availableCells.length > 0) {
             let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
             aiScore += board.cells[maxCell.row][maxCell.column];
@@ -153,26 +151,26 @@ function checkEndGame() {
 function endGame() {
     let winner;
     if (playerScore > aiScore) {
-        winner = 'You win!';
+        if (currentLevel < maxLevel) {
+            winner = 'You win this round! Moving to next level...';
+            currentLevel++;
+            resetGame(); // Start the next level
+        } else {
+            winner = 'Congratulations! You have won the game!';
+            gameWon = true;
+            // Additional end game logic here
+        }
     } else if (aiScore > playerScore) {
         winner = 'AI wins!';
+        // Game over logic here
     } else {
         winner = 'Draw!';
+        // Handle draw condition here
     }
 
     document.getElementById('board').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'block';
     document.getElementById('winner-message').textContent = winner;
-    if (winner === 'You win!') {
-        currentLevel++;
-        if (currentLevel > maxLevel) {
-            endSequence();
-        } else {
-            resetGame(); // Reset the game with the new level
-        }
-    } else {
-        endSequence();
-    }
 }
 
 function canComputerMove() {
@@ -204,6 +202,7 @@ function getAvailableCells() {
     }
     return availableCells;
 }
+
 
 
 
