@@ -93,6 +93,7 @@ function createMasterBoard() {
 
 
 
+
 //--------------------------------------------------------------------
 // #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
@@ -200,12 +201,14 @@ function endGame() {
 }
 
 function canComputerMove() {
-    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
+    return getAvailableCellsInColumn(lastSelectedColumn).filter(cell => masterBoard.cells[cell.row][cell.column] !== '•').length > 0;
 }
 
 function canPlayerMove() {
-    return getAvailableCellsInRow(lastSelectedRow).length > 0;
+    return getAvailableCellsInRow(lastSelectedRow).filter(cell => masterBoard.cells[cell.row][cell.column] !== '•').length > 0;
 }
+
+
 
 
 
