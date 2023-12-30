@@ -92,7 +92,6 @@ function createMasterBoard() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
@@ -124,6 +123,7 @@ function masterComputerMove() {
             highlightColumn(lastSelectedColumn); // Highlight the column
             isPlayerTurn = true;
             updateScoreDisplay();
+            checkPlayerMovePossibility();
         } else {
             checkEndGame();
         }
@@ -198,8 +198,6 @@ function canComputerMove() {
 function canPlayerMove() {
     return getAvailableCellsInRow(lastSelectedRow).length > 0;
 }
-
-// ... [Other functions remain unchanged]
 
 
 
