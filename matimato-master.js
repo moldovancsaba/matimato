@@ -92,7 +92,6 @@ function createMasterBoard() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
@@ -118,28 +117,14 @@ function makeMove(row, column, board) {
         lastSelectedRow = row;
         highlightRow(lastSelectedRow);
         isPlayerTurn = false;
-        setTimeout(() => autoMove(masterBoard, 'computer'), 500);
+        setTimeout(masterComputerMove, 500);
     } else {
         aiScore += scoreToAdd;
         lastSelectedColumn = column;
         highlightColumn(lastSelectedColumn);
         isPlayerTurn = true;
-        autoMove(masterBoard, 'player');
     }
     updateScoreDisplay();
-}
-
-// Automatically performs a move if only one option is available
-function autoMove(board, playerType) {
-    let availableMoves = playerType === 'player' ? getAvailableCellsInRow(lastSelectedRow) : getAvailableCellsInColumn(lastSelectedColumn);
-
-    if (availableMoves.length === 1) {
-        makeMove(availableMoves[0].row, availableMoves[0].column, board);
-    } else if (availableMoves.length === 0) {
-        checkEndGame();
-    } else if (playerType === 'computer') {
-        masterComputerMove();
-    }
 }
 
 // AI's logic to calculate the best move
@@ -216,16 +201,6 @@ function endGame() {
     document.getElementById('board').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'block';
     document.getElementById('winner-message').textContent = winner;
-}
-
-// Checks if the computer can make a move
-function canComputerMove() {
-    return getAvailableCellsInColumn(lastSelectedColumn).filter(cell => masterBoard.cells[cell.row][cell.column] !== '•').length > 0;
-}
-
-// Checks if the player can make a move
-function canPlayerMove() {
-    return getAvailableCellsInRow(lastSelectedRow).filter(cell => masterBoard.cells[cell.row][cell.column] !== '•').length > 0;
 }
 
 
