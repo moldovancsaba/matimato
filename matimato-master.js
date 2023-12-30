@@ -98,10 +98,11 @@ function createMasterBoard() {
 //--------------------------------------------------------------------
 
 function handleCellClick(row, column, masterBoard) {
-    if (isPlayerTurn && masterBoard.cells[row][column] !== '•') {
+    if (isPlayerTurn && masterBoard.cells[row][column] !== '•' && (lastSelectedColumn === null || lastSelectedColumn === column)) {
         playerScore += masterBoard.cells[row][column];
         masterBoard.cells[row][column] = '•';
         highlightCell(row, column);
+        lastSelectedRow = row; // Update the last selected row
         isPlayerTurn = false;
         setTimeout(masterComputerMove, 500);
     }
@@ -115,6 +116,7 @@ function masterComputerMove() {
             aiScore += masterBoard.cells[bestMove.row][bestMove.column];
             masterBoard.cells[bestMove.row][bestMove.column] = '•';
             highlightCell(bestMove.row, bestMove.column);
+            lastSelectedColumn = bestMove.column; // Update the last selected column
             isPlayerTurn = true;
             updateScoreDisplay();
         } else {
@@ -127,37 +129,35 @@ function calculateBestMove(board) {
     let bestScoreDiff = -Infinity;
     let bestMove = null;
 
-    // Iterate through all available cells and calculate the best move
-    for (let i = 0; i < board.size; i++) {
-        for (let j = 0; j < board.size; j++) {
-            if (board.cells[i][j] !== '•') {
-                let tempScore = board.cells[i][j];
-                board.cells[i][j] = '•';
-                let playerBestMove = findPlayerBestMove(board);
-                let scoreDiff = tempScore - playerBestMove;
-                if (scoreDiff > bestScoreDiff) {
-                    bestScoreDiff = scoreDiff;
-                    bestMove = { row: i, column: j };
-                }
-                board.cells[i][j] = tempScore; // Reset the cell value
+    // Iterate through all available cells in the last selected row
+    for (let j = 0; j < board.size; j++) {
+        if (board.cells[lastSelectedRow][j] !== '•') {
+            let tempScore = board.cells[lastSelectedRow][j];
+            board.cells[lastSelectedRow][j] = '•';
+            let playerBestMove = findPlayerBestMove(board, j);
+            let scoreDiff = tempScore - playerBestMove;
+            if (scoreDiff > bestScoreDiff) {
+                bestScoreDiff = scoreDiff;
+                bestMove = { row: lastSelectedRow, column: j };
             }
+            board.cells[lastSelectedRow][j] = tempScore; // Reset the cell value
         }
     }
 
     return bestMove;
 }
 
-function findPlayerBestMove(board) {
+function findPlayerBestMove(board, column) {
     let bestScore = 0;
     for (let i = 0; i < board.size; i++) {
-        for (let j = 0; j < board.size; j++) {
-            if (board.cells[i][j] !== '•') {
-                bestScore = Math.max(bestScore, board.cells[i][j]);
-            }
+        if (board.cells[i][column] !== '•') {
+            bestScore = Math.max(bestScore, board.cells[i][column]);
         }
     }
     return bestScore;
 }
+
+
 
 
 
