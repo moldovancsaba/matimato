@@ -170,6 +170,16 @@ function getAvailableCellsInRow(row) {
     return availableCells;
 }
 
+function checkPlayerMovePossibility() {
+    if (!canPlayerMove()) {
+        endGame();
+    }
+}
+
+function canPlayerMove() {
+    return getAvailableCellsInColumn(lastSelectedColumn).filter(cell => masterBoard.cells[cell.row][cell.column] !== '•').length > 0;
+}
+
 function checkEndGame() {
     if ((!isPlayerTurn && !canComputerMove()) || (isPlayerTurn && !canPlayerMove())) {
         endGame();
@@ -192,14 +202,8 @@ function endGame() {
 }
 
 function canComputerMove() {
-    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
+    return getAvailableCellsInColumn(lastSelectedColumn).filter(cell => masterBoard.cells[cell.row][cell.column] !== '•').length > 0;
 }
-
-function canPlayerMove() {
-    return getAvailableCellsInRow(lastSelectedRow).length > 0;
-}
-
-
 
 
 
