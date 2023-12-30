@@ -84,21 +84,23 @@ function createBoard() {
 
 
 
+
+
 //--------------------------------------------------------------------
 // #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
 
-let lastSelectedRow = null; // Utoljára választott sor
-let lastSelectedColumn = null; // Utoljára választott oszlop
+let lastSelectedRow = null; // Last selected row
+let lastSelectedColumn = null; // Last selected column
 
 function handleCellClick(row, column) {
     if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedRow === null || lastSelectedRow === row)) {
         playerScore += board.cells[row][column];
         board.cells[row][column] = '•';
         highlightCell(row, column);
-        highlightColumn(column); // Kiemeli az oszlopot, ahol a játékos lépett
+        highlightColumn(column); // Highlight the column where the player moved
         isPlayerTurn = false;
-        lastSelectedColumn = column; // Frissíti az utoljára választott oszlopot
+        lastSelectedColumn = column; // Update the last selected column
         setTimeout(computerMove, 500);
     }
     updateScoreDisplay();
@@ -106,18 +108,18 @@ function handleCellClick(row, column) {
 
 function computerMove() {
     if (!isPlayerTurn) {
-        let availableCells = getAvailableCellsInColumn(lastSelectedColumn); // Csak az utoljára választott oszlopból választhat
+        let availableCells = getAvailableCellsInColumn(lastSelectedColumn); // Choose only from the last selected column
 
         if (availableCells.length > 0) {
             let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
             aiScore += board.cells[maxCell.row][maxCell.column];
             board.cells[maxCell.row][maxCell.column] = '•';
             highlightCell(maxCell.row, maxCell.column);
-            highlightRow(maxCell.row); // Kiemeli a sort, ahol a gép lépett
+            highlightRow(maxCell.row); // Highlight the row where the AI moved
             isPlayerTurn = true;
-            lastSelectedRow = maxCell.row; // Frissíti az utoljára választott sort
+            lastSelectedRow = maxCell.row; // Update the last selected row
             updateScoreDisplay();
-            checkPlayerMovePossibility(); // Ellenőrzi, hogy a játékos léphet-e
+            checkPlayerMovePossibility(); // Check if the player can move
         } else {
             checkEndGame();
         }
@@ -141,7 +143,7 @@ function getAvailableCellsInColumn(column) {
 }
 
 function checkEndGame() {
-    if (!isPlayerTurn && !canComputerMove() || isPlayerTurn && !canPlayerMove()) {
+    if ((!isPlayerTurn && !canComputerMove()) || (isPlayerTurn && !canPlayerMove())) {
         endGame();
     }
 }
@@ -190,6 +192,12 @@ function getAvailableCells() {
     }
     return availableCells;
 }
+
+
+
+
+
+
 
 
 
