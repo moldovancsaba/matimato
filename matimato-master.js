@@ -93,20 +93,21 @@ function createMasterBoard() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
 
-let lastSelectedRow = null; // Last selected row
-let lastSelectedColumn = null; // Last selected column
+let lastSelectedRow = null; // Tracks the last selected row
+let lastSelectedColumn = null; // Tracks the last selected column
 
+// Handles cell clicks and initiates the game logic
 function handleCellClick(row, column, masterBoard) {
     if (isPlayerTurn && masterBoard.cells[row][column] !== '•' && (lastSelectedColumn === null || lastSelectedColumn === column)) {
         makeMove(row, column, masterBoard);
     }
 }
 
+// Executes a move for either the player or the AI
 function makeMove(row, column, board) {
     let scoreToAdd = board.cells[row][column];
     board.cells[row][column] = '•';
@@ -114,31 +115,44 @@ function makeMove(row, column, board) {
 
     if (isPlayerTurn) {
         playerScore += scoreToAdd;
-        lastSelectedRow = row; // Update the last selected row
-        highlightRow(lastSelectedRow); // Highlight the row
+        lastSelectedRow = row;
+        highlightRow(lastSelectedRow);
         isPlayerTurn = false;
         setTimeout(() => autoMove(masterBoard, 'computer'), 500);
     } else {
         aiScore += scoreToAdd;
-        lastSelectedColumn = column; // Update the last selected column
-        highlightColumn(lastSelectedColumn); // Highlight the column
+        lastSelectedColumn = column;
+        highlightColumn(lastSelectedColumn);
         isPlayerTurn = true;
         autoMove(masterBoard, 'player');
     }
     updateScoreDisplay();
 }
 
+// Automatically performs a move if only one option is available
 function autoMove(board, playerType) {
     let availableMoves = playerType === 'player' ? getAvailableCellsInRow(lastSelectedRow) : getAvailableCellsInColumn(lastSelectedColumn);
 
-    // Automatically make a move if only one possible move is available
     if (availableMoves.length === 1) {
         makeMove(availableMoves[0].row, availableMoves[0].column, board);
     } else if (availableMoves.length === 0) {
         checkEndGame();
+    } else if (playerType === 'computer') {
+        masterComputerMove();
     }
 }
 
+// AI's logic to calculate the best move
+function masterComputerMove() {
+    let bestMove = calculateBestMove(masterBoard);
+    if (bestMove) {
+        makeMove(bestMove.row, bestMove.column, masterBoard);
+    } else {
+        checkEndGame();
+    }
+}
+
+// Calculates the AI's best move based on the game state
 function calculateBestMove(board) {
     let bestScoreDiff = -Infinity;
     let bestMove = null;
@@ -153,12 +167,13 @@ function calculateBestMove(board) {
             bestScoreDiff = scoreDiff;
             bestMove = cell;
         }
-        board.cells[cell.row][cell.column] = tempScore; // Reset the cell value
+        board.cells[cell.row][cell.column] = tempScore;
     });
 
     return bestMove;
 }
 
+// Finds the best possible move for the player
 function findPlayerBestMove(board, column) {
     let bestScore = 0;
     for (let i = 0; i < board.size; i++) {
@@ -169,6 +184,7 @@ function findPlayerBestMove(board, column) {
     return bestScore;
 }
 
+// Retrieves available cells in the selected row
 function getAvailableCellsInRow(row) {
     let availableCells = [];
     for (let j = 0; j < board.size; j++) {
@@ -179,12 +195,14 @@ function getAvailableCellsInRow(row) {
     return availableCells;
 }
 
+// Checks if the game should end based on available moves
 function checkEndGame() {
     if ((!isPlayerTurn && !canComputerMove()) || (isPlayerTurn && !canPlayerMove())) {
         endGame();
     }
 }
 
+// Ends the game and declares the winner
 function endGame() {
     let winner;
     if (playerScore > aiScore) {
@@ -200,14 +218,15 @@ function endGame() {
     document.getElementById('winner-message').textContent = winner;
 }
 
+// Checks if the computer can make a move
 function canComputerMove() {
     return getAvailableCellsInColumn(lastSelectedColumn).filter(cell => masterBoard.cells[cell.row][cell.column] !== '•').length > 0;
 }
 
+// Checks if the player can make a move
 function canPlayerMove() {
-    return getAvailableCellsInRow(lastSelectedRow).filter(cell => masterBoard.cells[cell.row][cell.column] !== '•').length > 0;
+    return getAvailableCellsInRow(lastSelectedRow).filter(cell => masterBoard.cells[cell.row][cell.column] !== ‘•’).length > 0;
 }
-
 
 
 
