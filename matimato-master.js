@@ -225,16 +225,8 @@ function canComputerMove() {
 
 // Checks if the player can make a move
 function canPlayerMove() {
-    return getAvailableCellsInRow(lastSelectedRow).filter(cell => masterBoard.cells[cell.row][cell.column] !== ‘•’).length > 0;
+    return getAvailableCellsInRow(lastSelectedRow).filter(cell => masterBoard.cells[cell.row][cell.column] !== '•').length > 0;
 }
-
-
-
-
-
-
-
-
 
 
 
