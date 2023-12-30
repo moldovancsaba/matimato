@@ -93,7 +93,6 @@ function createMasterBoard() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
@@ -107,6 +106,7 @@ function handleCellClick(row, column, masterBoard) {
         masterBoard.cells[row][column] = '•';
         highlightCell(row, column);
         lastSelectedRow = row; // Update the last selected row
+        highlightRow(lastSelectedRow); // Highlight the row
         isPlayerTurn = false;
         setTimeout(masterComputerMove, 500);
     }
@@ -121,6 +121,7 @@ function masterComputerMove() {
             masterBoard.cells[bestMove.row][bestMove.column] = '•';
             highlightCell(bestMove.row, bestMove.column);
             lastSelectedColumn = bestMove.column; // Update the last selected column
+            highlightColumn(lastSelectedColumn); // Highlight the column
             isPlayerTurn = true;
             updateScoreDisplay();
         } else {
@@ -130,36 +131,75 @@ function masterComputerMove() {
 }
 
 function calculateBestMove(board) {
-    // Existing logic for AI's best move calculation
+    let bestScoreDiff = -Infinity;
+    let bestMove = null;
+    let availableCells = getAvailableCellsInRow(lastSelectedRow);
+
+    availableCells.forEach(cell => {
+        let tempScore = board.cells[cell.row][cell.column];
+        board.cells[cell.row][cell.column] = '•';
+        let playerBestMove = findPlayerBestMove(board, cell.column);
+        let scoreDiff = tempScore - playerBestMove;
+        if (scoreDiff > bestScoreDiff) {
+            bestScoreDiff = scoreDiff;
+            bestMove = cell;
+        }
+        board.cells[cell.row][cell.column] = tempScore; // Reset the cell value
+    });
+
+    return bestMove;
+}
+
+function findPlayerBestMove(board, column) {
+    let bestScore = 0;
+    for (let i = 0; i < board.size; i++) {
+        if (board.cells[i][column] !== '•') {
+            bestScore = Math.max(bestScore, board.cells[i][column]);
+        }
+    }
+    return bestScore;
+}
+
+function getAvailableCellsInRow(row) {
+    let availableCells = [];
+    for (let j = 0; j < masterBoard.size; j++) {
+        if (masterBoard.cells[row][j] !== '•') {
+            availableCells.push({ row: row, column: j });
+        }
+    }
+    return availableCells;
 }
 
 function checkEndGame() {
-    if ((!isPlayerTurn && !canComputerMove(masterBoard)) || (isPlayerTurn && !canPlayerMove(masterBoard))) {
+    if ((!isPlayerTurn && !canComputerMove()) || (isPlayerTurn && !canPlayerMove())) {
         endGame();
     }
 }
 
 function endGame() {
-    // Existing logic for ending the game
+    let winner;
+    if (playerScore > aiScore) {
+        winner = 'You win!';
+    } else if (aiScore > playerScore) {
+        winner = 'AI wins!';
+    } else {
+        winner = 'Draw!';
+    }
+
+    document.getElementById('board').style.display = 'none';
+    document.getElementById('end-game-message').style.display = 'block';
+    document.getElementById('winner-message').textContent = winner;
 }
 
-function canComputerMove(board) {
-    // Check if the AI has any valid moves in the last selected row
-    return getAvailableCellsInRow(lastSelectedRow, board).length > 0;
+function canComputerMove() {
+    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
 }
 
-function canPlayerMove(board) {
-    // Check if the player has any valid moves in the last selected column
-    return getAvailableCellsInColumn(lastSelectedColumn, board).length > 0;
+function canPlayerMove() {
+    return getAvailableCellsInRow(lastSelectedRow).length > 0;
 }
 
-function getAvailableCellsInRow(row, board) {
-    // Existing logic to get available cells in a row
-}
-
-function getAvailableCellsInColumn(column, board) {
-    // Existing logic to get available cells in a column
-}
+// ... [Other functions remain unchanged]
 
 
 
