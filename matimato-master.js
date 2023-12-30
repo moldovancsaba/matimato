@@ -91,7 +91,6 @@ function createMasterBoard() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
@@ -103,6 +102,9 @@ let lastSelectedColumn = null; // Tracks the last selected column
 function handleCellClick(row, column, masterBoard) {
     if (isPlayerTurn && masterBoard.cells[row][column] !== '•' && (lastSelectedColumn === null || lastSelectedColumn === column)) {
         makeMove(row, column, masterBoard);
+        if (!isPlayerTurn) {
+            masterComputerMove();
+        }
     }
 }
 
@@ -117,7 +119,6 @@ function makeMove(row, column, board) {
         lastSelectedRow = row;
         highlightRow(lastSelectedRow);
         isPlayerTurn = false;
-        setTimeout(masterComputerMove, 500);
     } else {
         aiScore += scoreToAdd;
         lastSelectedColumn = column;
@@ -152,7 +153,7 @@ function calculateBestMove(board) {
             bestScoreDiff = scoreDiff;
             bestMove = cell;
         }
-        board.cells[cell.row][cell.column] = tempScore;
+        board.cells[cell.row][cell.column] = tempScore; // Reset the cell value
     });
 
     return bestMove;
@@ -202,6 +203,7 @@ function endGame() {
     document.getElementById('end-game-message').style.display = 'block';
     document.getElementById('winner-message').textContent = winner;
 }
+
 
 
 
