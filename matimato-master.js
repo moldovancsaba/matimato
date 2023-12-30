@@ -102,32 +102,39 @@ let lastSelectedColumn = null; // Last selected column
 
 function handleCellClick(row, column, masterBoard) {
     if (isPlayerTurn && masterBoard.cells[row][column] !== '•' && (lastSelectedColumn === null || lastSelectedColumn === column)) {
-        playerScore += masterBoard.cells[row][column];
-        masterBoard.cells[row][column] = '•';
-        highlightCell(row, column);
+        makeMove(row, column, masterBoard);
+    }
+}
+
+function makeMove(row, column, board) {
+    let scoreToAdd = board.cells[row][column];
+    board.cells[row][column] = '•';
+    highlightCell(row, column);
+
+    if (isPlayerTurn) {
+        playerScore += scoreToAdd;
         lastSelectedRow = row; // Update the last selected row
         highlightRow(lastSelectedRow); // Highlight the row
         isPlayerTurn = false;
-        setTimeout(masterComputerMove, 500);
+        setTimeout(() => autoMove(masterBoard, 'computer'), 500);
+    } else {
+        aiScore += scoreToAdd;
+        lastSelectedColumn = column; // Update the last selected column
+        highlightColumn(lastSelectedColumn); // Highlight the column
+        isPlayerTurn = true;
+        autoMove(masterBoard, 'player');
     }
     updateScoreDisplay();
 }
 
-function masterComputerMove() {
-    if (!isPlayerTurn) {
-        let bestMove = calculateBestMove(masterBoard);
-        if (bestMove) {
-            aiScore += masterBoard.cells[bestMove.row][bestMove.column];
-            masterBoard.cells[bestMove.row][bestMove.column] = '•';
-            highlightCell(bestMove.row, bestMove.column);
-            lastSelectedColumn = bestMove.column; // Update the last selected column
-            highlightColumn(lastSelectedColumn); // Highlight the column
-            isPlayerTurn = true;
-            updateScoreDisplay();
-            checkPlayerMovePossibility();
-        } else {
-            checkEndGame();
-        }
+function autoMove(board, playerType) {
+    let availableMoves = playerType === 'player' ? getAvailableCellsInRow(lastSelectedRow) : getAvailableCellsInColumn(lastSelectedColumn);
+
+    // Automatically make a move if only one possible move is available
+    if (availableMoves.length === 1) {
+        makeMove(availableMoves[0].row, availableMoves[0].column, board);
+    } else if (availableMoves.length === 0) {
+        checkEndGame();
     }
 }
 
@@ -163,26 +170,12 @@ function findPlayerBestMove(board, column) {
 
 function getAvailableCellsInRow(row) {
     let availableCells = [];
-    for (let j = 0; j < masterBoard.size; j++) {
-        if (masterBoard.cells[row][j] !== '•') {
+    for (let j = 0; j < board.size; j++) {
+        if (board.cells[row][j] !== '•') {
             availableCells.push({ row: row, column: j });
         }
     }
     return availableCells;
-}
-
-function checkPlayerMovePossibility() {
-    if (!canPlayerMove()) {
-        endGame();
-    }
-}
-
-function canComputerMove() {
-    return getAvailableCellsInColumn(lastSelectedColumn).some(cell => masterBoard.cells[cell.row][cell.column] > 0);
-}
-
-function canPlayerMove() {
-    return getAvailableCellsInRow(lastSelectedRow).some(cell => masterBoard.cells[cell.row][cell.column] > 0);
 }
 
 function checkEndGame() {
@@ -205,6 +198,15 @@ function endGame() {
     document.getElementById('end-game-message').style.display = 'block';
     document.getElementById('winner-message').textContent = winner;
 }
+
+function canComputerMove() {
+    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
+}
+
+function canPlayerMove() {
+    return getAvailableCellsInRow(lastSelectedRow).length > 0;
+}
+
 
 
 
