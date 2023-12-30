@@ -220,21 +220,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function startMasterGame() {
     masterResetGame();
-    document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block';
-    document.getElementById('start-screen').style.display = 'none';
+    showGame(); // Make sure to show the game board
 }
 
 function masterResetGame() {
-    board = new Board(7, 7); // Create a new 7x7 board for Master mode
-    board.cells = board.createInitialBoard(); // Generate new cell values for the board
+    masterBoard = new MasterBoard(7); // Create a new 7x7 board for Master mode
+    masterBoard.cells = masterBoard.createInitialBoard(); // Generate new cell values for the board
     playerScore = 0;
     aiScore = 0;
     isPlayerTurn = true;
     lastSelectedRow = null;
     lastSelectedColumn = null;
-    createBoard();
+    createMasterBoard();
     updateScoreDisplay();
+}
+
+function showGame() {
+    document.getElementById('board').style.display = 'grid';
+    document.getElementById('score').style.display = 'block';
+    document.getElementById('end-game-message').style.display = 'none';
 }
 
 
