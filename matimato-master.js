@@ -171,6 +171,7 @@ function findPlayerBestMove(board, column) {
 
 
 
+
 //--------------------------------------------------------------------
 // #MM0004 UI Functions ----------------------------------------------
 //--------------------------------------------------------------------
@@ -186,6 +187,22 @@ function highlightCell(row, column) {
     }
 }
 
+function highlightColumn(column) {
+    clearHighlights();
+    document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
+        cell.style.border = '4px solid #DDDDDD';
+        cell.style.boxSizing = 'border-box';
+    });
+}
+
+function highlightRow(row) {
+    clearHighlights();
+    document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
+        cell.style.border = '4px solid #DDDDDD';
+        cell.style.boxSizing = 'border-box';
+    });
+}
+
 function clearHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
         cell.style.border = '';
@@ -199,6 +216,8 @@ function updateScoreDisplay() {
     playerScoreElement.textContent = `You: ${playerScore}`;
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
+
+
 
 
 
@@ -252,6 +271,7 @@ function showGame() {
 
 
 
+
 //--------------------------------------------------------------------
 // #MM0006 Start & End -----------------------------------------------
 //--------------------------------------------------------------------
@@ -263,11 +283,27 @@ function hideGame() {
     document.getElementById('start-screen').style.display = 'block';
 }
 
+function endGame() {
+    let winner;
+    if (playerScore > aiScore) {
+        winner = 'You win!';
+    } else if (aiScore > playerScore) {
+        winner = 'AI wins!';
+    } else {
+        winner = 'Draw!';
+    }
+
+    document.getElementById('board').style.display = 'none';
+    document.getElementById('end-game-message').style.display = 'block';
+    document.getElementById('winner-message').textContent = winner;
+}
+
 // Event handler for the Restart button
 document.getElementById('restart-button').addEventListener('click', () => {
     masterResetGame();
     startMasterGame();
 });
+
 
 
 
