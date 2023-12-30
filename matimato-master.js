@@ -93,17 +93,20 @@ function createMasterBoard() {
 
 
 
+
 //--------------------------------------------------------------------
 // #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
 
 function handleCellClick(row, column, masterBoard) {
-    if (isPlayerTurn && masterBoard.cells[row][column] !== '•' && (lastSelectedColumn === null || lastSelectedColumn === column)) {
+    if (isPlayerTurn && masterBoard.cells[row][column] !== '•') {
         playerScore += masterBoard.cells[row][column];
         masterBoard.cells[row][column] = '•';
         highlightCell(row, column);
-        lastSelectedRow = row; // Update the last selected row
+        highlightRow(row); // Highlight the row where the player moved
         isPlayerTurn = false;
+        lastSelectedRow = row; // Update the last selected row
+        lastSelectedColumn = null; // Clear the last selected column for AI
         setTimeout(masterComputerMove, 500);
     }
     updateScoreDisplay();
@@ -111,13 +114,15 @@ function handleCellClick(row, column, masterBoard) {
 
 function masterComputerMove() {
     if (!isPlayerTurn) {
-        let bestMove = calculateBestMove(masterBoard);
+        let bestMove = calculateBestMove(masterBoard, lastSelectedRow);
         if (bestMove) {
             aiScore += masterBoard.cells[bestMove.row][bestMove.column];
             masterBoard.cells[bestMove.row][bestMove.column] = '•';
             highlightCell(bestMove.row, bestMove.column);
-            lastSelectedColumn = bestMove.column; // Update the last selected column
+            highlightColumn(bestMove.column); // Highlight the column where the AI moved
             isPlayerTurn = true;
+            lastSelectedColumn = bestMove.column; // Update the last selected column
+            lastSelectedRow = null; // Clear the last selected row for player
             updateScoreDisplay();
         } else {
             checkEndGame();
@@ -125,38 +130,38 @@ function masterComputerMove() {
     }
 }
 
-function calculateBestMove(board) {
+function calculateBestMove(board, lastRow) {
     let bestScoreDiff = -Infinity;
     let bestMove = null;
 
-    // Iterate through all available cells in the last selected row
+    // Iterate through all available cells in the last selected row by the player
     for (let j = 0; j < board.size; j++) {
-        if (board.cells[lastSelectedRow][j] !== '•') {
-            let tempScore = board.cells[lastSelectedRow][j];
-            board.cells[lastSelectedRow][j] = '•';
+        if (board.cells[lastRow][j] !== '•') {
+            let tempScore = board.cells[lastRow][j];
+            board.cells[lastRow][j] = '•';
             let playerBestMove = findPlayerBestMove(board, j);
             let scoreDiff = tempScore - playerBestMove;
             if (scoreDiff > bestScoreDiff) {
                 bestScoreDiff = scoreDiff;
-                bestMove = { row: lastSelectedRow, column: j };
+                bestMove = { row: lastRow, column: j };
             }
-            board.cells[lastSelectedRow][j] = tempScore; // Reset the cell value
+            board.cells[lastRow][j] = tempScore; // Reset the cell value
         }
     }
 
     return bestMove;
 }
 
-function findPlayerBestMove(board, column) {
+function findPlayerBestMove(board, lastColumn) {
     let bestScore = 0;
+    // Iterate through all available cells in the last selected column by the AI
     for (let i = 0; i < board.size; i++) {
-        if (board.cells[i][column] !== '•') {
-            bestScore = Math.max(bestScore, board.cells[i][column]);
+        if (board.cells[i][lastColumn] !== '•') {
+            bestScore = Math.max(bestScore, board.cells[i][lastColumn]);
         }
     }
     return bestScore;
 }
-
 
 
 
