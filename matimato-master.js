@@ -176,8 +176,12 @@ function checkPlayerMovePossibility() {
     }
 }
 
+function canComputerMove() {
+    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
+}
+
 function canPlayerMove() {
-    return getAvailableCellsInColumn(lastSelectedColumn).filter(cell => masterBoard.cells[cell.row][cell.column] !== '•').length > 0;
+    return getAvailableCellsInRow(lastSelectedRow).length > 0;
 }
 
 function checkEndGame() {
@@ -199,10 +203,6 @@ function endGame() {
     document.getElementById('board').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'block';
     document.getElementById('winner-message').textContent = winner;
-}
-
-function canComputerMove() {
-    return getAvailableCellsInColumn(lastSelectedColumn).filter(cell => masterBoard.cells[cell.row][cell.column] !== '•').length > 0;
 }
 
 
