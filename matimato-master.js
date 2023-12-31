@@ -270,7 +270,6 @@ function updateScoreDisplay() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0005 Initialize Game and Firebase Logic ------------------------
 //--------------------------------------------------------------------
@@ -284,6 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function startMasterGame() {
     masterResetGame();
     showGame(); // Display the game board
+    masterComputerMove(); // AI makes the first move
 }
 
 // Resets the game to its initial state
