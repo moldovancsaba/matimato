@@ -33,8 +33,8 @@
 /* Adjustments for landscape orientation */
 @media (orientation: landscape) {
     .board {
-        width: 85vh;
-        height: 85vh; /* Adjust height to match width */
+        width: 80vh;
+        height: 80vh; /* Adjust height to match width */
     }
 
     .cell {
@@ -73,8 +73,8 @@
 /* Adjustments for portrait orientation */
 @media (orientation: portrait) {
     .board {
-        width: 90vw; /* Adjust board width */
-        height: 90vw; /* Adjust board height to match width */
+        width: 80vw; /* Adjust board width */
+        height: 80vw; /* Adjust board height to match width */
     }
 
     #ai-score, #player-score {
