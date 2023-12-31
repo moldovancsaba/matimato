@@ -17,10 +17,13 @@
 //--------------------------------------------------------------------
 // #MM0001 Global variables ------------------------------------------
 //--------------------------------------------------------------------
+let playerScore = 0; // Player's score
+let aiScore = 0;     // AI's score
+let isPlayerTurn = false; // Flag to check if it's player's turn
 
 class MasterBoard {
     constructor(size) {
-        this.size = size; // Board size, always 7x7 for Master level
+        this.size = size; // Fixed size for Master level
         this.cells = this.createInitialBoard();
     }
 
@@ -37,15 +40,7 @@ class MasterBoard {
     }
 }
 
-// Initializing the Master game board with 7x7 size
-let masterBoard = new MasterBoard(7);
-let playerScore = 0; // Player's score
-let aiScore = 0;     // AI's score
-let isPlayerTurn = true; // Flag to check if it's player's turn
-
-
-
-
+let masterBoard = new MasterBoard(7); // Creating a 7x7 board for Master level
 
 
 
@@ -58,7 +53,6 @@ let isPlayerTurn = true; // Flag to check if it's player's turn
 //--------------------------------------------------------------------
 // #MM0002 Create Gamefield ------------------------------------------
 //--------------------------------------------------------------------
-
 function createMasterBoard() {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
@@ -66,20 +60,24 @@ function createMasterBoard() {
     boardElement.style.gridTemplateColumns = `repeat(${masterBoard.size}, 1fr)`;
 
     for (let i = 0; i < masterBoard.size; i++) {
-        const rowDiv = document.createElement('div');
-        rowDiv.className = 'row';
         for (let j = 0; j < masterBoard.size; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
             cell.textContent = masterBoard.cells[i][j];
             cell.setAttribute('row', i);
             cell.setAttribute('column', j);
-            cell.addEventListener('click', () => handleCellClick(i, j, masterBoard));
-            rowDiv.appendChild(cell);
+            cell.addEventListener('click', () => handleCellClick(i, j));
+            boardElement.appendChild(cell);
         }
-        boardElement.appendChild(rowDiv);
     }
 }
+
+// Initialize and display the game board
+document.addEventListener('DOMContentLoaded', () => {
+    createMasterBoard();
+    // Additional initialization code can be added here if needed
+});
+
 
 
 
@@ -212,10 +210,13 @@ function endGame() {
 
 
 
+
+
 //--------------------------------------------------------------------
 // #MM0004 UI Functions ----------------------------------------------
 //--------------------------------------------------------------------
 
+// Highlights the selected cell
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
@@ -227,6 +228,7 @@ function highlightCell(row, column) {
     }
 }
 
+// Highlights all cells in the selected column
 function highlightColumn(column) {
     clearHighlights();
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
@@ -235,6 +237,7 @@ function highlightColumn(column) {
     });
 }
 
+// Highlights all cells in the selected row
 function highlightRow(row) {
     clearHighlights();
     document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
@@ -243,6 +246,7 @@ function highlightRow(row) {
     });
 }
 
+// Clears all cell highlights
 function clearHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
         cell.style.border = '';
@@ -250,6 +254,7 @@ function clearHighlights() {
     });
 }
 
+// Updates the score display for both player and AI
 function updateScoreDisplay() {
     const playerScoreElement = document.getElementById('player-score');
     const aiScoreElement = document.getElementById('ai-score');
@@ -266,35 +271,33 @@ function updateScoreDisplay() {
 
 
 
-
-
 //--------------------------------------------------------------------
 // #MM0005 Initialize Game and Firebase Logic ------------------------
 //--------------------------------------------------------------------
 
+// Executes when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
-    startMasterGame(); // Start the Master mode game immediately when the page loads
+    startMasterGame(); // Start the Master level game immediately when the page loads
 });
 
+// Starts the Master level game
 function startMasterGame() {
     masterResetGame();
-    showGame(); // Make sure to show the game board
-    isPlayerTurn = false; // AI kezdi a játékot
-    masterComputerMove(); // AI első lépése
+    showGame(); // Display the game board
 }
 
+// Resets the game to its initial state
 function masterResetGame() {
     masterBoard = new MasterBoard(7); // Create a new 7x7 board for Master mode
     masterBoard.cells = masterBoard.createInitialBoard(); // Generate new cell values for the board
     playerScore = 0;
     aiScore = 0;
-    isPlayerTurn = true;
-    lastSelectedRow = null;
-    lastSelectedColumn = null;
-    createMasterBoard();
-    updateScoreDisplay();
+    isPlayerTurn = false; // AI starts first in Master mode
+    createMasterBoard(); // Create and display the game board
+    updateScoreDisplay(); // Update the score display
 }
 
+// Displays the game board and score
 function showGame() {
     document.getElementById('board').style.display = 'grid';
     document.getElementById('score').style.display = 'block';
@@ -302,51 +305,6 @@ function showGame() {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//--------------------------------------------------------------------
-// #MM0006 Start & End -----------------------------------------------
-//--------------------------------------------------------------------
-
-function hideGame() {
-    document.getElementById('board').style.display = 'none';
-    document.getElementById('score').style.display = 'none';
-    document.getElementById('end-game-message').style.display = 'none';
-    document.getElementById('start-screen').style.display = 'block';
-}
-
-function endGame() {
-    let winner;
-    if (playerScore > aiScore) {
-        winner = 'You win!';
-    } else if (aiScore > playerScore) {
-        winner = 'AI wins!';
-    } else {
-        winner = 'Draw!';
-    }
-
-    document.getElementById('board').style.display = 'none';
-    document.getElementById('end-game-message').style.display = 'block';
-    document.getElementById('winner-message').textContent = winner;
-}
-
-// Event handler for the Restart button
-document.getElementById('restart-button').addEventListener('click', () => {
-    masterResetGame();
-    startMasterGame();
-});
 
 
 
