@@ -268,7 +268,6 @@ function updateScoreDisplay() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0005 Initialize Game and Firebase Logic ------------------------
 //--------------------------------------------------------------------
@@ -280,6 +279,8 @@ document.addEventListener('DOMContentLoaded', () => {
 function startMasterGame() {
     masterResetGame();
     showGame(); // Make sure to show the game board
+    isPlayerTurn = false; // AI kezdi a játékot
+    masterComputerMove(); // AI első lépése
 }
 
 function masterResetGame() {
@@ -299,6 +300,9 @@ function showGame() {
     document.getElementById('score').style.display = 'block';
     document.getElementById('end-game-message').style.display = 'none';
 }
+
+
+
 
 
 
