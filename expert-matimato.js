@@ -244,19 +244,30 @@ function updateScoreDisplay() {
 //--------------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Display the game board and score when the page loads
+    resetGame(); // Ez a függvény hívja a createBoard függvényt
+    document.getElementById('board').style.display = 'grid';
+    document.getElementById('score').style.display = 'block';
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('end-game-message').style.display = 'none';
+
+    // Event handler for the Restart button
+    document.getElementById('restart-button').addEventListener('click', startGame);
+    document.getElementById('next-level-button').addEventListener('click', startGame);
+
+    // Event handler for the Main Menu button (assuming there is one)
+    document.getElementById('main-menu-button').addEventListener('click', () => {
+        // Logic to return to the main menu
+    });
+});
+
+// Define the startGame function to handle starting or restarting the game
+function startGame() {
     resetGame();
     document.getElementById('board').style.display = 'grid';
     document.getElementById('score').style.display = 'block';
-
-    // Event handler for the Restart button
-    document.getElementById('restart-button').addEventListener('click', () => {
-        resetGame();
-        document.getElementById('board').style.display = 'grid';
-        document.getElementById('score').style.display = 'block';
-        document.getElementById('end-game-message').style.display = 'none';
-    });
-});
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('end-game-message').style.display = 'none';
+}
 
 function resetGame() {
     // Create a new board based on the current level
@@ -268,14 +279,6 @@ function resetGame() {
     lastSelectedColumn = null;
     createBoard();
     updateScoreDisplay();
-    showGame(); // Make sure to show the game board
-}
-
-function showGame() {
-    // Display the game board and score
-    document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block';
-    document.getElementById('start-screen').style.display = 'none';
 }
 
 
