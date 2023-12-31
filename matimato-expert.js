@@ -95,7 +95,6 @@ function createBoard() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
@@ -134,9 +133,8 @@ function computerMove() {
             isPlayerTurn = true;
             lastSelectedRow = maxCell.row; // Update the last selected row
             updateScoreDisplay();
-        } else {
-            checkEndGame();
-        }
+        } 
+        checkEndGame(); // Always check for end game after AI's move
     }
 }
 
@@ -175,7 +173,6 @@ function getAvailableCellsInRow(row) {
     }
     return availableCells;
 }
-
 
 
 
