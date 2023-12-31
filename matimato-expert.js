@@ -290,7 +290,6 @@ function showGame() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0006 Start & End -----------------------------------------------
 //--------------------------------------------------------------------
@@ -335,15 +334,18 @@ function endGame() {
     document.getElementById('end-game-message').style.display = 'block';
 }
 
+// Define the startGame function to handle starting or restarting the game
+function startGame() {
+    resetGame();
+    document.getElementById('board').style.display = 'grid';
+    document.getElementById('score').style.display = 'block';
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('end-game-message').style.display = 'none';
+}
+
 // Event handler for the Restart and Next Level buttons
-document.getElementById('restart-button').addEventListener('click', () => {
-    resetGame();
-    startGame();
-});
-document.getElementById('next-level-button').addEventListener('click', () => {
-    resetGame();
-    startGame();
-});
+document.getElementById('restart-button').addEventListener('click', startGame);
+document.getElementById('next-level-button').addEventListener('click', startGame);
 
 // Event handler for the Main Menu button (assuming there is one)
 document.getElementById('main-menu-button').addEventListener('click', () => {
@@ -360,12 +362,10 @@ document.getElementById('main-menu-button').addEventListener('click', () => {
 
 
 
-
-
 //------------------------------
 // END OF CODE -----------------
 //------------------------------
 // CREATED BY MOLDOVAN ---------
 //------------------------------
-// JAVASCRIPT WRITTEN BY GPT ---
+// JAVASCRIPT BY GPT -----------
 //------------------------------
