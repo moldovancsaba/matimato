@@ -93,7 +93,6 @@ function createBoard() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
@@ -111,12 +110,8 @@ function handleCellClick(row, column) {
         isPlayerTurn = false;
         updateScoreDisplay();
 
-        // Check if the player has any more possible moves
-        if (!canPlayerMove()) {
-            checkEndGame();
-        } else {
-            setTimeout(computerMove, 500);
-        }
+        // Call computer move after a short delay
+        setTimeout(computerMove, 500);
     }
 }
 
@@ -133,7 +128,8 @@ function computerMove() {
             lastSelectedRow = maxCell.row; // Update the last selected row
             updateScoreDisplay();
         }
-        checkEndGame(); // Always check for end game after AI's move
+        // Check for end game after AI's move
+        checkEndGame();
     }
 }
 
@@ -143,14 +139,11 @@ function checkEndGame() {
     }
 }
 
-
 function canComputerMove() {
-    // Implement logic to check if the computer can make a move
     return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
 }
 
 function canPlayerMove() {
-    // Implement logic to check if the player can make a move
     return getAvailableCellsInRow(lastSelectedRow).length > 0;
 }
 
