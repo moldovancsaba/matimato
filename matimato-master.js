@@ -70,13 +70,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
+//--------------------------------------------------------------------
+// #MM0003 Game Logic ------------------------------------------------
+//--------------------------------------------------------------------
 
 let lastSelectedRow = null; // Tracks the last selected row
 let lastSelectedColumn = null; // Tracks the last selected column
 
 function handleCellClick(row, column) {
-    if (isPlayerTurn && masterBoard.cells[row][column] !== '•') {
+    if (isPlayerTurn && masterBoard.cells[row][column] !== '•' &&
+       (lastSelectedRow === null || lastSelectedRow === row)) {
         makeMove(row, column, masterBoard);
         if (!isPlayerTurn) {
             masterComputerMove();
@@ -102,6 +105,7 @@ function makeMove(row, column, board) {
     }
     updateScoreDisplay();
 }
+
 
 function masterComputerMove() {
     let bestMove = calculateBestMove(masterBoard);
