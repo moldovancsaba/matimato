@@ -1,0 +1,55 @@
+/*----------------------------*/
+/* game.css ------------------*/
+/*----------------------------*/
+/* CSS STARTS HERE -----------*/
+/*----------------------------*/
+
+
+
+/* Specific styling for the game */
+#board {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.row {
+    display: contents;
+}
+
+.cell {
+    width: 50px;
+    height: 50px;
+    background-color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #ddd;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.cell:hover {
+    background-color: #e9e9e9;
+}
+
+#score {
+    margin-bottom: 20px;
+}
+
+#end-game-message {
+    display: none;
+    font-size: 20px;
+    text-align: center;
+    margin-top: 20px;
+}
+
+
+
+/*----------------------------*/
+/* END OF CSS ----------------*/
+/*----------------------------*/
+/* CREATED BY MOLDOVAN -------*/
+/*----------------------------*/
+/* CSS WRITTEN BY GPT --------*/
+/*----------------------------*/
