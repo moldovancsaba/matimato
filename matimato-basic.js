@@ -51,6 +51,10 @@ let isPlayerTurn = true; // Flag to check if it's player's turn
 
 
 
+
+
+
+
 //--------------------------------------------------------------------
 // #MM0002 Create Gamefield ------------------------------------------
 //--------------------------------------------------------------------
@@ -58,7 +62,8 @@ let isPlayerTurn = true; // Flag to check if it's player's turn
 function createBoard() {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
-    boardElement.style.gridTemplateRows = `repeat(${board.rows}, 1fr)`; 
+    boardElement.style.gridTemplateRows = `repeat(${board.rows}, 1fr)`;
+    boardElement.style.gridTemplateColumns = `repeat(${board.columns}, 1fr)`;
 
     for (let i = 0; i < board.rows; i++) {
         const rowDiv = document.createElement('div');
@@ -85,6 +90,8 @@ function createBoard() {
 
 
 
+
+
 //--------------------------------------------------------------------
 // #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
@@ -92,40 +99,36 @@ function createBoard() {
 let lastSelectedRow = null; // Last selected row
 let lastSelectedColumn = null; // Last selected column
 
-function handleCellClick(row, column, masterBoard) {
-    if (isPlayerTurn && masterBoard.cells[row][column] !== '•' && (lastSelectedColumn === null || lastSelectedColumn === column)) {
-        playerScore += masterBoard.cells[row][column];
-        masterBoard.cells[row][column] = '•';
+function handleCellClick(row, column) {
+    if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedRow === null || lastSelectedRow === row)) {
+        playerScore += board.cells[row][column];
+        board.cells[row][column] = '•';
         highlightCell(row, column);
         highlightColumn(column); // Highlight the column where the player moved
         isPlayerTurn = false;
         lastSelectedColumn = column; // Update the last selected column
-        setTimeout(masterComputerMove, 500);
+        setTimeout(computerMove, 500);
     }
     updateScoreDisplay();
 }
 
-function masterComputerMove() {
+function computerMove() {
     if (!isPlayerTurn) {
-        let bestMove = calculateBestMove(masterBoard);
-        if (bestMove) {
-            aiScore += masterBoard.cells[bestMove.row][bestMove.column];
-            masterBoard.cells[bestMove.row][bestMove.column] = '•';
-            highlightCell(bestMove.row, bestMove.column);
-            highlightRow(bestMove.row); // Highlight the row where the AI moved
+        let availableCells = getAvailableCellsInColumn(lastSelectedColumn); // Choose only from the last selected column
+        if (availableCells.length > 0) {
+            let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
+            aiScore += board.cells[maxCell.row][maxCell.column];
+            board.cells[maxCell.row][maxCell.column] = '•';
+            highlightCell(maxCell.row, maxCell.column);
+            highlightRow(maxCell.row); // Highlight the row where the AI moved
             isPlayerTurn = true;
-            lastSelectedRow = bestMove.row; // Update the last selected row
+            lastSelectedRow = maxCell.row; // Update the last selected row
             updateScoreDisplay();
             checkPlayerMovePossibility(); // Check if the player can move
         } else {
             checkEndGame();
         }
     }
-}
-
-function calculateBestMove(board) {
-    // Implement AI logic to calculate the best move
-    // Ensure it considers the last selected row by the player
 }
 
 function checkPlayerMovePossibility() {
@@ -136,8 +139,8 @@ function checkPlayerMovePossibility() {
 
 function getAvailableCellsInColumn(column) {
     let availableCells = [];
-    for (let i = 0; i < masterBoard.size; i++) {
-        if (masterBoard.cells[i][column] !== '•') {
+    for (let i = 0; i < board.rows; i++) {
+        if (board.cells[i][column] !== '•') {
             availableCells.push({ row: i, column: column });
         }
     }
@@ -145,29 +148,42 @@ function getAvailableCellsInColumn(column) {
 }
 
 function checkEndGame() {
-    // Implement logic to check if the game has ended
+    if ((!isPlayerTurn && !canComputerMove()) || (isPlayerTurn && !canPlayerMove())) {
+        endGame();
+    }
 }
 
 function endGame() {
-    // Implement logic to handle the end of the game
+    let winner;
+    if (playerScore > aiScore) {
+        winner = 'Player wins!';
+    } else if (aiScore > playerScore) {
+        winner = 'AI wins!';
+    } else {
+        winner = 'Draw!';
+    }
+    document.getElementById('board').style.display = 'none';
+    document.getElementById('end-game-message').style.display = 'block';
+    document.getElementById('winner-message').textContent = winner;
+}
+
+function canComputerMove() {
+    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
 }
 
 function canPlayerMove() {
-    // Implement logic to check if the player can make a move
-    // Consider only the last selected column by the AI
+    return getAvailableCellsInRow(lastSelectedRow).length > 0;
 }
 
 function getAvailableCellsInRow(row) {
     let availableCells = [];
-    for (let j = 0; j < masterBoard.size; j++) {
-        if (masterBoard.cells[row][j] !== '•') {
+    for (let j = 0; j < board.columns; j++) {
+        if (board.cells[row][j] !== '•') {
             availableCells.push({ row: row, column: j });
         }
     }
     return availableCells;
 }
-
-// Other necessary functions
 
 
 
@@ -237,7 +253,7 @@ function updateScoreDisplay() {
 
 
 //--------------------------------------------------------------------
-// #MM0005 Initialize Game and Firebase Logic
+// #MM0005 Initialize Game and Firebase Logic ------------------------
 //--------------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
