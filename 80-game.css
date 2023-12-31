@@ -34,7 +34,7 @@
 
 .cell {
     background-color: #fff;
-    border: 2px solid #ddd;
+    border: 1px solid #ddd;
     position: relative;
     padding-top: 25%; /* Aspect ratio 1:1 to create squares */
 }
@@ -55,7 +55,7 @@
     }
 
     .cell {
-        border: 2vh solid #ddd;
+        border: 1vh solid #ddd;
     }
 }
 
@@ -71,7 +71,7 @@
     }
 
     .cell {
-        border: 2vw solid #ddd;
+        border: 1vw solid #ddd;
     }
 }
 
