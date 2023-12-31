@@ -97,7 +97,6 @@ function createBoard() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
@@ -165,15 +164,14 @@ function endGame() {
         if (currentLevel < maxLevel) {
             winner = 'You win this round! Moving to next level...';
             currentLevel++;
-            resetGame(); // Start the next level
+            showNextLevelButton();
         } else {
             winner = 'Congratulations! You have won the game!';
-            gameWon = true;
+            showRestartMenuButtons();
         }
     } else {
         winner = aiScore > playerScore ? 'AI wins!' : 'Draw!';
-        gameWon = false; // Reset gameWon for a new start
-        currentLevel = 2; // Reset to the initial level for a new game
+        showRestartMenuButtons();
     }
 
     document.getElementById('board').style.display = 'none';
@@ -308,65 +306,60 @@ function showGame() {
 
 function hideGame() {
     document.getElementById('board').style.display = 'none';
-    document.getElementById('score').style.display = 'none'; // Hide the score initially
+    document.getElementById('score').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'none';
     document.getElementById('start-screen').style.display = 'block';
 }
 
 function endGame() {
-    let winner;
+    let winnerMessageElement = document.getElementById('winner-message');
+    let restartButtonElement = document.getElementById('restart-button');
+    let nextLevelButtonElement = document.getElementById('next-level-button');
+    let mainMenuButtonElement = document.getElementById('main-menu-button');
+
     if (playerScore > aiScore) {
         if (currentLevel < maxLevel) {
-            // If the player wins, but hasn't reached the max level yet
-            winner = 'You win this round! Moving to next level...';
+            winnerMessageElement.textContent = 'You win this round! Moving to next level...';
+            nextLevelButtonElement.style.display = 'block';
+            restartButtonElement.style.display = 'none';
+            mainMenuButtonElement.style.display = 'none';
             currentLevel++;
-            resetGame(); // Start the next level
         } else {
-            // If the player wins at the max level
-            winner = 'Congratulations! You have won the game!';
+            winnerMessageElement.textContent = 'Congratulations! You have won the game!';
+            nextLevelButtonElement.style.display = 'none';
+            restartButtonElement.style.display = 'block';
+            mainMenuButtonElement.style.display = 'block';
             gameWon = true;
         }
     } else {
-        // If AI wins or it's a draw
-        winner = aiScore > playerScore ? 'AI wins!' : 'Draw!';
-        gameWon = false; // Reset gameWon for a new start
-        currentLevel = 2; // Reset to the initial level for a new game
+        winnerMessageElement.textContent = aiScore > playerScore ? 'AI wins!' : 'Draw!';
+        nextLevelButtonElement.style.display = 'none';
+        restartButtonElement.style.display = 'block';
+        mainMenuButtonElement.style.display = 'block';
+        gameWon = false;
+        currentLevel = 2;
     }
 
     document.getElementById('board').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'block';
-    document.getElementById('winner-message').textContent = winner;
 }
 
-function canComputerMove() {
-    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
-}
+// Event handler for the Restart and Next Level buttons
+document.getElementById('restart-button').addEventListener('click', () => {
+    resetGame();
+    startGame();
+});
+document.getElementById('next-level-button').addEventListener('click', () => {
+    resetGame();
+    startGame();
+});
 
-function canPlayerMove() {
-    return getAvailableCellsInRow(lastSelectedRow).length > 0;
-}
+// Event handler for the Main Menu button (assuming there is one)
+document.getElementById('main-menu-button').addEventListener('click', () => {
+    // Logic to return to the main menu
+});
 
-function getAvailableCellsInRow(row) {
-    let availableCells = [];
-    for (let j = 0; j < board.columns; j++) {
-        if (board.cells[row][j] !== '•') {
-            availableCells.push({ row: row, column: j });
-        }
-    }
-    return availableCells;
-}
-
-function getAvailableCells() {
-    let availableCells = [];
-    for (let i = 0; i < board.rows; i++) {
-        for (let j = 0; j < board.columns; j++) {
-            if (board.cells[i][j] !== '•') {
-                availableCells.push({ row: i, column: j });
-            }
-        }
-    }
-    return availableCells;
-}
+// Other necessary functions...
 
 
 
