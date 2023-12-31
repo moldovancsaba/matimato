@@ -107,8 +107,9 @@ function makeMove(row, column, board) {
 }
 
 
+
 function masterComputerMove() {
-    let bestMove = calculateBestMove(masterBoard);
+    let bestMove = calculateBestMove(masterBoard, lastSelectedColumn);
     if (bestMove) {
         makeMove(bestMove.row, bestMove.column, masterBoard);
     } else {
@@ -116,15 +117,15 @@ function masterComputerMove() {
     }
 }
 
-function calculateBestMove(board) {
+function calculateBestMove(board, column) {
     let bestScoreDiff = -Infinity;
     let bestMove = null;
-    let availableCells = getAvailableCellsInRow(lastSelectedRow);
+    let availableCells = getAvailableCellsInColumn(column);
 
     availableCells.forEach(cell => {
         let tempScore = board.cells[cell.row][cell.column];
         board.cells[cell.row][cell.column] = '•';
-        let playerBestMove = findPlayerBestMove(board, cell.column);
+        let playerBestMove = findPlayerBestMove(board, cell.row);
         let scoreDiff = tempScore - playerBestMove;
         if (scoreDiff > bestScoreDiff) {
             bestScoreDiff = scoreDiff;
@@ -135,6 +136,18 @@ function calculateBestMove(board) {
 
     return bestMove;
 }
+
+function getAvailableCellsInColumn(column) {
+    let availableCells = [];
+    for (let i = 0; i < masterBoard.size; i++) {
+        if (masterBoard.cells[i][column] !== '•') {
+            availableCells.push({ row: i, column: column });
+        }
+    }
+    return availableCells;
+}
+
+
 
 function findPlayerBestMove(board, column) {
     let bestScore = 0;
