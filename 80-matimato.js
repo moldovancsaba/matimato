@@ -14,8 +14,7 @@
 //--------------------------------------------------------------------
 
 
-// 1.1.
-// Setup variables
+// 1.1. Setup variables
 let board;
 let playerScore = 0; // Player's score
 let aiScore = 0;     // AI's score
@@ -32,8 +31,7 @@ let lastSelectedColumn = null; // Last selected column index
 //--------------------------------------------------------------------
 
 
-// 2.1.
-// Class definition for the game board
+// 2.1. Class definition for the game board
 class Board {
     constructor(rows, columns) {
         this.rows = rows;        // Number of rows in the board
@@ -67,8 +65,7 @@ class Board {
 //--------------------------------------------------------------------
 
 
-// 3.1.
-// Function to create and display the game board in the UI
+// 3.1. Function to create and display the game board in the UI
 function createBoard() {
     const boardElement = document.getElementById('board');
     boardElement.innerHTML = '';
@@ -101,8 +98,7 @@ function createBoard() {
 //--------------------------------------------------------------------
 
 
-// 4.1.
-// Function to handle the player's click on a cell
+// 4.1. Function to handle the player's click on a cell
 function handleCellClick(row, column) {
     if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedRow === null || lastSelectedRow === row)) {
         playerScore += board.cells[row][column];
@@ -117,8 +113,7 @@ function handleCellClick(row, column) {
 }
 
 
-// 4.2.
-// Function for the AI's move
+// 4.2. Function for the AI's move
 function computerMove() {
     if (!isPlayerTurn) {
         let availableCells = getAvailableCellsInColumn(lastSelectedColumn); // Choose only from the last selected column
@@ -146,8 +141,7 @@ function computerMove() {
 // #MM0005 End Game Logic
 //--------------------------------------------------------------------
 
-// 5.1.
-// Function to check if the player can make a move
+// 5.1. Function to check if the player can make a move
 function checkPlayerMovePossibility() {
     if (!canPlayerMove()) {
         endGame();
@@ -155,8 +149,7 @@ function checkPlayerMovePossibility() {
 }
 
 
-// 5.2.
-// Function to determine if there are any available moves in a column
+// 5.2. Function to determine if there are any available moves in a column
 function getAvailableCellsInColumn(column) {
     let availableCells = [];
     for (let i = 0; i < board.rows; i++) {
@@ -168,8 +161,7 @@ function getAvailableCellsInColumn(column) {
 }
 
 
-// 5.3.
-// Function to check if the game has ended
+// 5.3. Function to check if the game has ended
 function checkEndGame() {
     if ((!isPlayerTurn && !canComputerMove()) || (isPlayerTurn && !canPlayerMove())) {
         endGame();
@@ -177,8 +169,7 @@ function checkEndGame() {
 }
 
 
-// 5.4.
-// Function to end the game and display the winner
+// 5.4. Function to end the game and display the winner
 function endGame() {
     let winner;
     if (playerScore > aiScore) {
@@ -194,22 +185,19 @@ function endGame() {
 }
 
 
-// 5.5.
-// Function to check if the AI can make a move
+// 5.5. Function to check if the AI can make a move
 function canComputerMove() {
     return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
 }
 
 
-// 5.6
-// Function to check if the player can make a move
+// 5.6 Function to check if the player can make a move
 function canPlayerMove() {
     return getAvailableCellsInRow(lastSelectedRow).length > 0;
 }
 
 
-// 5.7
-// Function to determine if there are any available moves in a row
+// 5.7 Function to determine if there are any available moves in a row
 function getAvailableCellsInRow(row) {
     let availableCells = [];
     for (let j = 0; j < board.columns; j++) {
@@ -230,8 +218,7 @@ function getAvailableCellsInRow(row) {
 //--------------------------------------------------------------------
 
 
-// 6.1
-// Function to update the score display on the UI
+// 6.1 Function to update the score display on the UI
 function updateScoreDisplay() {
     const playerScoreElement = document.getElementById('player-score');
     const aiScoreElement = document.getElementById('ai-score');
@@ -239,6 +226,32 @@ function updateScoreDisplay() {
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
 
+
+
+
+
+//--------------------------------------------------------------------
+// #MM0007 Game Initialization
+//--------------------------------------------------------------------
+
+
+// 7.1. Function to start the game
+document.addEventListener('DOMContentLoaded', () => {
+    board = new Board(4, 4); // Initialize the board with 4 rows and 4 columns
+    createBoard(); // Create and display the game board
+    resetGame(); // Reset the game settings
+});
+
+
+// 7.2. Function to reset the game settings
+function resetGame() {
+    playerScore = 0;
+    aiScore = 0;
+    isPlayerTurn = true;
+    lastSelectedRow = null;
+    lastSelectedColumn = null;
+    updateScoreDisplay(); // Update the score display
+}
 
 
 
