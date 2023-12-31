@@ -96,7 +96,6 @@ function createBoard() {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0003 Game Logic ------------------------------------------------
 //--------------------------------------------------------------------
@@ -110,11 +109,17 @@ function handleCellClick(row, column) {
         board.cells[row][column] = '•';
         highlightCell(row, column);
         highlightColumn(column); // Highlight the column where the player moved
-        isPlayerTurn = false;
         lastSelectedColumn = column; // Update the last selected column
-        setTimeout(computerMove, 500);
+        isPlayerTurn = false;
+        updateScoreDisplay();
+
+        // Check if AI has any possible move
+        if (!canComputerMove()) {
+            checkEndGame();
+        } else {
+            setTimeout(computerMove, 500);
+        }
     }
-    updateScoreDisplay();
 }
 
 function computerMove() {
@@ -129,17 +134,26 @@ function computerMove() {
             isPlayerTurn = true;
             lastSelectedRow = maxCell.row; // Update the last selected row
             updateScoreDisplay();
-            checkPlayerMovePossibility(); // Check if the player can move
         } else {
             checkEndGame();
         }
     }
 }
 
-function checkPlayerMovePossibility() {
-    if (!canPlayerMove()) {
+function checkEndGame() {
+    if ((!isPlayerTurn && !canComputerMove()) || (isPlayerTurn && !canPlayerMove())) {
         endGame();
     }
+}
+
+function canComputerMove() {
+    // Implement logic to check if the computer can make a move
+    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
+}
+
+function canPlayerMove() {
+    // Implement logic to check if the player can make a move
+    return getAvailableCellsInRow(lastSelectedRow).length > 0;
 }
 
 function getAvailableCellsInColumn(column) {
@@ -152,31 +166,14 @@ function getAvailableCellsInColumn(column) {
     return availableCells;
 }
 
-function checkEndGame() {
-    if ((!isPlayerTurn && !canComputerMove()) || (isPlayerTurn && !canPlayerMove())) {
-        endGame();
-    }
-}
-
-function endGame() {
-    let winner;
-    if (playerScore > aiScore) {
-        if (currentLevel < maxLevel) {
-            winner = 'You win this round! Moving to next level...';
-            currentLevel++;
-            showNextLevelButton();
-        } else {
-            winner = 'Congratulations! You have won the game!';
-            showRestartMenuButtons();
+function getAvailableCellsInRow(row) {
+    let availableCells = [];
+    for (let j = 0; j < board.columns; j++) {
+        if (board.cells[row][j] !== '•') {
+            availableCells.push({ row: row, column: j });
         }
-    } else {
-        winner = aiScore > playerScore ? 'AI wins!' : 'Draw!';
-        showRestartMenuButtons();
     }
-
-    document.getElementById('board').style.display = 'none';
-    document.getElementById('end-game-message').style.display = 'block';
-    document.getElementById('winner-message').textContent = winner;
+    return availableCells;
 }
 
 
