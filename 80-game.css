@@ -60,16 +60,17 @@
     #board {
         width: 80vh;
         height: 80vh;
-        margin-right: 5%; /* Space between board and other content */
     }
 
     .cell {
-        padding-top: 20vh; /* 1:1 Aspect ratio */
+        padding-top: 10vh; /* 1:1 Aspect ratio */
     }
 
     .other-content {
-        position: static; /* Default static positioning */
-        align-self: center; /* Center vertically in the container */
+        position: absolute; /* Use absolute positioning */
+        right: 5%; /* 5% from the right */
+        top: 50%;
+        transform: translateY(-50%);
     }
 }
 
@@ -82,16 +83,17 @@
     #board {
         width: 80vw;
         height: 80vw;
-        margin-bottom: 5%; /* Space between board and other content */
     }
 
     .cell {
-        padding-top: 20vw; /* 1:1 Aspect ratio */
+        padding-top: 10vw; /* 1:1 Aspect ratio */
     }
 
     .other-content {
-        position: static; /* Default static positioning */
-        align-self: center; /* Center horizontally in the container */
+        position: absolute; /* Use absolute positioning */
+        bottom: 5%; /* 5% from the bottom */
+        left: 50%;
+        transform: translateX(-50%);
     }
 }
 
