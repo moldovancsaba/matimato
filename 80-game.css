@@ -59,7 +59,7 @@
     }
 
     .cell {
-        padding-top: 20vh; /* 1:1 Aspect ratio */
+        padding-top: 10vh; /* 1:1 Aspect ratio */
     }
 }
 
@@ -71,7 +71,7 @@
     }
 
     .cell {
-        padding-top: 20vw; /* 1:1 Aspect ratio */
+        padding-top: 10vw; /* 1:1 Aspect ratio */
     }
 }
 
