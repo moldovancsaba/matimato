@@ -32,12 +32,12 @@
         top: 50%; /* Center vertically */
         left: 50%; /* Center horizontally */
         transform: translate(-50%, -50%); /* Centering adjustment */
-        width: 70vh;
-        height: 70vh; /* Adjust height to match width */
+        width: 70vh; /* Adjust width to match viewport height */
+        height: 70vh; /* Adjust height to match viewport height */
     }
 
     .cell {
-        font-size: 5vw; /* Responsive font size */
+        font-size: 3vh; /* Responsive font size based on viewport height */
     }
 
     /* Positioning scores */
