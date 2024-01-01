@@ -33,8 +33,8 @@
 /* Adjustments for landscape orientation */
 @media (orientation: landscape) {
     .board {
-        width: 80vh;
-        height: 80vh; /* Adjust height to match width */
+        width: 70vh;
+        height: 70vh; /* Adjust height to match width */
     }
 
     .cell {
