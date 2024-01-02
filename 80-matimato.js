@@ -99,7 +99,8 @@ function computerMove() {
             highlightCell(maxCell.row, maxCell.column);
             updateScoreDisplay();
             isPlayerTurn = true;
-            lastSelectedRow = maxCell.row;
+            checkPlayerMovePossibility();
+        } else {
             checkEndGame();
         }
     }
@@ -146,6 +147,7 @@ function getAvailableCellsInRow(row) {
 
 
 
+
 //--------------------------------------------------------------------
 // #MM0004 UI Functions
 //--------------------------------------------------------------------
@@ -154,14 +156,20 @@ function getAvailableCellsInRow(row) {
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
-        cellElement.classList.add('highlight');
+        cellElement.classList.add('highlighted');
+        setTimeout(() => {
+            cellElement.textContent = '•';
+            cellElement.style.backgroundColor = '#444444';
+        }, 500);
     }
 }
 
 // 4.2. Function to clear all highlights
 function clearHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
-        cell.classList.remove('highlight');
+        cell.classList.remove('highlighted');
+        cell.style.backgroundColor = '';
+        cell.style.border = '';
     });
 }
 
@@ -169,13 +177,11 @@ function clearHighlights() {
 function updateScoreDisplay() {
     const playerScoreElement = document.getElementById('player-score');
     const aiScoreElement = document.getElementById('ai-score');
-    if (!playerScoreElement || !aiScoreElement) {
-        console.error('Score elements not found!');
-        return;
-    }
     playerScoreElement.textContent = `Player: ${playerScore}`;
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
+
+
 
 
 
@@ -191,8 +197,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // 5.2. Initialize the game settings and create the board
 function initializeGame() {
     board = new Board(4, 4); // Initialize the board with 4 rows and 4 columns
-    createBoard();           // Create and display the game board
-    resetGame();             // Reset the game settings
+    createBoard(); // Create and display the game board
+    resetGame(); // Reset the game settings
 }
 
 // 5.3. Reset the game to initial state
@@ -202,9 +208,10 @@ function resetGame() {
     isPlayerTurn = true;
     lastSelectedRow = null;
     lastSelectedColumn = null;
-    clearHighlights();       // Clear any highlighted cells
-    updateScoreDisplay();    // Update the score display
+    clearHighlights(); // Clear any highlighted cells
+    updateScoreDisplay(); // Update the score display
 }
+
 
 
 //--------------------------------------------------------------------
@@ -215,21 +222,23 @@ function resetGame() {
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
-        cellElement.classList.add('highlighted');
+        cellElement.classList.add('highlighted'); // Add highlighted class to the cell
+        // Ensure the cell content is updated immediately to show the '•'
+        cellElement.textContent = '•';
     }
 }
 
 // 6.2. Function to highlight all cells in a selected row
 function highlightRow(row) {
-    document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
-        cell.classList.add('highlighted-row');
+    document.querySelectorAll(`.cell[row="${row}"]`).forEach(cell => {
+        cell.classList.add('highlighted-row'); // Add highlighted-row class for styling
     });
 }
 
 // 6.3. Function to highlight all cells in a selected column
 function highlightColumn(column) {
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.classList.add('highlighted-column');
+        cell.classList.add('highlighted-column'); // Add highlighted-column class for styling
     });
 }
 
@@ -237,6 +246,8 @@ function highlightColumn(column) {
 function clearHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
         cell.classList.remove('highlighted', 'highlighted-row', 'highlighted-column');
+        // Reset the background color to default
+        cell.style.backgroundColor = '';
     });
 }
 
