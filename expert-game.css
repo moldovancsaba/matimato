@@ -4,7 +4,9 @@
 /* CSS STARTS HERE ------------*/
 /* ----------------------------*/
 
+.board {
 
+}
 
 .cell {
     position: relative;
@@ -32,12 +34,12 @@
         top: 50%; /* Center vertically */
         left: 50%; /* Center horizontally */
         transform: translate(-50%, -50%); /* Centering adjustment */
-        width: 70vh; /* Adjust width to match viewport height */
-        height: 70vh; /* Adjust height to match viewport height */
+        width: 70vh;
+        height: 70vh; /* Adjust height to match width */
     }
 
     .cell {
-        font-size: 3vh; /* Responsive font size based on viewport height */
+        font-size: 5vw; /* Responsive font size */
     }
 
     /* Positioning scores */
@@ -72,13 +74,13 @@
 /* Adjustments for portrait orientation */
 @media (orientation: portrait) {
     .board {
-        display: grid;
-        gap: 0; /* No gap between cells */
-        margin: auto; /* Center the board */
-        position: absolute; /* Absolute positioning */
-        top: 50%; /* Center vertically */
-        left: 50%; /* Center horizontally */
-        transform: translate(-50%, -50%); /* Centering adjustment */
+            display: grid;
+    gap: 0; /* No gap between cells */
+    margin: auto; /* Center the board */
+    position: absolute; /* Absolute positioning */
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Centering adjustment */
         width: 80vw; /* Adjust board width */
         height: 80vw; /* Adjust board height to match width */
     }
