@@ -89,22 +89,24 @@ function handleCellClick(row, column) {
 
 // 3.1. Function for the AI's move
 function computerMove() {
+    clearRowHighlight(); // Clear any highlighted row
     if (!isPlayerTurn) {
-        let availableCells = getAvailableCellsInColumn(lastSelectedColumn); // Choose only from the last selected column
+        let availableCells = getAvailableCellsInColumn(lastSelectedColumn);
         if (availableCells.length > 0) {
             let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
             aiScore += board.cells[maxCell.row][maxCell.column];
             updateCell(maxCell.row, maxCell.column, '•');
-            highlightRow(maxCell.row); // Highlight the row where the AI moved
             isPlayerTurn = true;
             lastSelectedRow = maxCell.row; // Update the last selected row
             updateScoreDisplay();
-            checkEndGame();
+            highlightRow(lastSelectedRow); // Highlight the row for the player's next move
+            checkPlayerMovePossibility();
         } else {
             checkEndGame();
         }
     }
 }
+
 
 // 3.2. Function to check if the game has ended
 function checkEndGame() {
@@ -152,12 +154,14 @@ function getAvailableCellsInRow(row) {
 // #MM0004 UI Functions
 //--------------------------------------------------------------------
 
+
 // 4.1. Function to highlight a cell when selected
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
-        cellElement.classList.add('highlighted');
+        cellElement.style.backgroundColor = '#444444'; // Change the background to grey
         cellElement.textContent = '•'; // Immediately update the cell content
+        clearColumnHighlight(); // Clear any highlighted column
     }
 }
 
@@ -204,8 +208,14 @@ function clearColumnHighlight() {
     });
 }
 
-
-
+// 4.5. Helper function to update cell content and styling
+function updateCell(row, column, content) {
+    const cell = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
+    if (cell) {
+        cell.textContent = content;
+        cell.style.backgroundColor = content === '•' ? '#444444' : '';
+    }
+}
 
 
 //--------------------------------------------------------------------
