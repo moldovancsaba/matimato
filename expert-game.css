@@ -1,11 +1,19 @@
 /* ----------------------------*/
-/* game-elements-expert.css ---*/
+/* expert-game.css ------------*/
 /* ----------------------------*/
 /* CSS STARTS HERE ------------*/
 /* ----------------------------*/
 
 .board {
-
+    display: grid;
+    gap: 0; /* No gap between cells */
+    margin: auto; /* Center the board */
+    position: absolute; /* Absolute positioning */
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Centering adjustment */
+    width: 70vh; /* Initial width, adjust as needed */
+    height: 70vh; /* Initial height, adjust as needed */
 }
 
 .cell {
@@ -13,7 +21,7 @@
     cursor: pointer;
     background-color: #002255;
     border-radius: 10%; /* Rounded corners */
-    box-shadow: 1 5% 5% rgba(0, 0, 0, 1); /* Cell shadow */
+    box-shadow: 1px 5px 5px rgba(0, 0, 0, 0.1); /* Cell shadow */
     aspect-ratio: 1 / 1; /* Square cells */
     display: flex;
     font-size: 6vw; /* Responsive font size */
@@ -27,15 +35,8 @@
 /* Adjustments for landscape orientation */
 @media (orientation: landscape) {
     .board {
-        display: grid;
-        gap: 0; /* No gap between cells */
-        margin: auto; /* Center the board */
-        position: absolute; /* Absolute positioning */
-        top: 50%; /* Center vertically */
-        left: 50%; /* Center horizontally */
-        transform: translate(-50%, -50%); /* Centering adjustment */
-        width: 70vh;
-        height: 70vh; /* Adjust height to match width */
+        width: 85vh;
+        height: 85vh; /* Adjust height to match width */
     }
 
     .cell {
@@ -74,15 +75,8 @@
 /* Adjustments for portrait orientation */
 @media (orientation: portrait) {
     .board {
-            display: grid;
-    gap: 0; /* No gap between cells */
-    margin: auto; /* Center the board */
-    position: absolute; /* Absolute positioning */
-    top: 50%; /* Center vertically */
-    left: 50%; /* Center horizontally */
-    transform: translate(-50%, -50%); /* Centering adjustment */
-        width: 80vw; /* Adjust board width */
-        height: 80vw; /* Adjust board height to match width */
+        width: 90vw; /* Adjust board width */
+        height: 90vw; /* Adjust board height to match width */
     }
 
     #ai-score, #player-score {
