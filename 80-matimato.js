@@ -94,11 +94,14 @@ function computerMove() {
         if (availableCells.length > 0) {
             let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
             aiScore += board.cells[maxCell.row][maxCell.column];
-            updateCell(maxCell.row, maxCell.column, '•'); // Update cell content and styling
-            isPlayerTurn = true;
-            lastSelectedRow = maxCell.row; // Update the last selected row for the player's next turn
+            board.cells[maxCell.row][maxCell.column] = '•';
+            highlightCell(maxCell.row, maxCell.column);
             updateScoreDisplay();
-            checkPlayerMovePossibility();
+            isPlayerTurn = true;
+            lastSelectedRow = maxCell.row;
+            clearColumnHighlight();
+            highlightRow(maxCell.row); // Highlight the row where the AI moved
+            checkEndGame();
         } else {
             checkEndGame();
         }
@@ -165,17 +168,16 @@ function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
         cellElement.classList.add('highlighted');
-        setTimeout(() => {
-            cellElement.textContent = '•';
-            cellElement.style.backgroundColor = '#444444';
-        }, 500);
+        // Change cell content to '•' immediately to reflect the move
+        cellElement.textContent = '•';
     }
 }
 
 // 4.2. Function to clear all highlights
 function clearHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
-        cell.classList.remove('highlighted');
+        cell.classList.remove('highlighted', 'highlighted-row', 'highlighted-column');
+        // Reset the cell styles to default
         cell.style.backgroundColor = '';
         cell.style.border = '';
     });
@@ -187,6 +189,31 @@ function updateScoreDisplay() {
     const aiScoreElement = document.getElementById('ai-score');
     playerScoreElement.textContent = `Player: ${playerScore}`;
     aiScoreElement.textContent = `AI: ${aiScore}`;
+}
+
+// 4.4. UI functions to highlight rows and columns
+function highlightRow(row) {
+    document.querySelectorAll(`.cell[row="${row}"]`).forEach(cell => {
+        cell.classList.add('highlighted-row');
+    });
+}
+
+function highlightColumn(column) {
+    document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
+        cell.classList.add('highlighted-column');
+    });
+}
+
+function clearRowHighlight() {
+    document.querySelectorAll('.highlighted-row').forEach(cell => {
+        cell.classList.remove('highlighted-row');
+    });
+}
+
+function clearColumnHighlight() {
+    document.querySelectorAll('.highlighted-column').forEach(cell => {
+        cell.classList.remove('highlighted-column');
+    });
 }
 
 
