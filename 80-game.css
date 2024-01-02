@@ -10,6 +10,7 @@
 
 .container {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     margin: 0 auto;
@@ -26,25 +27,25 @@
 
 #board {
     display: grid;
-    gap: 0;
-    grid-template-columns: repeat(4, 1fr);
-    justify-content: center;
-    align-self: center; /* Center board vertically in the container */
+    grid-template-columns: repeat(4, 1fr); /* 4 columns, equal width */
+    grid-template-rows: repeat(4, 1fr); /* 4 rows, equal height */
+    gap: 0; /* No gap between cells */
+    position: absolute; /* Absolute positioning */
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Centering adjustment */
+    width: 80vw; /* Width adjusted for 4x4 grid */
+    height: 80vw; /* Height adjusted to match width */
 }
 
 .cell {
     background-color: #fff;
     border: 1px solid #ddd;
-    position: relative;
-}
-
-.cell-content {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: large;
-    width: 100%;
-    height: 100%;
+    font-size: large; /* Larger font size for visibility */
+    aspect-ratio: 1 / 1; /* Square cells */
 }
 
 /*-------------------------*/
@@ -53,21 +54,18 @@
 
 /* 3.1. Landscape orientation */
 @media screen and (orientation: landscape) {
-    .container {
-        flex-direction: row; /* Align items in a row */
-    }
-
     #board {
-        width: 80vh;
-        height: 80vh;
+        width: 80vh; /* Width adjusted for landscape */
+        height: 80vh; /* Height adjusted to match width */
     }
 
     .cell {
-        padding-top: 10vh; /* 1:1 Aspect ratio */
+        font-size: 5vw; /* Responsive font size */
     }
 
+    /* Positioning other content */
     .other-content {
-        position: absolute; /* Use absolute positioning */
+        position: absolute;
         right: 5%; /* 5% from the right */
         top: 50%;
         transform: translateY(-50%);
@@ -76,21 +74,18 @@
 
 /* 3.2. Portrait orientation */
 @media screen and (orientation: portrait) {
-    .container {
-        flex-direction: column; /* Align items in a column */
-    }
-
     #board {
-        width: 80vw;
-        height: 80vw;
+        width: 80vw; /* Width adjusted for portrait */
+        height: 80vw; /* Height adjusted to match width */
     }
 
     .cell {
-        padding-top: 10vw; /* 1:1 Aspect ratio */
+        font-size: 6vw; /* Responsive font size */
     }
 
+    /* Positioning other content */
     .other-content {
-        position: absolute; /* Use absolute positioning */
+        position: absolute;
         bottom: 5%; /* 5% from the bottom */
         left: 50%;
         transform: translateX(-50%);
