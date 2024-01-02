@@ -54,18 +54,10 @@
         font-size: 4vw;
     }
 
-    #score {
-        position: absolute;
-        right: 5%;
-        top: 50%;
-        transform: translateY(-50%);
-    }
-
-    #end-game-message, #restart-button {
-        position: absolute;
-        left: 5%;
-        top: 50%;
-        transform: translateY(-50%);
+    #score, #end-game-message, #restart-button {
+        margin-left: 5%; /* Left margin */
+        margin-right: 5%; /* Right margin */
+        align-self: center;
     }
 }
 
@@ -81,7 +73,8 @@
     }
 
     #score, #end-game-message, #restart-button {
-        position: static;
+        margin-left: 5%; /* Left margin */
+        margin-right: 5%; /* Right margin */
         align-self: center;
         margin-top: 5%;
     }
@@ -89,8 +82,4 @@
 
 /*----------------------------*/
 /* END OF CSS ----------------*/
-/*----------------------------*/
-/* CREATED BY MOLDOVAN -------*/
-/*----------------------------*/
-/* CSS BY GPT ----------------*/
 /*----------------------------*/
