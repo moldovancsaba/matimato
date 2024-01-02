@@ -17,6 +17,7 @@ class Board {
         this.cells = this.createInitialBoard();
     }
 
+    // Creates an initial board with random numbers in each cell
     createInitialBoard() {
         let board = [];
         for (let i = 0; i < this.rows; i++) {
@@ -31,13 +32,12 @@ class Board {
 }
 
 // 1.2. Global variables
-let board = new Board(4, 4); // Adjust size as necessary
-let playerScore = 0;
-let aiScore = 0;
-let isPlayerTurn = true;
-let lastSelectedRow = null;
-let lastSelectedColumn = null;
-
+let board = new Board(4, 4); // Initialize the board with 4 rows and 4 columns
+let playerScore = 0;         // Player's score
+let aiScore = 0;             // AI's score
+let isPlayerTurn = true;     // Flag to determine if it's the player's turn
+let lastSelectedRow = null;  // Last selected row, null initially
+let lastSelectedColumn = null; // Last selected column, null initially
 
 
 
@@ -48,6 +48,10 @@ let lastSelectedColumn = null;
 // 2.1. Function to create and display the game board in the UI
 function createBoard() {
     const boardElement = document.getElementById('board');
+    if (!boardElement) {
+        console.error('Board element not found!');
+        return;
+    }
     boardElement.innerHTML = '';
     boardElement.style.gridTemplateRows = `repeat(${board.rows}, 1fr)`;
     boardElement.style.gridTemplateColumns = `repeat(${board.columns}, 1fr)`;
@@ -59,21 +63,21 @@ function createBoard() {
             cell.textContent = board.cells[i][j];
             cell.setAttribute('row', i);
             cell.setAttribute('column', j);
-            cell.addEventListener('click', (e) => handleCellClick(i, j, e));
+            cell.addEventListener('click', () => handleCellClick(i, j));
             boardElement.appendChild(cell);
         }
     }
 }
 
 // 2.2. Event listener for cell clicks
-function handleCellClick(row, column, event) {
+function handleCellClick(row, column) {
     if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedRow === null || lastSelectedRow === row)) {
         playerScore += board.cells[row][column];
         board.cells[row][column] = '•';
         highlightCell(row, column);
         updateScoreDisplay();
         isPlayerTurn = false;
-        setTimeout(() => computerMove(), 500);
+        setTimeout(computerMove, 200);
     }
 }
 
@@ -87,7 +91,7 @@ function handleCellClick(row, column, event) {
 // 3.1. Function for the AI's move
 function computerMove() {
     if (!isPlayerTurn) {
-        let availableCells = getAvailableCellsInColumn(lastSelectedColumn); // Choose only from the last selected column
+        let availableCells = getAvailableCellsInColumn(lastSelectedColumn);
         if (availableCells.length > 0) {
             let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
             aiScore += board.cells[maxCell.row][maxCell.column];
@@ -95,6 +99,7 @@ function computerMove() {
             highlightCell(maxCell.row, maxCell.column);
             updateScoreDisplay();
             isPlayerTurn = true;
+            lastSelectedRow = maxCell.row;
             checkEndGame();
         }
     }
@@ -164,6 +169,10 @@ function clearHighlights() {
 function updateScoreDisplay() {
     const playerScoreElement = document.getElementById('player-score');
     const aiScoreElement = document.getElementById('ai-score');
+    if (!playerScoreElement || !aiScoreElement) {
+        console.error('Score elements not found!');
+        return;
+    }
     playerScoreElement.textContent = `Player: ${playerScore}`;
     aiScoreElement.textContent = `AI: ${aiScore}`;
 }
@@ -182,8 +191,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // 5.2. Initialize the game settings and create the board
 function initializeGame() {
     board = new Board(4, 4); // Initialize the board with 4 rows and 4 columns
-    createBoard(); // Create and display the game board
-    resetGame(); // Reset the game settings
+    createBoard();           // Create and display the game board
+    resetGame();             // Reset the game settings
 }
 
 // 5.3. Reset the game to initial state
@@ -193,8 +202,8 @@ function resetGame() {
     isPlayerTurn = true;
     lastSelectedRow = null;
     lastSelectedColumn = null;
-    clearHighlights(); // Clear any highlighted cells
-    updateScoreDisplay(); // Update the score display
+    clearHighlights();       // Clear any highlighted cells
+    updateScoreDisplay();    // Update the score display
 }
 
 
@@ -206,28 +215,28 @@ function resetGame() {
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
-        cellElement.classList.add('highlighted'); // Add highlighted class to the cell
+        cellElement.classList.add('highlighted');
     }
 }
 
 // 6.2. Function to highlight all cells in a selected row
 function highlightRow(row) {
     document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
-        cell.classList.add('highlighted'); // Add highlighted class to each cell in the row
+        cell.classList.add('highlighted-row');
     });
 }
 
 // 6.3. Function to highlight all cells in a selected column
 function highlightColumn(column) {
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.classList.add('highlighted'); // Add highlighted class to each cell in the column
+        cell.classList.add('highlighted-column');
     });
 }
 
 // 6.4. Function to clear all highlighted cells
 function clearHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
-        cell.classList.remove('highlighted');
+        cell.classList.remove('highlighted', 'highlighted-row', 'highlighted-column');
     });
 }
 
@@ -245,8 +254,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // 7.2. Initialize the game settings and create the board
 function initializeGame() {
     board = new Board(4, 4); // Initialize the board with 4 rows and 4 columns
-    createBoard(); // Create and display the game board
-    resetGame(); // Reset the game settings
+    createBoard();           // Create and display the game board
+    resetGame();             // Reset the game settings
 }
 
 // 7.3. Reset the game to initial state
@@ -256,8 +265,8 @@ function resetGame() {
     isPlayerTurn = true;
     lastSelectedRow = null;
     lastSelectedColumn = null;
-    clearHighlights(); // Clear any highlighted cells
-    updateScoreDisplay(); // Update the score display
+    clearHighlights();       // Clear any highlighted cells
+    updateScoreDisplay();    // Update the score display
 }
 
 
@@ -269,7 +278,7 @@ function resetGame() {
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
-        cellElement.classList.add('highlighted'); // Add 'highlighted' class for styling
+        cellElement.classList.add('highlighted');
     }
 }
 
@@ -277,7 +286,7 @@ function highlightCell(row, column) {
 function highlightColumn(column) {
     clearHighlights();
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.classList.add('highlighted-column'); // Add 'highlighted-column' class for styling
+        cell.classList.add('highlighted-column');
     });
 }
 
@@ -285,7 +294,7 @@ function highlightColumn(column) {
 function highlightRow(row) {
     clearHighlights();
     document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
-        cell.classList.add('highlighted-row'); // Add 'highlighted-row' class for styling
+        cell.classList.add('highlighted-row');
     });
 }
 
@@ -304,9 +313,7 @@ function clearHighlights() {
 
 // 9.1. Function to initialize and start the game
 document.addEventListener('DOMContentLoaded', () => {
-    board = new Board(4, 4); // Initialize the board with 4 rows and 4 columns
-    createBoard(); // Create and display the game board
-    resetGame(); // Reset the game settings
+    startGame(); // Start the game immediately when the page loads
 });
 
 // 9.2. Function to reset the game settings and restart the game
@@ -325,6 +332,15 @@ function resetGame() {
 
 // 9.3. Event listener for the Restart button
 document.getElementById('restart-button').addEventListener('click', resetGame);
+
+// 9.4. Define the startGame function to handle starting or restarting the game
+function startGame() {
+    resetGame(); // Reset the game to its initial state
+    document.getElementById('board').style.display = 'grid'; // Display the game board
+    document.getElementById('score').style.display = 'block'; // Display the score
+    document.getElementById('start-screen').style.display = 'none'; // Hide the start screen
+    document.getElementById('end-game-message').style.display = 'none'; // Hide the end game message
+}
 
 
 //--------------------------------------------------------------------
@@ -385,8 +401,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // 11.2. Function to set up and start the game
 function initializeGame() {
     board = new Board(4, 4); // Initialize the board with 4 rows and 4 columns
-    createBoard(); // Create and display the game board
-    resetGame(); // Reset game settings
+    createBoard();           // Create and display the game board
+    resetGame();             // Reset game settings
 }
 
 // 11.3. Function to reset the game settings
@@ -396,8 +412,8 @@ function resetGame() {
     isPlayerTurn = true;
     lastSelectedRow = null;
     lastSelectedColumn = null;
-    updateScoreDisplay(); // Update the score display
-    clearHighlights(); // Clear any existing highlights
+    updateScoreDisplay();    // Update the score display
+    clearHighlights();       // Clear any existing highlights
 }
 
 // 11.4. Add any additional initialization logic if needed
@@ -445,8 +461,6 @@ function getAvailableCellsInColumn(column) {
 
 
 
-
-
 //--------------------------------------------------------------------
 // #MM0013 Game Initialization and Restart Logic
 //--------------------------------------------------------------------
@@ -479,6 +493,7 @@ function resetGame() {
 
 // 13.4. Event handler for the Restart button
 document.getElementById('restart-button').addEventListener('click', startGame);
+
 
 
 
