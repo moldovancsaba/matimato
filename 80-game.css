@@ -48,49 +48,60 @@
     aspect-ratio: 1 / 1; /* Square cells */
 }
 
+
 /*-------------------------*/
 /* 3. Media Queries -------*/
 /*-------------------------*/
 
 /* 3.1. Landscape orientation */
 @media screen and (orientation: landscape) {
+    .container {
+        flex-direction: row; /* Align items in a row */
+        justify-content: space-around; /* Space between items */
+    }
+
     #board {
-        width: 80vh; /* Width adjusted for landscape */
-        height: 80vh; /* Height adjusted to match width */
+        width: 70vh;
+        height: 70vh;
     }
 
     .cell {
-        font-size: 5vw; /* Responsive font size */
+        font-size: 4vw; /* Adjusted font size */
     }
 
     /* Positioning other content */
     .other-content {
-        position: absolute;
-        right: 5%; /* 5% from the right */
-        top: 50%;
-        transform: translateY(-50%);
+        position: static; /* Normal flow in the container */
+        align-self: center; /* Center vertically */
+        margin-left: 5%; /* Space from the board */
     }
 }
 
 /* 3.2. Portrait orientation */
 @media screen and (orientation: portrait) {
+    .container {
+        flex-direction: column; /* Align items in a column */
+        justify-content: space-around; /* Space between items */
+    }
+
     #board {
-        width: 80vw; /* Width adjusted for portrait */
-        height: 80vw; /* Height adjusted to match width */
+        width: 80vw;
+        height: 80vw;
     }
 
     .cell {
-        font-size: 6vw; /* Responsive font size */
+        font-size: 5vw; /* Adjusted font size */
     }
 
     /* Positioning other content */
     .other-content {
-        position: absolute;
-        bottom: 5%; /* 5% from the bottom */
-        left: 50%;
-        transform: translateX(-50%);
+        position: static; /* Normal flow in the container */
+        align-self: center; /* Center horizontally */
+        margin-top: 5%; /* Space from the board */
     }
 }
+
+
 
 /*-------------------------*/
 /* END OF CSS -------------*/
