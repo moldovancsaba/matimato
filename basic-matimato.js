@@ -1,5 +1,5 @@
 //------------------------------
-// matimato-basic.js -----------
+// basic-matimato.js -----------
 //------------------------------
 // JAVASCRIPT STARTS HERE ------
 //------------------------------
@@ -317,5 +317,5 @@ document.getElementById('restart-button').addEventListener('click', () => {
 //------------------------------
 // CREATED BY MOLDOVAN ---------
 //------------------------------
-// JAVASCRIPT WRITTEN BY GPT ---
+// JAVASCRIPT BY GPT -----------
 //------------------------------

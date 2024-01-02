@@ -31,5 +31,5 @@ const database = getDatabase(firebaseApp);
 //------------------------------
 // CREATED BY MOLDOVAN
 //------------------------------
-// CODE WRITTEN BY GPT
+// CODE BY GPT
 //------------------------------
