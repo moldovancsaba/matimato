@@ -21,37 +21,42 @@
 /* 2. Board Styling */
 #board {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(4, 1fr);
-    gap: 0;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 70vw;
-    height: 70vw;
+    grid-template-columns: repeat(4, 1fr); /* Adjusted for 4x4 grid */
+    grid-template-rows: repeat(4, 1fr); /* Adjusted for 4x4 grid */
+    gap: 0; /* No gap between cells */
+    width: 80vw; /* Adjusted width for 4x4 grid */
+    height: 80vw; /* Adjusted height to match width */
+    margin: auto; /* Center the board */
+    position: absolute; /* Absolute positioning */
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Centering adjustment */
 }
 
 .cell {
-    background-color: #fff;
-    border: 1px solid #444;
+    position: relative;
+    cursor: pointer;
+    background-color: #fff; /* Original color */
+    border: 1px solid #444; /* Original border style */
+    border-radius: 10%; /* Rounded corners */
+    box-shadow: 0 0 5% rgba(0, 0, 0, 0.5); /* Cell shadow */
+    aspect-ratio: 1 / 1; /* Square cells */
     display: flex;
-    justify-content: center;
+    font-size: large; /* Original font size */
     align-items: center;
-    font-size: large;
-    aspect-ratio: 1 / 1;
+    justify-content: center;
+    user-select: none;
 }
 
-/* 3. Media Queries */
-/* 3.1. Landscape orientation */
-@media screen and (orientation: landscape) {
+/* Adjustments for landscape orientation */
+@media (orientation: landscape) {
     #board {
-        width: 70vh;
-        height: 70vh;
+        width: 85vh;
+        height: 85vh; /* Adjust height to match width */
     }
 
     .cell {
-        font-size: 4vw;
+        font-size: 4vw; /* Responsive font size */
     }
 
     #score {
@@ -69,15 +74,15 @@
     }
 }
 
-/* 3.2. Portrait orientation */
-@media screen and (orientation: portrait) {
+/* Adjustments for portrait orientation */
+@media (orientation: portrait) {
     #board {
-        width: 70vw;
-        height: 70vw;
+        width: 90vw; /* Adjust board width */
+        height: 90vw; /* Adjust board height to match width */
     }
 
     .cell {
-        font-size: 5vw;
+        font-size: 5vw; /* Responsive font size */
     }
 
     #score, #end-game-message, #restart-button {
