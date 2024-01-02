@@ -40,6 +40,7 @@ let lastSelectedColumn = null;
 
 
 
+
 //--------------------------------------------------------------------
 // #MM0002 Create Gamefield Function
 //--------------------------------------------------------------------
@@ -75,8 +76,6 @@ function handleCellClick(row, column, event) {
         setTimeout(() => computerMove(), 500);
     }
 }
-
-
 
 
 
@@ -170,6 +169,7 @@ function updateScoreDisplay() {
 }
 
 
+
 //--------------------------------------------------------------------
 // #MM0005 Game Initialization and Reset
 //--------------------------------------------------------------------
@@ -226,8 +226,8 @@ function highlightColumn(column) {
 
 // 6.4. Function to clear all highlighted cells
 function clearHighlights() {
-    document.querySelectorAll('.highlighted').forEach(cell => {
-        cell.classList.remove('highlighted'); // Remove highlighted class from each cell
+    document.querySelectorAll('.cell').forEach(cell => {
+        cell.classList.remove('highlighted');
     });
 }
 
@@ -237,27 +237,28 @@ function clearHighlights() {
 // #MM0007 Game Initialization and Reset
 //--------------------------------------------------------------------
 
-// 7.1. Function to start or reset the game
+// 7.1. Event listener for DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+    initializeGame();
+});
+
+// 7.2. Initialize the game settings and create the board
+function initializeGame() {
+    board = new Board(4, 4); // Initialize the board with 4 rows and 4 columns
+    createBoard(); // Create and display the game board
+    resetGame(); // Reset the game settings
+}
+
+// 7.3. Reset the game to initial state
 function resetGame() {
-    // Resetting scores and flags
     playerScore = 0;
     aiScore = 0;
     isPlayerTurn = true;
     lastSelectedRow = null;
     lastSelectedColumn = null;
-
-    // Creating a new board and updating the UI
-    board = new Board(4, 4); // Adjust the board size as needed
-    createBoard();
-    updateScoreDisplay();
-    clearHighlights();
+    clearHighlights(); // Clear any highlighted cells
+    updateScoreDisplay(); // Update the score display
 }
-
-// 7.2. Event Listener for DOMContentLoaded
-document.addEventListener('DOMContentLoaded', () => {
-    resetGame(); // Initialize the game when the document is ready
-});
-
 
 
 //--------------------------------------------------------------------
@@ -274,6 +275,7 @@ function highlightCell(row, column) {
 
 // 8.2. Function to highlight the entire column
 function highlightColumn(column) {
+    clearHighlights();
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
         cell.classList.add('highlighted-column'); // Add 'highlighted-column' class for styling
     });
@@ -281,6 +283,7 @@ function highlightColumn(column) {
 
 // 8.3. Function to highlight the entire row
 function highlightRow(row) {
+    clearHighlights();
     document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
         cell.classList.add('highlighted-row'); // Add 'highlighted-row' class for styling
     });
@@ -322,7 +325,6 @@ function resetGame() {
 
 // 9.3. Event listener for the Restart button
 document.getElementById('restart-button').addEventListener('click', resetGame);
-
 
 
 //--------------------------------------------------------------------
@@ -369,8 +371,6 @@ function updateScoreDisplay() {
 }
 
 // 10.6. Additional functions and logic can be added here if needed
-
-
 
 
 //--------------------------------------------------------------------
@@ -442,6 +442,7 @@ function getAvailableCellsInColumn(column) {
 }
 
 // 12.5. Add any additional utility functions as needed
+
 
 
 
@@ -521,6 +522,7 @@ function getAvailableCellsInColumn(column) {
 
 
 
+
 //--------------------------------------------------------------------
 // #MM0015 Game Initialization
 //--------------------------------------------------------------------
@@ -556,6 +558,8 @@ function startGame() {
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'none';
 }
+
+
 
 
 //--------------------------------------------------------------------
