@@ -83,7 +83,6 @@ function handleCellClick(row, column) {
 
 
 
-
 //--------------------------------------------------------------------
 // #MM0003 Game Logic
 //--------------------------------------------------------------------
@@ -95,10 +94,10 @@ function computerMove() {
         if (availableCells.length > 0) {
             let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
             aiScore += board.cells[maxCell.row][maxCell.column];
-            board.cells[maxCell.row][maxCell.column] = '•';
-            highlightCell(maxCell.row, maxCell.column);
-            updateScoreDisplay();
+            updateCell(maxCell.row, maxCell.column, '•'); // Update cell content and styling
             isPlayerTurn = true;
+            lastSelectedRow = maxCell.row; // Update the last selected row for the player's next turn
+            updateScoreDisplay();
             checkPlayerMovePossibility();
         } else {
             checkEndGame();
@@ -143,6 +142,15 @@ function getAvailableCellsInRow(row) {
         }
     }
     return availableCells;
+}
+
+// Helper function to update cell content and styling
+function updateCell(row, column, content) {
+    const cell = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
+    if (cell) {
+        cell.textContent = content;
+        cell.classList.add(content === '•' ? 'taken' : '');
+    }
 }
 
 
