@@ -4,96 +4,86 @@
 /* CSS STARTS HERE -----------*/
 /*----------------------------*/
 
-/* #CSS01 Board Styling */
-.board {
+/* 1. Base Styling */
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+    box-sizing: border-box;
+    padding: 5px;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* 2. Board Styling */
+#board {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4x4 grid */
+    grid-template-columns: repeat(4, 1fr);
     grid-template-rows: repeat(4, 1fr);
     gap: 0;
-    width: 80vw;
-    height: 80vw;
-    margin: auto;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    width: 70vw;
+    height: 70vw;
 }
 
-/* #CSS02 Cell Styling */
 .cell {
-    position: relative;
-    cursor: pointer;
-    background-color: #002255;
-    border-radius: 10%;
-    box-shadow: 1px 5% 5% rgba(0, 0, 0, 1);
-    aspect-ratio: 1 / 1;
+    background-color: #fff;
+    border: 1px solid #444;
     display: flex;
-    font-size: 6vw;
-    font-weight: 800;
-    color: white;
-    align-items: center;
     justify-content: center;
-    user-select: none;
+    align-items: center;
+    font-size: large;
+    aspect-ratio: 1 / 1;
 }
 
-/* #CSS03 Landscape Orientation Adjustments */
-@media (orientation: landscape) {
-    .board {
-        width: 85vh;
-        height: 85vh;
+/* 3. Media Queries */
+/* 3.1. Landscape orientation */
+@media screen and (orientation: landscape) {
+    #board {
+        width: 70vh;
+        height: 70vh;
+    }
+
+    .cell {
+        font-size: 4vw;
+    }
+
+    #score {
+        position: absolute;
+        right: 5%;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    #end-game-message, #restart-button {
+        position: absolute;
+        left: 5%;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+}
+
+/* 3.2. Portrait orientation */
+@media screen and (orientation: portrait) {
+    #board {
+        width: 70vw;
+        height: 70vw;
     }
 
     .cell {
         font-size: 5vw;
     }
 
-    #ai-score, #player-score {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-    }
-
-    #player-score {
-        left: 8%;
-    }
-
-    #ai-score {
-        right: 8%;
-    }
-}
-
-/* #CSS04 End Game Message Styling */
-#end-game-message {
-    font-size: 3vw;
-    color: #ffffff;
-    text-shadow: 0 0 2px #000;
-}
-
-#end-game-message .end-game-text {
-    font-size: 6vw;
-    font-weight: 800;
-}
-
-/* #CSS05 Portrait Orientation Adjustments */
-@media (orientation: portrait) {
-    .board {
-        width: 90vw;
-        height: 90vw;
-    }
-
-    #ai-score, #player-score {
-        position: fixed;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 10;
-    }
-
-    #player-score {
-        top: 8%;
-    }
-
-    #ai-score {
-        bottom: 8%;
+    #score, #end-game-message, #restart-button {
+        position: static;
+        align-self: center;
+        margin-top: 5%;
     }
 }
 
