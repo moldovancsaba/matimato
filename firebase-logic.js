@@ -43,5 +43,5 @@ export { saveGameStats };
 //------------------------------
 // CREATED BY MOLDOVAN
 //------------------------------
-// JAVASCRIPT WRITTEN BY GPT
+// JAVASCRIPT BY GPT
 //------------------------------
