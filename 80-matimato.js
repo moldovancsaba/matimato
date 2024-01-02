@@ -87,6 +87,10 @@ function handleCellClick(row, column) {
 // #MM0003 Game Logic
 //--------------------------------------------------------------------
 
+//--------------------------------------------------------------------
+// #MM0003 Game Logic
+//--------------------------------------------------------------------
+
 // 3.1. Function for the AI's move
 function computerMove() {
     if (!isPlayerTurn) {
@@ -96,17 +100,16 @@ function computerMove() {
             aiScore += board.cells[maxCell.row][maxCell.column];
             board.cells[maxCell.row][maxCell.column] = '•';
             highlightCell(maxCell.row, maxCell.column);
-            updateScoreDisplay();
             isPlayerTurn = true;
-            lastSelectedRow = maxCell.row;
-            clearColumnHighlight();
-            highlightRow(maxCell.row); // Highlight the row where the AI moved
-            checkEndGame();
+            lastSelectedRow = maxCell.row; // Update the last selected row
+            updateScoreDisplay();
+            checkPlayerMovePossibility();
         } else {
             checkEndGame();
         }
     }
 }
+
 
 // 3.2. Function to check if the game has ended
 function checkEndGame() {
@@ -168,8 +171,7 @@ function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
         cellElement.classList.add('highlighted');
-        // Change cell content to '•' immediately to reflect the move
-        cellElement.textContent = '•';
+        cellElement.textContent = '•'; // Immediately update the cell content
     }
 }
 
