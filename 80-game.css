@@ -38,14 +38,12 @@
         position: absolute;
         left: 10%;
         top: 15%;
-        transform: translateY(-50%);
     }
 
     #main-menu-button {
         position: absolute;
         right: 10%;
         top: 35%;
-        transform: translateY(-50%);
     }
 
     #player-score {
@@ -70,7 +68,6 @@
         position: absolute;
         left: 10%;
         top: 65%;
-        transform: translateY(-50%);
     }
 
     #end-game-message {
