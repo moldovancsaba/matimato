@@ -4,21 +4,7 @@
 /* CSS STARTS HERE -----------*/
 /*----------------------------*/
 
-/* 1. Base Styling 
-.container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin: 0 auto;
-    box-sizing: border-box;
-    padding: 5px;
-    width: 100%;
-    height: 100%;
-    position: relative;
-} */
-
-/* 2. Board for landscape orientation */
+/* 1. Board for landscape orientation */
 @media (orientation: landscape) {
     #board {
         display: grid;
@@ -63,7 +49,7 @@
     }
 }
 
-/* 3. Board for portrait orientation */
+/* 2. Board for portrait orientation */
 @media (orientation: portrait) {
     #board {
         display: grid;
