@@ -5,609 +5,268 @@
 //------------------------------
 
 //--------------------------------------------------------------------
-// #MM0001 Global Variables and Board Class Definition
+// #MM0001 - Class definition for the game board.
 //--------------------------------------------------------------------
 
-// 1.1. Class to represent the game board
+// 1.1. Class definition
 class Board {
     constructor(rows, columns) {
-        this.rows = rows;        // Number of rows in the board
-        this.columns = columns;  // Number of columns in the board
-        this.cells = this.createInitialBoard(); // Create the initial board
+        this.rows = rows; // Number of rows in the board.
+        this.columns = columns; // Number of columns in the board.
+        this.cells = this.createInitialBoard(); // Initializing the board cells.
     }
 
-    // Initializes the board with random numbers in each cell
+// 1.2. Function to create the initial board setup with random numbers.
     createInitialBoard() {
-        let board = [];
-        for (let i = 0; i < this.rows; i++) {
-            let row = [];
-            for (let j = 0; j < this.columns; j++) {
-                row.push(Math.floor(Math.random() * 9) + 1); // Random number between 1 and 9
+        let board = []; // Initialize an empty array for the board.
+        for (let i = 0; i < this.rows; i++) { // Loop through each row.
+            let row = []; // Initialize an empty array for the row.
+            for (let j = 0; j < this.columns; j++) { // Loop through each column.
+                // Push a random number between 1 and 9 into the row array.
+                row.push(Math.floor(Math.random() * 9) + 1);
             }
-            board.push(row);
+            board.push(row); // Add the completed row to the board.
         }
-        return board;
+        return board; // Return the fully populated board.
     }
 }
 
-// 1.2. Initialize the game board with 4 rows and 4 columns
-let board = new Board(4, 4);
-
-// 1.3. Initialize scores and game state variables
-let playerScore = 0; // Player's score
-let aiScore = 0;     // AI's score
-let isPlayerTurn = true; // Flag to determine if it's the player's turn
+// 1.3. Initializing global variables.
+let board = new Board(4, 4); // Create a new game board instance with 4 rows and 4 columns.
+let playerScore = 0; // Initialize player's score.
+let aiScore = 0; // Initialize AI's score.
+let isPlayerTurn = true; // Flag to track whose turn it is, starting with the player.
 
 
 //--------------------------------------------------------------------
-// #MM0002 Create Gamefield Function
+// #MM0002 - Function to Create and Display the Game Board
 //--------------------------------------------------------------------
 
-// 2.1. Function to create and display the game board in the UI
+// 2.1. Function to create and display the game board in the UI.
 function createBoard() {
-    const boardElement = document.getElementById('board');
-    if (!boardElement) {
-        console.error('Board element not found!');
-        return;
-    }
-    boardElement.innerHTML = '';
+    const boardElement = document.getElementById('board'); // Access the board element in the HTML.
+    boardElement.innerHTML = ''; // Clear any existing content in the board element.
+    // Set the grid layout based on the number of rows and columns in the board.
     boardElement.style.gridTemplateRows = `repeat(${board.rows}, 1fr)`;
     boardElement.style.gridTemplateColumns = `repeat(${board.columns}, 1fr)`;
 
-    for (let i = 0; i < board.rows; i++) {
-        const rowDiv = document.createElement('div');
-        rowDiv.className = 'row';
-        for (let j = 0; j < board.columns; j++) {
-            const cell = document.createElement('div');
-            cell.className = 'cell';
-            cell.textContent = board.cells[i][j];
+    for (let i = 0; i < board.rows; i++) { // Loop through each row.
+        const rowDiv = document.createElement('div'); // Create a new div for the row.
+        rowDiv.className = 'row'; // Assign 'row' class for styling.
+        for (let j = 0; j < board.columns; j++) { // Loop through each column in the row.
+            const cell = document.createElement('div'); // Create a new div for the cell.
+            cell.className = 'cell'; // Assign 'cell' class for styling.
+            cell.textContent = board.cells[i][j]; // Set the cell's content to the board's value.
+            // Set custom attributes to identify the cell's row and column.
             cell.setAttribute('row', i);
             cell.setAttribute('column', j);
+            // Add an event listener to handle clicks on the cell.
             cell.addEventListener('click', () => handleCellClick(i, j));
-            rowDiv.appendChild(cell);
+            rowDiv.appendChild(cell); // Add the cell to the row div.
         }
-        boardElement.appendChild(rowDiv);
+        boardElement.appendChild(rowDiv); // Add the completed row div to the board element.
     }
 }
 
-// 2.2. Event listener for cell clicks
+// 2.2. Global variables to keep track of the last selected row and column.
+let lastSelectedRow = null; 
+let lastSelectedColumn = null;
+
+
+//--------------------------------------------------------------------
+// #MM0003 - Cell Click Handling and Game Logic
+//--------------------------------------------------------------------
+
+// Function to handle cell clicks by the player.
 function handleCellClick(row, column) {
+    // Check if it's player's turn, the cell is not already taken, and the click is in the same row or it's the first click.
     if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedRow === null || lastSelectedRow === row)) {
-        playerScore += board.cells[row][column];
-        board.cells[row][column] = '•';
-        highlightCell(row, column);
-        updateScoreDisplay();
-        isPlayerTurn = false;
-        setTimeout(computerMove, 200);
+        playerScore += board.cells[row][column]; // Add the cell value to the player's score.
+        board.cells[row][column] = '•'; // Mark the cell as taken.
+        highlightCell(row, column); // Highlight the clicked cell.
+        highlightColumn(column); // Highlight the entire column for AI's next move.
+        isPlayerTurn = false; // Switch the turn to AI.
+        lastSelectedColumn = column; // Remember the last selected column for AI's logic.
+        setTimeout(computerMove, 500); // Initiate AI's move after a delay.
     }
+    updateScoreDisplay(); // Update the score display after each click.
 }
 
-
-//--------------------------------------------------------------------
-// #MM0003 Game Logic
-//--------------------------------------------------------------------
-
-// 3.1. Function for the AI's move
+// Function for AI's move logic.
 function computerMove() {
     if (!isPlayerTurn) {
-        let availableCells = getAvailableCellsInColumn(lastSelectedColumn);
+        let availableCells = getAvailableCellsInColumn(lastSelectedColumn); // Get available cells in the last selected column.
         if (availableCells.length > 0) {
-            let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
-            aiScore += board.cells[maxCell.row][maxCell.column];
-            board.cells[maxCell.row][maxCell.column] = '•';
-            highlightCell(maxCell.row, maxCell.column);
-            isPlayerTurn = true;
-            lastSelectedRow = maxCell.row; // Update the last selected row
-            updateScoreDisplay();
-            checkPlayerMovePossibility();
+            // Select the cell with the maximum value in the column.
+            let maxCell = availableCells.reduce((max, cell) => 
+                board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, 
+                availableCells[0]
+            );
+            aiScore += board.cells[maxCell.row][maxCell.column]; // Add the selected cell's value to the AI's score.
+            board.cells[maxCell.row][maxCell.column] = '•'; // Mark the selected cell as taken.
+            highlightCell(maxCell.row, maxCell.column); // Highlight the selected cell.
+            highlightRow(maxCell.row); // Highlight the entire row for the player's next move.
+            isPlayerTurn = true; // Switch the turn back to the player.
+            lastSelectedRow = maxCell.row; // Remember the last selected row for the player's logic.
+            updateScoreDisplay(); // Update the score display after AI's move.
+            checkPlayerMovePossibility(); // Check if the player can make a move next.
         } else {
-            checkEndGame();
+            checkEndGame(); // Check if the game has ended if no moves are available.
         }
     }
 }
 
-// 3.2. Function to check if the game has ended
+// Function to check if the player has any possible moves left.
+function checkPlayerMovePossibility() {
+    if (!canPlayerMove()) {
+        endGame(); // End the game if the player has no moves.
+    }
+}
+
+// Function to get available cells in a given column.
+function getAvailableCellsInColumn(column) {
+    let availableCells = [];
+    for (let i = 0; i < board.rows; i++) {
+        if (board.cells[i][column] !== '•') { // Check if the cell is not already taken.
+            availableCells.push({ row: i, column: column }); // Add the cell to available options.
+        }
+    }
+    return availableCells; // Return the list of available cells.
+}
+
+// Function to check if the game should end.
 function checkEndGame() {
+    // Check if neither the player nor the AI can make a move.
     if ((!isPlayerTurn && !canComputerMove()) || (isPlayerTurn && !canPlayerMove())) {
-        endGame();
+        endGame(); // End the game.
     }
 }
 
-// 3.3. Function to determine if there are any available moves in a column
-function getAvailableCellsInColumn(column) {
-    let availableCells = [];
-    for (let i = 0; i < board.rows; i++) {
-        if (board.cells[i][column] !== '•') {
-            availableCells.push({ row: i, column: column });
-        }
+// Function to handle the end of the game.
+function endGame() {
+    let winner;
+    // Determine the winner based on scores.
+    if (playerScore > aiScore) {
+        winner = 'Player wins!';
+    } else if (aiScore > playerScore) {
+        winner = 'AI wins!';
+    } else {
+        winner = 'Draw!';
     }
-    return availableCells;
+    // Update the UI to reflect the end of the game.
+    document.getElementById('board').style.display = 'none';
+    document.getElementById('end-game-message').style.display = 'block';
+    document.getElementById('winner-message').textContent = winner; // Show who the winner is.
 }
 
-// 3.4. Function to check if the AI can make a move
+// Function to check if the computer can make a move.
 function canComputerMove() {
-    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
-}
+    return getAvailableCellsInColumn(lastSelectedColumn).length > 0; // Check if there are any available cells in the last selected column.
 
-// 3.5. Function to check if the player can make a move
+
+// Function to check if the player can make a move.
 function canPlayerMove() {
-    return getAvailableCellsInRow(lastSelectedRow).length > 0;
+    return getAvailableCellsInRow(lastSelectedRow).length > 0; // Check if there are any available cells in the last selected row.
 }
 
-// 3.6. Function to determine if there are any available moves in a row
+// Function to get available cells in a given row.
 function getAvailableCellsInRow(row) {
     let availableCells = [];
     for (let j = 0; j < board.columns; j++) {
-        if (board.cells[row][j] !== '•') {
-            availableCells.push({ row: row, column: j });
+        if (board.cells[row][j] !== '•') { // Check if the cell is not already taken.
+            availableCells.push({ row: row, column: j }); // Add the cell to available options.
         }
     }
-    return availableCells;
+    return availableCells; // Return the list of available cells.
 }
 
-
-//--------------------------------------------------------------------
-// #MM0004 UI Functions
-//--------------------------------------------------------------------
-
-// 4.1. Function to highlight a cell when selected
+// Function to highlight a specific cell.
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
-        cellElement.style.backgroundColor = '#BBB';
+        cellElement.style.backgroundColor = '#BBB'; // Change the cell's background color.
         setTimeout(() => {
-            cellElement.textContent = '•';
-            cellElement.style.backgroundColor = '#BBB';
+            cellElement.textContent = '•'; // Update the cell's content after a short delay.
+            cellElement.style.backgroundColor = '#BBB'; // Maintain the background color.
         }, 500);
     }
 }
 
-// 4.2. Function to highlight the entire column
+// Function to highlight all cells in a specified column.
 function highlightColumn(column) {
-    clearHighlights();
+    clearHighlights(); // Clear any existing highlights before applying new ones.
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.style.border = '4px solid #111199';
-        cell.style.boxSizing = 'border-box';
+        cell.style.border = '4px solid #111199'; // Add a border to each cell in the column.
+        cell.style.boxSizing = 'border-box'; // Adjust the box sizing to include the border.
     });
 }
 
-// 4.3. Function to highlight the entire row
+// Function to highlight all cells in a specified row.
 function highlightRow(row) {
-    clearHighlights();
+    clearHighlights(); // Clear any existing highlights before applying new ones.
     document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
-        cell.style.border = '4px solid #111199';
-        cell.style.boxSizing = 'border-box';
+        cell.style.border = '4px solid #111199'; // Add a border to each cell in the row.
+        cell.style.boxSizing = 'border-box'; // Adjust the box sizing to include the border.
     });
 }
 
-// 4.4. Function to clear all highlights
+// Function to clear all cell highlights.
 function clearHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
-        cell.style.border = '';
-        cell.style.boxSizing = '';
+        cell.style.border = ''; // Remove the border from the cell.
+        cell.style.boxSizing = ''; // Reset the box sizing to default.
     });
 }
 
-// 4.5. Function to update the score display
+// Function to update the score display on the UI.
 function updateScoreDisplay() {
     const playerScoreElement = document.getElementById('player-score');
     const aiScoreElement = document.getElementById('ai-score');
-    playerScoreElement.textContent = `You: ${playerScore}`;
-    aiScoreElement.textContent = `AI: ${aiScore}`;
+    playerScoreElement.textContent = `You: ${playerScore}`; // Update the player's score display.
+    aiScoreElement.textContent = `AI: ${aiScore}`; // Update the AI's score display.
 }
 
-//--------------------------------------------------------------------
-// #MM0005 Game Initialization and Reset
-//--------------------------------------------------------------------
-
-// 5.1. Event listener for DOMContentLoaded
+// Event listener for DOMContentLoaded to start the game once the document is fully loaded.
 document.addEventListener('DOMContentLoaded', () => {
-    initializeGame(); // Call the function to initialize the game
+    startGame(); // Call the startGame function to initiate the game.
 });
 
-// 5.2. Function to initialize game settings and create the board
-function initializeGame() {
-    board = new Board(4, 4); // Initialize the board with 4 rows and 4 columns
-    createBoard();           // Create and display the game board
-    resetGame();             // Reset game settings
+// Function to start or restart the game.
+function startGame() {
+    resetGame(); // Call the resetGame function to reset the game to its initial state.
+    // Update the UI to display the game components.
+    document.getElementById('board').style.display = 'grid';
+    document.getElementById('score').style.display = 'block';
+    document.getElementById('start-screen').style.display = 'none'; // Hide the start screen, if any.
 }
 
-// 5.3. Function to reset the game to its initial state
+// Function to reset the game to its initial state.
 function resetGame() {
-    playerScore = 0;         // Reset player's score
-    aiScore = 0;             // Reset AI's score
-    isPlayerTurn = true;     // Set the turn to the player
-    lastSelectedRow = null;  // Reset the last selected row
-    lastSelectedColumn = null; // Reset the last selected column
-    updateScoreDisplay();    // Update the score display
-    clearHighlights();       // Clear any existing highlights
+    board = new Board(4, 4); // Create a new 4x4 game board.
+    board.cells = board.createInitialBoard(); // Generate new cell values for the board.
+    playerScore = 0; // Reset the player's score.
+    aiScore = 0; // Reset the AI's score.
+    isPlayerTurn = true; // Set the turn back to the player.
+    lastSelectedRow = null; // Reset the last selected row.
+    lastSelectedColumn = null; // Reset the last selected column.
+    createBoard(); // Call createBoard to set up the board again.
+    updateScoreDisplay(); // Update the score display with reset scores.
 }
 
-//--------------------------------------------------------------------
-// #MM0006 UI Interaction Functions
-//--------------------------------------------------------------------
-
-// 6.1. Function to highlight a selected cell
-function highlightCell(row, column) {
-    let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
-    if (cellElement) {
-        cellElement.classList.add('highlighted'); // Add 'highlighted' class for styling
-        cellElement.textContent = '•'; // Immediately update the cell content
-    }
-}
-
-// 6.2. Function to highlight all cells in a selected row
-function highlightRow(row) {
-    document.querySelectorAll(`.cell[row="${row}"]`).forEach(cell => {
-        cell.classList.add('highlighted-row'); // Add 'highlighted-row' class for styling
-    });
-}
-
-// 6.3. Function to highlight all cells in a selected column
-function highlightColumn(column) {
-    document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.classList.add('highlighted-column'); // Add 'highlighted-column' class for styling
-    });
-}
-
-// 6.4. Function to clear all highlighted cells
-function clearHighlights() {
-    document.querySelectorAll('.cell').forEach(cell => {
-        cell.classList.remove('highlighted', 'highlighted-row', 'highlighted-column');
-    });
-}
-
-//--------------------------------------------------------------------
-// #MM0007 Game Initialization and Reset
-//--------------------------------------------------------------------
-
-// 7.1. Event listener for DOMContentLoaded
-document.addEventListener('DOMContentLoaded', () => {
-    initializeGame(); // Call the function to initialize the game
-});
-
-// 7.2. Initialize the game settings and create the board
-function initializeGame() {
-    board = new Board(4, 4); // Initialize the board with 4 rows and 4 columns
-    createBoard();           // Create and display the game board
-    resetGame();             // Reset the game settings
-}
-
-// 7.3. Reset the game to initial state
-function resetGame() {
-    playerScore = 0; // Reset player's score
-    aiScore = 0;     // Reset AI's score
-    isPlayerTurn = true; // Set the turn to player
-    lastSelectedRow = null; // Reset last selected row
-    lastSelectedColumn = null; // Reset last selected column
-    clearHighlights();       // Clear any highlighted cells
-    updateScoreDisplay();    // Update the score display
-}
-
-//--------------------------------------------------------------------
-// #MM0008 UI Interaction Functions
-//--------------------------------------------------------------------
-
-// 8.1. Function to highlight a selected cell
-function highlightCell(row, column) {
-    let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
-    if (cellElement) {
-        cellElement.style.backgroundColor = '#BBB'; // Change the background to grey
-        setTimeout(() => {
-            cellElement.textContent = '•'; // Update the cell content
-            cellElement.style.backgroundColor = '#BBB'; // Maintain the grey background
-        }, 500);
-    }
-}
-
-// 8.2. Function to highlight the entire column
-function highlightColumn(column) {
-    clearHighlights(); // Clear any existing highlights before highlighting a column
-    document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.style.border = '4px solid #111199'; // Add a solid border to the highlighted column
-        cell.style.boxSizing = 'border-box'; // Adjust box sizing to include the border
-    });
-}
-
-// 8.3. Function to highlight the entire row
-function highlightRow(row) {
-    clearHighlights(); // Clear any existing highlights before highlighting a row
-    document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
-        cell.style.border = '4px solid #111199'; // Add a solid border to the highlighted row
-        cell.style.boxSizing = 'border-box'; // Adjust box sizing to include the border
-    });
-}
-
-// 8.4. Function to clear all highlights
-function clearHighlights() {
-    document.querySelectorAll('.cell').forEach(cell => {
-        cell.style.border = ''; // Remove any border styling from the cell
-        cell.style.boxSizing = ''; // Reset box sizing to default
-    });
-}
-
-
-//--------------------------------------------------------------------
-// #MM0009 Game Initialization and Restart Logic
-//--------------------------------------------------------------------
-
-// 9.1. Event listener for DOMContentLoaded
-document.addEventListener('DOMContentLoaded', () => {
-    startGame(); // Initialize and start the game when the page is fully loaded
-});
-
-// 9.2. Function to reset the game settings and restart the game
-function resetGame() {
-    board = new Board(4, 4); // Create a new 4x4 game board
-    board.cells = board.createInitialBoard(); // Generate new cell values for the board
-    playerScore = 0; // Reset player's score to zero
-    aiScore = 0;     // Reset AI's score to zero
-    isPlayerTurn = true; // Set the turn to the player
-    lastSelectedRow = null; // Reset the last selected row to null
-    lastSelectedColumn = null; // Reset the last selected column to null
-    createBoard(); // Recreate the board with new values
-    updateScoreDisplay(); // Update the score display on UI
-    clearHighlights(); // Clear any existing highlights on the board
-}
-
-// 9.3. Event listener for the Restart button
+// Event listener for the restart button.
 document.getElementById('restart-button').addEventListener('click', () => {
-    resetGame(); // Reset and restart the game when the restart button is clicked
-    startGame(); // Start the game after resetting
+    resetGame(); // Reset the game when the restart button is clicked.
+    startGame(); // Start the game after resetting.
 });
-
-// 9.4. Define the startGame function to handle starting or restarting the game
-function startGame() {
-    resetGame(); // Reset the game to its initial state
-    document.getElementById('board').style.display = 'grid'; // Display the game board
-    document.getElementById('score').style.display = 'block'; // Display the score board
-    document.getElementById('start-screen').style.display = 'none'; // Hide the start screen
-    document.getElementById('end-game-message').style.display = 'none'; // Hide the end game message if it's visible
 }
 
-
-//--------------------------------------------------------------------
-// #MM0010 Additional Gameplay Features
-//--------------------------------------------------------------------
-
-// 10.1. Function to highlight the selected cell
-function highlightCell(row, column) {
-    let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
-    if (cellElement) {
-        cellElement.classList.add('highlighted'); // Add the 'highlighted' class for visual indication
-        cellElement.textContent = '•'; // Update the cell content to a dot indicating selection
-    }
+// Function to hide the game components and show the start screen.
+function hideGame() {
+    document.getElementById('board').style.display = 'none'; // Hide the game board.
+    document.getElementById('score').style.display = 'none'; // Hide the score display.
+    document.getElementById('end-game-message').style.display = 'none'; // Hide the end-game message.
+    document.getElementById('start-screen').style.display = 'block'; // Show the start screen.
 }
-
-// 10.2. Function to highlight the entire column
-function highlightColumn(column) {
-    clearHighlights(); // Clear any previously highlighted cells
-    document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.classList.add('highlighted-column'); // Add 'highlighted-column' class for styling
-    });
-}
-
-// 10.3. Function to highlight the entire row
-function highlightRow(row) {
-    clearHighlights(); // Clear any previously highlighted cells
-    document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
-        cell.classList.add('highlighted-row'); // Add 'highlighted-row' class for styling
-    });
-}
-
-// 10.4. Function to clear all highlights
-function clearHighlights() {
-    document.querySelectorAll('.cell').forEach(cell => {
-        cell.classList.remove('highlighted', 'highlighted-row', 'highlighted-column'); // Remove all highlight classes
-    });
-}
-
-// 10.5. Function to update the score display
-function updateScoreDisplay() {
-    const playerScoreElement = document.getElementById('player-score');
-    const aiScoreElement = document.getElementById('ai-score');
-    playerScoreElement.textContent = `Player: ${playerScore}`; // Update player's score display
-    aiScoreElement.textContent = `AI: ${aiScore}`; // Update AI's score display
-}
-
-// 10.6. Additional functions and logic can be added here if needed
-
-//--------------------------------------------------------------------
-// #MM0011 Game Initialization and Reset
-//--------------------------------------------------------------------
-
-// 11.1. Function to initialize the game when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    initializeGame(); // Call the function to initialize the game
-});
-
-// 11.2. Function to set up and start the game
-function initializeGame() {
-    board = new Board(4, 4); // Initialize the board with 4 rows and 4 columns
-    createBoard();           // Create and display the game board
-    resetGame();             // Reset game settings
-}
-
-// 11.3. Function to reset the game settings
-function resetGame() {
-    playerScore = 0;         // Reset player's score
-    aiScore = 0;             // Reset AI's score
-    isPlayerTurn = true;     // Set the turn to the player
-    lastSelectedRow = null;  // Reset the last selected row
-    lastSelectedColumn = null; // Reset the last selected column
-    updateScoreDisplay();    // Update the score display
-    clearHighlights();       // Clear any existing highlights
-}
-
-// 11.4. Add any additional initialization logic if needed
-
-//--------------------------------------------------------------------
-// #MM0012 Additional Functions
-//--------------------------------------------------------------------
-
-// 12.1. Function to check if the computer can make a move
-function canComputerMove() {
-    // Logic to determine if there are any available moves for the AI
-    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
-}
-
-// 12.2. Function to check if the player can make a move
-function canPlayerMove() {
-    // Logic to determine if there are any available moves for the player
-    return getAvailableCellsInRow(lastSelectedRow).length > 0;
-}
-
-// 12.3. Function to determine available cells in a specific row
-function getAvailableCellsInRow(row) {
-    let availableCells = [];
-    for (let j = 0; j < board.columns; j++) {
-        if (board.cells[row][j] !== '•') {
-            availableCells.push({ row: row, column: j });
-        }
-    }
-    return availableCells;
-}
-
-// 12.4. Function to determine available cells in a specific column
-function getAvailableCellsInColumn(column) {
-    let availableCells = [];
-    for (let i = 0; i < board.rows; i++) {
-        if (board.cells[i][column] !== '•') {
-            availableCells.push({ row: i, column: column });
-        }
-    }
-    return availableCells;
-}
-
-// 12.5. Add any additional utility functions as needed
-
-//--------------------------------------------------------------------
-// #MM0013 Game Initialization and Restart Logic
-//--------------------------------------------------------------------
-
-// 13.1. Function to initialize the game when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    startGame(); // Start the game immediately when the page loads
-});
-
-// 13.2. Function to start or restart the game
-function startGame() {
-    resetGame(); // Reset the game to its initial state
-    document.getElementById('board').style.display = 'grid'; // Display the game board
-    document.getElementById('score').style.display = 'block'; // Display the score
-    document.getElementById('start-screen').style.display = 'none'; // Hide the start screen
-    document.getElementById('end-game-message').style.display = 'none'; // Hide the end game message
-}
-
-// 13.3. Function to reset the game to its initial state
-function resetGame() {
-    board = new Board(4, 4); // Initialize the board with 4 rows and 4 columns
-    createBoard(); // Create and display the game board
-    playerScore = 0; // Reset player's score
-    aiScore = 0;     // Reset AI's score
-    isPlayerTurn = true; // Set the turn to player
-    lastSelectedRow = null; // Reset last selected row
-    lastSelectedColumn = null; // Reset last selected column
-    updateScoreDisplay(); // Update the score display
-}
-
-// 13.4. Event handler for the Restart button
-document.getElementById('restart-button').addEventListener('click', startGame);
-
-
-//--------------------------------------------------------------------
-// #MM0014 Helper Functions
-//--------------------------------------------------------------------
-
-// 14.1. Function to check if the player can make a move
-function canPlayerMove() {
-    // Check for available moves in the last selected row
-    return getAvailableCellsInRow(lastSelectedRow).length > 0;
-}
-
-// 14.2. Function to check if the AI can make a move
-function canComputerMove() {
-    // Check for available moves in the last selected column
-    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
-}
-
-// 14.3. Function to get available cells in a specific row
-function getAvailableCellsInRow(row) {
-    let availableCells = [];
-    for (let j = 0; j < board.columns; j++) {
-        if (board.cells[row][j] !== '•') {
-            availableCells.push({ row: row, column: j });
-        }
-    }
-    return availableCells;
-}
-
-// 14.4. Function to get available cells in a specific column
-function getAvailableCellsInColumn(column) {
-    let availableCells = [];
-    for (let i = 0; i < board.rows; i++) {
-        if (board.cells[i][column] !== '•') {
-            availableCells.push({ row: i, column: column });
-        }
-    }
-    return availableCells;
-}
-
-//--------------------------------------------------------------------
-// #MM0015 Game Initialization
-//--------------------------------------------------------------------
-
-// 15.1. Function to start the game
-document.addEventListener('DOMContentLoaded', () => {
-    startGame(); // Initialize the game when the page loads
-});
-
-// 15.2. Function to reset the game settings
-function resetGame() {
-    board = new Board(4, 4); // Create a new board with 4 rows and 4 columns
-    board.cells = board.createInitialBoard(); // Generate new cell values
-    playerScore = 0; // Reset player's score
-    aiScore = 0;     // Reset AI's score
-    isPlayerTurn = true; // Set the turn to player
-    lastSelectedRow = null; // Reset the last selected row
-    lastSelectedColumn = null; // Reset the last selected column
-    createBoard(); // Recreate the board with new values
-    updateScoreDisplay(); // Update the score display
-}
-
-// 15.3. Event handler for the Restart button
-document.getElementById('restart-button').addEventListener('click', () => {
-    resetGame();
-    startGame();
-});
-
-// 15.4. Define the startGame function to handle starting or restarting the game
-function startGame() {
-    resetGame(); // Reset the game to its initial state
-    document.getElementById('board').style.display = 'grid'; // Display the game board
-    document.getElementById('score').style.display = 'block'; // Display the score board
-    document.getElementById('start-screen').style.display = 'none'; // Hide the start screen
-    document.getElementById('end-game-message').style.display = 'none'; // Hide the end game message
-}
-
-//--------------------------------------------------------------------
-// #MM0016 Finalize and Export
-//--------------------------------------------------------------------
-
-// 16.1. Finalize the code
-// (Add any final touches or clean up if needed)
-
-// 16.2. Export the necessary components if this module is used in a larger application
-// (Only if relevant. For example: export { startGame, resetGame };)
-
-//------------------------------
-// END OF CODE -----------------
-//------------------------------
-// CREATED BY MOLDOVAN ---------
-//------------------------------
-// JAVASCRIPT BY GPT -----------
-//------------------------------
-
 
 //------------------------------
 // END OF CODE -----------------
