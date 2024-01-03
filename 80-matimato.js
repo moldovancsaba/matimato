@@ -144,10 +144,10 @@ function getAvailableCellsInRow(row) {
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
-        cellElement.style.backgroundColor = '#444444';
+        cellElement.style.backgroundColor = '#BBB';
         setTimeout(() => {
             cellElement.textContent = '•';
-            cellElement.style.backgroundColor = '#444444';
+            cellElement.style.backgroundColor = '#BBB';
         }, 500);
     }
 }
@@ -155,7 +155,7 @@ function highlightCell(row, column) {
 function highlightColumn(column) {
     clearHighlights();
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.style.border = '4px solid #DDDDDD';
+        cell.style.border = '4px solid #111199';
         cell.style.boxSizing = 'border-box';
     });
 }
@@ -163,7 +163,7 @@ function highlightColumn(column) {
 function highlightRow(row) {
     clearHighlights();
     document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
-        cell.style.border = '4px solid #DDDDDD';
+        cell.style.border = '4px solid #111199';
         cell.style.boxSizing = 'border-box';
     });
 }
