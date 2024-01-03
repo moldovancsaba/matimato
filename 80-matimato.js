@@ -207,7 +207,7 @@ function highlightColumn(column) {
 function highlightRow(row) {
     clearHighlights(); // Clear any existing highlights before applying new ones.
     document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
-        cell.style.border = '1px solid #FFFFFF'; // Add a border to each cell in the row.
+        cell.style.border = '1px solid #AA4444'; // Add a border to each cell in the row.
         cellElement.style.backgroundColor = '#EEEEEE'; // Maintain the background color.
         cell.style.boxSizing = 'border-box'; // Adjust the box sizing to include the border.
     });
@@ -217,7 +217,6 @@ function highlightRow(row) {
 function clearHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
         cell.style.border = ''; // Remove the border from the cell.
-        cellElement.style.backgroundColor = ''; // Remove the background color.
         cell.style.boxSizing = ''; // Reset the box sizing to default.
     });
 }
