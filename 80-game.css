@@ -4,6 +4,24 @@
 /* CSS STARTS HERE -----------*/
 /*----------------------------*/
 
+/* Highlighted cell background color */
+.cell-highlighted {
+    background-color: #BBB;
+}
+
+/* Highlight border for selected row and column */
+.cell-highlighted-row, .cell-highlighted-column {
+    border: 4px solid #111199;
+    box-sizing: border-box;
+}
+
+/* Cell marked as selected */
+.cell-marked {
+    background-color: #666; /* Darker background for marked cell */
+    color: #FFF; /* White text for better visibility */
+}
+
+
 /* 1. Board for landscape orientation */
 @media (orientation: landscape) {
     #board {

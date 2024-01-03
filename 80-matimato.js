@@ -57,9 +57,9 @@ let lastSelectedColumn = null;
 function handleCellClick(row, column) {
     if (isPlayerTurn && board.cells[row][column] !== '•' && (lastSelectedRow === null || lastSelectedRow === row)) {
         playerScore += board.cells[row][column];
+        markCell(document.querySelector(`.cell[row="${row}"][column="${column}"]`));
         board.cells[row][column] = '•';
-        highlightCell(row, column);
-        highlightColumn(column); 
+        highlightColumn(column);
         isPlayerTurn = false;
         lastSelectedColumn = column; 
         setTimeout(computerMove, 500);
@@ -69,61 +69,60 @@ function handleCellClick(row, column) {
 
 function computerMove() {
     if (!isPlayerTurn) {
-        let availableCells = getAvailableCellsInColumn(lastSelectedColumn); 
+        let availableCells = getAvailableCellsInColumn(lastSelectedColumn);
         if (availableCells.length > 0) {
-            let maxCell = availableCells.reduce((max, cell) => board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
+            let maxCell = availableCells.reduce((max, cell) => 
+                board.cells[cell.row][cell.column] > board.cells[max.row][max.column] ? cell : max, availableCells[0]);
             aiScore += board.cells[maxCell.row][maxCell.column];
+            markCell(document.querySelector(`.cell[row="${maxCell.row}"][column="${maxCell.column}"]`));
             board.cells[maxCell.row][maxCell.column] = '•';
-            highlightCell(maxCell.row, maxCell.column);
-            highlightRow(maxCell.row); 
+            highlightRow(maxCell.row);
             isPlayerTurn = true;
             lastSelectedRow = maxCell.row;
             updateScoreDisplay();
-            checkPlayerMovePossibility(); 
+            checkPlayerMovePossibility();
         } else {
             checkEndGame();
         }
     }
 }
 
+function markCell(cell) {
+    cell.classList.add('cell-marked');
+    setTimeout(() => cell.classList.remove('cell-marked'), 500);
+}
+
+function highlightColumn(column) {
+    clearHighlights();
+    document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
+        cell.classList.add('cell-highlighted-column');
+    });
+}
+
+function highlightRow(row) {
+    clearHighlights();
+    document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
+        cell.classList.add('cell-highlighted-row');
+    });
+}
+
+function clearHighlights() {
+    document.querySelectorAll('.cell').forEach(cell => {
+        cell.classList.remove('cell-highlighted-column', 'cell-highlighted-row');
+    });
+}
+
+function updateScoreDisplay() {
+    const playerScoreElement = document.getElementById('player-score');
+    const aiScoreElement = document.getElementById('ai-score');
+    playerScoreElement.textContent = `You: ${playerScore}`;
+    aiScoreElement.textContent = `AI: ${aiScore}`;
+}
+
 function checkPlayerMovePossibility() {
     if (!canPlayerMove()) {
         endGame();
     }
-}
-
-function getAvailableCellsInColumn(column) {
-    let availableCells = [];
-    for (let i = 0; i < board.rows; i++) {
-        if (board.cells[i][column] !== '•') {
-            availableCells.push({ row: i, column: column });
-        }
-    }
-    return availableCells;
-}
-
-function checkEndGame() {
-    if ((!isPlayerTurn && !canComputerMove()) || (isPlayerTurn && !canPlayerMove())) {
-        endGame();
-    }
-}
-
-function endGame() {
-    let winner;
-    if (playerScore > aiScore) {
-        winner = 'Player wins!';
-    } else if (aiScore > playerScore) {
-        winner = 'AI wins!';
-    } else {
-        winner = 'Draw!';
-    }
-    document.getElementById('board').style.display = 'none';
-    document.getElementById('end-game-message').style.display = 'block';
-    document.getElementById('winner-message').textContent = winner;
-}
-
-function canComputerMove() {
-    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
 }
 
 function canPlayerMove() {
@@ -140,57 +139,42 @@ function getAvailableCellsInRow(row) {
     return availableCells;
 }
 
-function highlightCell(row, column) {
-    let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
-    if (cellElement) {
-        cellElement.style.backgroundColor = '#666';
-        setTimeout(() => {
-            cellElement.textContent = '•';
-            cellElement.style.backgroundColor = '#666';
-        }, 500);
+function checkEndGame() {
+    if ((!isPlayerTurn && !canComputerMove()) || (isPlayerTurn && !canPlayerMove())) {
+        endGame();
     }
 }
 
-function highlightColumn(column) {
-    clearHighlights();
-    document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.style.border = '4px solid #FFF';
-        cell.style.boxSizing = 'border-box';
-    });
+function canComputerMove() {
+    return getAvailableCellsInColumn(lastSelectedColumn).length > 0;
 }
 
-function highlightRow(row) {
-    clearHighlights();
-    document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
-        cell.style.border = '4px solid #FFF';
-        cell.style.boxSizing = 'border-box';
-    });
+function getAvailableCellsInColumn(column) {
+    let availableCells = [];
+    for (let i = 0; i < board.rows; i++) {
+        if (board.cells[i][column] !== '•') {
+            availableCells.push({ row: i, column: column });
+        }
+    }
+    return availableCells;
 }
 
-function clearHighlights() {
-    document.querySelectorAll('.cell').forEach(cell => {
-        cell.style.border = '';
-        cell.style.boxSizing = '';
-    });
-}
-
-function updateScoreDisplay() {
-    const playerScoreElement = document.getElementById('player-score');
-    const aiScoreElement = document.getElementById('ai-score');
-    playerScoreElement.textContent = `You: ${playerScore}`;
-    aiScoreElement.textContent = `AI: ${aiScore}`;
+function endGame() {
+    let winner;
+    if (playerScore > aiScore) {
+        winner = 'Player wins!';
+    } else if (aiScore > playerScore) {
+        winner = 'AI wins!';
+    } else {
+        winner = 'Draw!';
+    }
+    document.getElementById('end-game-message').style.display = 'block';
+    document.getElementById('winner-message').textContent = winner;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    startGame(); 
-});
-
-function startGame() {
     resetGame();
-    document.getElementById('board').style.display = 'grid';
-    document.getElementById('score').style.display = 'block';
-    document.getElementById('start-screen').style.display = 'none';
-}
+});
 
 function resetGame() {
     board = new Board(4, 4); 
@@ -202,19 +186,10 @@ function resetGame() {
     lastSelectedColumn = null;
     createBoard();
     updateScoreDisplay();
-}
-
-function hideGame() {
-    document.getElementById('board').style.display = 'none';
-    document.getElementById('score').style.display = 'none';
     document.getElementById('end-game-message').style.display = 'none';
-    document.getElementById('start-screen').style.display = 'block';
 }
 
-document.getElementById('restart-button').addEventListener('click', () => {
-    resetGame();
-    startGame();
-});
+document.getElementById('restart-button').addEventListener('click', resetGame);
 
 //------------------------------
 // END OF CODE -----------------
