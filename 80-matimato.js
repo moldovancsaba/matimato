@@ -241,13 +241,7 @@ function startGame() {
     document.getElementById('start-screen').style.display = 'none'; // Hide the start screen, if any.
 }
 
-// 3.18. Event listener for the restart button.
-document.getElementById('restart-button').addEventListener('click', () => {
-    resetGame();
-    startGame();
-});
-
-// 3.19. Function to reset the game to its initial state.
+// 3.18. Function to reset the game to its initial state.
 function resetGame() {
     board = new Board(4, 4); // Create a new 4x4 game board.
     board.cells = board.createInitialBoard(); // Generate new cell values for the board.
@@ -260,7 +254,7 @@ function resetGame() {
     updateScoreDisplay(); // Update the score display with reset scores.
 }
 
-// 3.20. Function to hide the game components and show the start screen.
+// 3.19. Function to hide the game components and show the start screen.
 function hideGame() {
     document.getElementById('board').style.display = 'none'; // Hide the game board.
     document.getElementById('score').style.display = 'none'; // Hide the score display.
@@ -268,7 +262,11 @@ function hideGame() {
     document.getElementById('start-screen').style.display = 'block'; // Show the start screen.
 }
 
-
+// 3.20. Event listener for the restart button.
+document.getElementById('restart-button').addEventListener('click', () => {
+    resetGame();
+    startGame();
+});
 
 
 
