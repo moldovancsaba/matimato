@@ -4,6 +4,79 @@
 /* CSS STARTS HERE ------------*/
 /* ----------------------------*/
 
+
+
+body {
+    text-align: center;
+    font-family: 'Open Sans', sans-serif;
+    background-color: #FFF;
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+h1 {
+    position: absolute;
+    bottom: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    background-color: #002255;
+    text-align: center;
+    font-size: calc(3vw + 1vmin);
+    padding: 2% 0;
+    margin: 0;
+    z-index: 100;
+    color: black;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 5vh;
+    box-sizing: border-box;
+}
+
+.score-container {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+}
+
+.score {
+    background-color: #002255;
+    padding: 10px;
+    border-radius: 10px;
+    color: black;
+    font-size: calc(2vw + 1vmin);
+    box-shadow: 0 0px 0px rgba(0, 0, 0, 0);
+    margin: 5px 0;
+}
+
+.center-screen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    display: none;
+}
+
+.large-button {
+    background-color: #002255;
+    color: white;
+    padding: 15px 30px;
+    font-size: calc(3vw + 1vmin);
+    border: none;
+    border-radius: 1vh;
+    cursor: pointer;
+    margin-top: 5%;
+}
+
+.end-game-text {
+    display: block;
+    font-size: calc(2vw + 1vmin);
+    color: #002255;
+}
+
 .board {
     display: grid;
     grid-template-columns: repeat(4, 1fr); /* Adjusted for 4x4 grid in Basic mode */
@@ -39,6 +112,32 @@
     .board {
         width: 85vh;
         height: 85vh; /* Adjust height to match width */
+    }
+
+    h1 {
+        display: none;
+    }
+
+    /* A pontszámok a játéktábla mellett */
+    .score-container {
+        top: 50%;
+        left: 5%; /* Játékos pontszámok a bal oldalon */
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #ai-score {
+        position: absolute;
+        top: 50%;
+        right: 5%;
+        transform: translateY(-50%);
+    }
+
+    #player-score {
+        position: absolute;
+        top: 50%;
+        left: 5%;
+        transform: translateY(-50%);
     }
 
     .cell {
@@ -95,6 +194,18 @@
     #ai-score {
         bottom: 8%; /* Place AI's score at the bottom */
     }
+
+    h1, .score-container {
+        position: fixed;
+        bottom: 0;
+    }
+
+    .score-container {
+        bottom: 5vh;
+        left: 50%;
+        transform: translateX(-50%);
+        flex-direction: row;
+    }
 }
 
 /*-----------------------------*/
@@ -102,5 +213,5 @@
 /* ----------------------------*/
 /* CREATED BY MOLDOVAN --------*/
 /* ----------------------------*/
-/* CSS CODE BY GPT ------------*/
+/* CSS BY GPT -----------------*/
 /* ----------------------------*/
