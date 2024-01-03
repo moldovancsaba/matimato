@@ -22,9 +22,9 @@
     .cell {
         position: relative;
         cursor: pointer;
-        background-color: #DDD; /* Original color */
-        border: 2px solid #444; /* Original border style */
-        border-radius: 2%; /* Rounded corners */
+        background-color: #FFF; /* Original color */
+        border: 2px solid #EEE; /* Original border style */
+        border-radius: 0%; /* Rounded corners */
         box-shadow: 0 0 0% rgba(0, 0, 0, 0); /* Cell shadow */
         aspect-ratio: 1 / 1; /* Square cells */
         display: flex;
