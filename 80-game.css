@@ -4,7 +4,7 @@
 /* CSS STARTS HERE -----------*/
 /*----------------------------*/
 
-/* 1. Base Styling */
+/* 1. Base Styling 
 .container {
     display: flex;
     flex-direction: column;
@@ -16,47 +16,36 @@
     width: 100%;
     height: 100%;
     position: relative;
-}
+} */
 
-/* 2. Board Styling */
-#board {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr); /* Adjusted for 4x4 grid */
-    grid-template-rows: repeat(4, 1fr); /* Adjusted for 4x4 grid */
-    gap: 0; /* No gap between cells */
-    width: 80vw; /* Adjusted width for 4x4 grid */
-    height: 80vw; /* Adjusted height to match width */
-    margin: auto; /* Center the board */
-    position: absolute; /* Absolute positioning */
-    top: 50%; /* Center vertically */
-    left: 50%; /* Center horizontally */
-    transform: translate(-50%, -50%); /* Centering adjustment */
-}
-
-.cell {
-    position: relative;
-    cursor: pointer;
-    background-color: #fff; /* Original color */
-    border: 1px solid #444; /* Original border style */
-    border-radius: 10%; /* Rounded corners */
-    box-shadow: 0 0 5% rgba(0, 0, 0, 0.5); /* Cell shadow */
-    aspect-ratio: 1 / 1; /* Square cells */
-    display: flex;
-    font-size: large; /* Original font size */
-    align-items: center;
-    justify-content: center;
-    user-select: none;
-}
-
-/* Adjustments for landscape orientation */
+/* 2. Board for landscape orientation */
 @media (orientation: landscape) {
     #board {
-        width: 85vh;
-        height: 85vh; /* Adjust height to match width */
+        display: grid;
+        grid-template-columns: repeat(4, 1fr); /* Adjusted for 4x4 grid */
+        grid-template-rows: repeat(4, 1fr); /* Adjusted for 4x4 grid */
+        gap: 0; /* No gap between cells */
+        width: 85vh; /* Adjusted width for 4x4 grid */
+        height: 85vh; /* Adjusted height to match width */
+        margin: auto; /* Center the board */
+        position: absolute; /* Absolute positioning */
+        top: 50%; /* Center vertically */
+        left: 50%; /* Center horizontally */
+        transform: translate(-50%, -50%); /* Centering adjustment */
     }
-
     .cell {
+        position: relative;
+        cursor: pointer;
+        background-color: #fff; /* Original color */
+        border: 1px solid #444; /* Original border style */
+        border-radius: 0%; /* Rounded corners */
+        box-shadow: 0 0 0% rgba(0, 0, 0, 0); /* Cell shadow */
+        aspect-ratio: 1 / 1; /* Square cells */
+        display: flex;
         font-size: 4vw; /* Responsive font size */
+        align-items: center;
+        justify-content: center;
+        user-select: none;
     }
 
     #score {
@@ -74,15 +63,35 @@
     }
 }
 
-/* Adjustments for portrait orientation */
+/* 3. Board for portrait orientation */
 @media (orientation: portrait) {
     #board {
-        width: 90vw; /* Adjust board width */
-        height: 90vw; /* Adjust board height to match width */
+        display: grid;
+        grid-template-columns: repeat(4, 1fr); /* Adjusted for 4x4 grid */
+        grid-template-rows: repeat(4, 1fr); /* Adjusted for 4x4 grid */
+        gap: 0; /* No gap between cells */
+        width: 85vw; /* Adjusted width for 4x4 grid */
+        height: 85vw; /* Adjusted height to match width */
+        margin: auto; /* Center the board */
+        position: absolute; /* Absolute positioning */
+        top: 50%; /* Center vertically */
+        left: 50%; /* Center horizontally */
+        transform: translate(-50%, -50%); /* Centering adjustment */
     }
 
     .cell {
+        position: relative;
+        cursor: pointer;
+        background-color: #fff; /* Original color */
+        border: 1px solid #444; /* Original border style */
+        border-radius: 0%; /* Rounded corners */
+        box-shadow: 0 0 0% rgba(0, 0, 0, 0); /* Cell shadow */
+        aspect-ratio: 1 / 1; /* Square cells */
+        display: flex;
         font-size: 5vw; /* Responsive font size */
+        align-items: center;
+        justify-content: center;
+        user-select: none;
     }
 
     #score, #end-game-message, #restart-button {
