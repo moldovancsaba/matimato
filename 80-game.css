@@ -34,6 +34,13 @@
         user-select: none;
     }
 
+    #start-button {
+        position: absolute;
+        left: 10%;
+        top: 15%;
+        transform: translateY(-50%);
+    }
+
     #main-menu-button {
         position: absolute;
         right: 10%;
