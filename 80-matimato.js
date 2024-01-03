@@ -197,7 +197,7 @@ function highlightCell(row, column) {
 function highlightColumn(column) {
     clearHighlights(); // Clear any existing highlights before applying new ones.
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.style.border = '2px solid #666666'; // Add a border to each cell in the column.
+        cell.style.border = '2px solid #999999'; // Add a border to each cell in the column.
         cell.style.boxSizing = 'border-box'; // Adjust the box sizing to include the border.
     });
 }
@@ -206,7 +206,7 @@ function highlightColumn(column) {
 function highlightRow(row) {
     clearHighlights(); // Clear any existing highlights before applying new ones.
     document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
-        cell.style.border = '2px solid #666666'; // Add a border to each cell in the row.
+        cell.style.border = '2px solid #999999'; // Add a border to each cell in the row.
         cell.style.boxSizing = 'border-box'; // Adjust the box sizing to include the border.
     });
 }
