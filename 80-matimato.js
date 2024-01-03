@@ -185,10 +185,10 @@ function getAvailableCellsInRow(row) {
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
-        cellElement.style.backgroundColor = '#BBB'; // Change the cell's background color.
+        cellElement.style.backgroundColor = '#AAA'; // Change the cell's background color.
         setTimeout(() => {
             cellElement.textContent = '•'; // Update the cell's content after a short delay.
-            cellElement.style.backgroundColor = '#BBB'; // Maintain the background color.
+            cellElement.style.backgroundColor = '#AAA'; // Maintain the background color.
         }, 500);
     }
 }
