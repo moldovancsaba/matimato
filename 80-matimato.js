@@ -232,6 +232,8 @@ function restartGame() {
     playerScore = 0;
     aiScore = 0;
     isPlayerTurn = true;
+    lastSelectedRow = null;
+    lastSelectedColumn = null;
     // Recreate game board and update display
     createBoard();
     updateScoreDisplay();
@@ -239,6 +241,9 @@ function restartGame() {
     document.getElementById('board').style.display = 'grid';
     document.getElementById('end-game-message').style.display = 'none';
 }
+
+// 5.3. Event Listener for Restart Button
+document.getElementById('restart-button').addEventListener('click', restartGame);
 
 // 5.3. Event Listener for Restart Button
 document.getElementById('restart-button').addEventListener('click', restartGame);
@@ -390,7 +395,7 @@ function resetGame() {
 }
 
 // 9.2. Event Listener for Restart Button
-document.getElementById('restart-button').addEventListener('click', resetGame);
+document.getElementById('restart-button').addEventListener('click', restartGame);
 
 // 9.3. Start Game on Page Load
 document.addEventListener('DOMContentLoaded', resetGame);
