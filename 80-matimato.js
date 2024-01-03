@@ -185,10 +185,10 @@ function getAvailableCellsInRow(row) {
 function highlightCell(row, column) {
     let cellElement = document.querySelector(`.cell[row="${row}"][column="${column}"]`);
     if (cellElement) {
-        cellElement.style.backgroundColor = '#666666'; // Change the cell's background color.
+        cellElement.style.backgroundColor = '#888888'; // Change the cell's background color.
         setTimeout(() => {
             cellElement.textContent = '•'; // Update the cell's content after a short delay.
-            cellElement.style.backgroundColor = '#666666'; // Maintain the background color.
+            cellElement.style.backgroundColor = '#888888'; // Maintain the background color.
         }, 500);
     }
 }
@@ -197,7 +197,7 @@ function highlightCell(row, column) {
 function highlightColumn(column) {
     clearHighlights(); // Clear any existing highlights before applying new ones.
     document.querySelectorAll(`.cell[column="${column}"]`).forEach(cell => {
-        cell.style.border = '4px solid #BBBBBB'; // Add a border to each cell in the column.
+        cell.style.border = '1px solid #BBFFBB'; // Add a border to each cell in the column.
         cell.style.boxSizing = 'border-box'; // Adjust the box sizing to include the border.
     });
 }
@@ -206,7 +206,7 @@ function highlightColumn(column) {
 function highlightRow(row) {
     clearHighlights(); // Clear any existing highlights before applying new ones.
     document.querySelectorAll(`.row:nth-child(${row + 1}) .cell`).forEach(cell => {
-        cell.style.border = '4px solid #BBBBBB'; // Add a border to each cell in the row.
+        cell.style.border = '1px solid #BBFFBB'; // Add a border to each cell in the row.
         cell.style.boxSizing = 'border-box'; // Adjust the box sizing to include the border.
     });
 }
