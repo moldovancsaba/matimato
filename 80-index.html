@@ -7,28 +7,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>1727 matimato</title>
+    <title>1728 matimato</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link rel="stylesheet" type="text/css" href="80-environment.css?v=1727">
-    <link rel="stylesheet" type="text/css" href="80-base.css?v=1727">
-    <link rel="stylesheet" type="text/css" href="80-game.css?v=1727">
+    <link rel="stylesheet" type="text/css" href="80-environment.css?v=1728">
+    <link rel="stylesheet" type="text/css" href="80-base.css?v=1728">
+    <link rel="stylesheet" type="text/css" href="80-game.css?v=1728">
 </head>
 <body>
-    <script src="80-matimato.js?v=1727"></script>
-    <div id="score" class="hidden">
-        <div id="player-score" class="score">You: 0</div>
-        <div id="ai-score" class="score">AI: 0</div>
-    </div>
-    <div id="end-game-message" class="center-screen hidden">
-        <span id="winner-message" class="end-game-text"></span>
-        <button id="start-button" class="large-button">Start</button>
-        <button id="restart-button" class="large-button">Restart</button>
-        <button id="main-menu-button" class="large-button" onclick="window.location.href='index.html';">Main Menu</button>
-    </div>
-    <div id="board" class="board hidden"></div>
+        <div id="score" class="hidden">
+            <div id="player-score" class="score">You: 0</div>
+            <div id="ai-score" class="score">AI: 0</div>
+        </div>
+        <script src="80-matimato.js?v=1728"></script>
+        <div id="start-screen" class="center-screen">
+            <button id="start-button" class="large-button">Start</button>
+        </div>
+        <div id="end-game-message" class="center-screen hidden">
+            <span id="winner-message" class="end-game-text"></span>
+            <button id="restart-button" class="large-button">Restart</button>
+            <button id="main-menu-button" class="large-button" onclick="window.location.href='index.html';">Main Menu</button>
+        </div>
+        <div id="board" class="board hidden"></div>
 </body>
 </html>
 
