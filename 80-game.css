@@ -23,7 +23,7 @@
         position: relative;
         cursor: pointer;
         background-color: #fff; /* Original color */
-        border: 1px solid #444; /* Original border style */
+        border: 1px solid #000; /* Original border style */
         border-radius: 3%; /* Rounded corners */
         box-shadow: 0 0 0% rgba(0, 0, 0, 0); /* Cell shadow */
         aspect-ratio: 1 / 1; /* Square cells */
@@ -100,7 +100,7 @@
         position: relative;
         cursor: pointer;
         background-color: #fff; /* Original color */
-        border: 1px solid #444; /* Original border style */
+        border: 1px solid #000; /* Original border style */
         border-radius: 0%; /* Rounded corners */
         box-shadow: 0 0 0% rgba(0, 0, 0, 0); /* Cell shadow */
         aspect-ratio: 1 / 1; /* Square cells */
