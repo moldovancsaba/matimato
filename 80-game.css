@@ -41,7 +41,17 @@
         transform: translateY(-50%);
     }
 
-    #end-game-message, #restart-button {
+
+    #end-game-message {
+        font-size: 6vw;
+        font-weight: 800;
+        position: absolute;
+        left: 5%;
+        top: 30%;
+        transform: translateY(-50%);
+    }
+    
+    #restart-button {
         position: absolute;
         left: 5%;
         top: 50%;
