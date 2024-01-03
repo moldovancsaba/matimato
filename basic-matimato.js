@@ -4,7 +4,6 @@
 // JAVASCRIPT STARTS HERE ------
 //------------------------------
 
-
 class Board {
     constructor(rows, columns) {
         this.rows = rows;
