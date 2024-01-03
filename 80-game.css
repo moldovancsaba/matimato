@@ -49,6 +49,8 @@
     }
 
     #player-score {
+        font-size: 3vw;
+        font-weight: 800;
         position: absolute;
         right: 10%;
         top: 45%;
@@ -56,6 +58,8 @@
     }
     
     #ai-score {
+        font-size: 3vw;
+        font-weight: 800;
         position: absolute;
         right: 10%;
         top: 55%;
