@@ -33,8 +33,13 @@
         justify-content: center;
         user-select: none;
     }
-    
 
+    #main-menu-button {
+        position: absolute;
+        right: 10%;
+        top: 35%;
+        transform: translateY(-50%);
+    }
 
     #player-score {
         position: absolute;
@@ -50,26 +55,19 @@
         transform: translateY(-50%);
     }
 
+    #restart-button {
+        position: absolute;
+        left: 10%;
+        top: 65%;
+        transform: translateY(-50%);
+    }
+
     #end-game-message {
         font-size: 6vw;
         font-weight: 800;
         position: flex;
         left: 50%;
         top: 60%;
-        transform: translateY(-50%);
-    }
-    
-    #main-menu-button {
-        position: absolute;
-        right: 30%;
-        top: 40%;
-        transform: translateY(-50%);
-    }
-
-    #restart-button {
-        position: absolute;
-        left: 30%;
-        top: 40%;
         transform: translateY(-50%);
     }
 }
