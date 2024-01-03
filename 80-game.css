@@ -55,21 +55,21 @@
         font-weight: 800;
         position: flex;
         left: 50%;
-        top: 30%;
+        top: 60%;
         transform: translateY(-50%);
     }
     
     #main-menu-button {
         position: absolute;
-        left: 50%;
-        top: 80%;
+        right: 30%;
+        top: 40%;
         transform: translateY(-50%);
     }
 
     #restart-button {
         position: absolute;
-        left: 50%;
-        top: 50%;
+        left: 30%;
+        top: 40%;
         transform: translateY(-50%);
     }
 }
