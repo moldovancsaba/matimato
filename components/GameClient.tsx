@@ -288,7 +288,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
 
         <section className="board-panel" aria-label="Matimato board">
           {game ? (
-            <Stack gap="md">
+            <>
               <VisuallyHidden aria-live="polite">
                 {turnTitle(game)}. {turnMessage(game)}
               </VisuallyHidden>
@@ -327,7 +327,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                   })
                 )}
               </div>
-            </Stack>
+            </>
           ) : (
             <div className="preview-board" aria-hidden="true">
               {[8, -2, 4, -7, 1, 3, -5, 9, 6, -1, 7, 2, -8, 5, 4, -3, 8, 1, -6, 9, 2, -4, 7, 3, -9].map((value, index) => (
