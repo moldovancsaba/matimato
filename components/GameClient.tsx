@@ -136,8 +136,8 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     <main className="app-stage">
       <div className={`game-shell ${game ? "is-playing" : "is-setup"}`}>
         <section className="game-panel" aria-label="Game controls">
-          <Stack gap="md">
-            <Group justify="space-between" align="center">
+          <Stack gap="sm">
+            <Group className="game-header" justify="space-between" align="center">
               <Group gap="sm">
                 <div className="brand-mark" aria-hidden="true">M</div>
                 <div>
@@ -212,13 +212,18 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                   {game.players.map((player) => (
                     <div className="score-card" key={player.playerId} aria-current={game.turnPlayerId === player.playerId ? "step" : undefined}>
                       <BodyText>{player.displayName}</BodyText>
-                      <div className="score-value">{player.score}</div>
-                      <Badge>{player.side}</Badge>
+                      <div className="score-meta">
+                        <span className="score-value">{player.score}</span>
+                        <Badge>{player.side}</Badge>
+                      </div>
                     </div>
                   ))}
                 </div>
 
-                <InlineAlert severity={game.viewer?.canMove ? "success" : "info"} title={turnTitle(game)} message={turnMessage(game)} />
+                <div className="turn-strip" data-active={game.viewer?.canMove ? "true" : "false"} role="status" aria-live="polite">
+                  <strong>{turnTitle(game)}</strong>
+                  <span>{turnMessage(game)}</span>
+                </div>
 
                 {game.mode === "pvp" && game.status === "waiting" ? (
                   <Stack gap="xs">
@@ -230,12 +235,14 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                   </Stack>
                 ) : null}
 
-                <Group gap="xs">
-                  <Button variant="secondary" onClick={() => { setGame(null); window.history.replaceState(null, "", "/"); }}>
-                    New game
+                <Group className="action-dock" gap="xs">
+                  <Button aria-label="New game" variant="secondary" onClick={() => { setGame(null); window.history.replaceState(null, "", "/"); }}>
+                    <span aria-hidden="true">+</span>
+                    <span className="dock-label">New</span>
                   </Button>
-                  <Button variant="subtle" onClick={() => fetchGame(game.id)} disabled={api.loading}>
-                    Refresh
+                  <Button aria-label="Refresh game" variant="subtle" onClick={() => fetchGame(game.id)} disabled={api.loading}>
+                    <span aria-hidden="true">↻</span>
+                    <span className="dock-label">Refresh</span>
                   </Button>
                 </Group>
               </Stack>
