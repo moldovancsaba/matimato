@@ -32,14 +32,14 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#15211f"
+  themeColor: "#180b12"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" data-gds-theme-preset="sunset" data-matimato-theme="sunset-pulse">
       <head>
-        <ColorSchemeScript defaultColorScheme="light" />
+        <ColorSchemeScript defaultColorScheme="dark" forceColorScheme="dark" />
       </head>
       <body>
         <GoogleAnalytics />

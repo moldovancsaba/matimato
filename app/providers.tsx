@@ -8,7 +8,7 @@ const matimatoTheme = createPublicBrandTheme({
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <GdsProvider theme={matimatoTheme} defaultColorScheme="light">
+    <GdsProvider theme={matimatoTheme} defaultColorScheme="dark" forceColorScheme="dark">
       {children}
     </GdsProvider>
   );
