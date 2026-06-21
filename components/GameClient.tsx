@@ -192,7 +192,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 </div>
                 <TextInput
                   label="Display name"
-                  placeholder="Player"
+                  placeholder="Your name"
                   value={displayName}
                   onChange={(event) => setDisplayName(event.currentTarget.value)}
                 />
@@ -213,6 +213,24 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
 
             {game ? (
               <div className="play-controls">
+                <div className="play-hud" aria-live="polite">
+                  <div className="turn-strip" data-active={game.viewer?.canMove ? "true" : "false"} role="status">
+                    <strong>{turnTitle(game)}</strong>
+                    <span>{turnMessage(game)}</span>
+                  </div>
+                  <div className="score-grid" aria-label="Score board">
+                    {game.players.map((player) => (
+                      <div className="score-card" key={player.playerId} aria-current={game.turnPlayerId === player.playerId ? "step" : undefined}>
+                        <BodyText>{player.displayName}</BodyText>
+                        <div className="score-meta">
+                          <span className="score-value">{player.score}</span>
+                          <Badge>{player.side}</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 {!game.viewer && game.status === "waiting" ? (
                   <Stack gap="sm">
                     <InlineAlert
@@ -222,7 +240,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                     />
                     <TextInput
                       label="Display name"
-                      placeholder="Player 2"
+                      placeholder="Your name"
                       value={displayName}
                       onChange={(event) => setDisplayName(event.currentTarget.value)}
                     />
@@ -231,23 +249,6 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                     </Button>
                   </Stack>
                 ) : null}
-
-                <div className="score-grid">
-                  {game.players.map((player) => (
-                    <div className="score-card" key={player.playerId} aria-current={game.turnPlayerId === player.playerId ? "step" : undefined}>
-                      <BodyText>{player.displayName}</BodyText>
-                      <div className="score-meta">
-                        <span className="score-value">{player.score}</span>
-                        <Badge>{player.side}</Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="turn-strip" data-active={game.viewer?.canMove ? "true" : "false"} role="status" aria-live="polite">
-                  <strong>{turnTitle(game)}</strong>
-                  <span>{turnMessage(game)}</span>
-                </div>
 
                 {game.mode === "pvp" && game.status === "waiting" ? (
                   <Stack gap="xs">
@@ -260,13 +261,22 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 ) : null}
 
                 <Group className="action-dock" gap="xs">
-                  <Button aria-label="New game" variant="secondary" onClick={() => { setGame(null); window.history.replaceState(null, "", "/"); }}>
-                    <span aria-hidden="true">+</span>
+                  <Button
+                    aria-label="Start new game"
+                    variant="secondary"
+                    onClick={() => {
+                      setGame(null);
+                      window.history.replaceState(null, "", "/");
+                    }}
+                  >
+                    <span aria-hidden="true">＋</span>
                     <span className="dock-label">New</span>
+                    <VisuallyHidden>Start new game</VisuallyHidden>
                   </Button>
                   <Button aria-label="Refresh game" variant="subtle" onClick={() => fetchGame(game.id)} disabled={api.loading}>
-                    <span aria-hidden="true">↻</span>
+                    <span aria-hidden="true">⟳</span>
                     <span className="dock-label">Refresh</span>
+                    <VisuallyHidden>Refresh game</VisuallyHidden>
                   </Button>
                 </Group>
               </div>
