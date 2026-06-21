@@ -56,10 +56,12 @@ Matimato is productized as a fixed 9x9 game. The client no longer exposes board-
 - The app exposes installable metadata through `app/manifest.ts`.
 - It intentionally does not register a service worker because game state is realtime and session-bound.
 - `PwaGuard` unregisters old service workers and deletes old Matimato caches when present.
-- The client resolves explicit screen states: `home`, `setup`, `battleLobby`, `match`, and `result`.
+- The client resolves explicit screen states: `home`, `setup`, `battleLobby`, `match`, `result`, `challenges`, `leaderboard`, `history`, and `profile`.
+- App destinations are typed as `home`, `battle`, `challenges`, `leaderboard`, `history`, and `profile`; `battle` maps to the setup screen until a game exists.
 - The mobile game view is a fixed game canvas: compact title/status HUD at the top, a direct full-width board panel in the center, and fixed bottom actions.
 - Lobby and result flows render as standalone screens without the board. The active match screen renders the HUD, board, and gameplay actions only.
 - Result view state is derived from the public game DTO and exposes outcome copy, final scores, rematch setup, home navigation, share text, and match-finished analytics without adding persistence.
+- Bottom navigation renders only outside the active match screen and reserves safe-area space so it does not cover setup, lobby, result, profile, history, leaderboard, or challenge screens. Match keeps its gameplay action dock only.
 - Invite, copied-link feedback, reconnect warnings, stale move errors, profile, history, leaderboard, and challenge flows must be separate screens or non-layout-shifting overlays; they must not stack above the active board.
 - Runtime feedback uses a capped local toast layer with a polite live region. Toasts are mounted outside the game shell and auto-dismiss so feedback never changes board dimensions.
 - The visual direction is based on the supplied references and the GDS `sunset` dark preset: soft raised Sudoku-board cells, separated onboarding/setup/game states, sunset-pulse dark surfaces, compact HUD modules, and animated screen transitions.

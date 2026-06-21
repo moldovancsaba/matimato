@@ -108,6 +108,8 @@ The app moves through explicit screen states instead of rendering everything abo
 
 Bottom navigation is visible on non-match screens. Match screen keeps only gameplay actions to avoid accidental navigation during a move.
 
+Current implementation: the app shell now has a safe-area-aware bottom navigation for Home, Battle, Quests, Ranks, and Profile. History is also supported as an explicit screen state for the upcoming match summary phase. Feature destinations render standalone preview screens so future data systems can ship independently without stacking panels on top of the board.
+
 ## Phase 1: Game Shell Refinement
 
 - Replace generic setup copy with game terms: BATTLE, SOLO, player tag, battle code, start match, join battle.

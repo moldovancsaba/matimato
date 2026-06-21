@@ -64,7 +64,7 @@ select {
   padding:
     max(10px, env(safe-area-inset-top))
     max(10px, env(safe-area-inset-right))
-    max(10px, env(safe-area-inset-bottom))
+    calc(max(10px, env(safe-area-inset-bottom)) + 74px)
     max(10px, env(safe-area-inset-left));
   overflow: hidden;
   isolation: isolate;
@@ -85,6 +85,10 @@ select {
   height: min(100dvh, 100%);
   max-height: min(100dvh, 100%);
   overflow: hidden;
+}
+
+.screen-match {
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
 }
 
 .game-panel,
@@ -351,6 +355,132 @@ select {
   justify-self: end;
 }
 
+.app-bottom-nav {
+  position: fixed;
+  z-index: 30;
+  left: 50%;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(640px, calc(100vw - max(20px, env(safe-area-inset-left)) - max(20px, env(safe-area-inset-right))));
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--gds-vibe-primary) 36%, transparent);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--gds-vibe-primary) 12%, transparent), color-mix(in srgb, var(--gds-vibe-accent) 10%, transparent)),
+    color-mix(in srgb, var(--gds-vibe-shell) 94%, black);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 12%, transparent),
+    0 18px 48px color-mix(in srgb, var(--gds-vibe-glow) 42%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.app-nav-button {
+  min-width: 0;
+  min-height: 48px;
+  border: 0;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  color: var(--gds-vibe-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 850;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.app-nav-button[data-active="true"] {
+  color: var(--gds-vibe-text);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gds-vibe-primary) 70%, transparent), color-mix(in srgb, var(--gds-vibe-accent) 62%, transparent));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 16%, transparent),
+    0 8px 22px color-mix(in srgb, var(--gds-vibe-glow) 42%, transparent);
+}
+
+.app-nav-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--gds-vibe-focus) 64%, transparent);
+  outline-offset: 3px;
+}
+
+.feature-screen {
+  min-height: min(620px, 72dvh);
+  display: grid;
+  align-content: end;
+  gap: 16px;
+  padding: clamp(10px, 3vw, 28px) 0 4px;
+}
+
+.feature-screen h1 {
+  margin: 0;
+  max-width: 9ch;
+  font-size: clamp(2.55rem, 8.4vw, 5rem);
+  line-height: 0.94;
+  letter-spacing: -0.06em;
+}
+
+.feature-screen p {
+  margin: 0;
+  max-width: 38ch;
+  color: var(--gds-vibe-muted);
+  font-size: clamp(1rem, 2vw, 1.12rem);
+  line-height: 1.4;
+}
+
+.feature-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.feature-card {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--gds-vibe-primary) 28%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--gds-vibe-surface) 78%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+}
+
+.feature-card strong {
+  font-size: 1.08rem;
+  line-height: 1.05;
+}
+
+.feature-card span {
+  color: var(--gds-vibe-muted);
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+.screen-challenges .game-shell,
+.screen-leaderboard .game-shell,
+.screen-history .game-shell,
+.screen-profile .game-shell {
+  grid-template-columns: minmax(280px, 560px);
+  grid-template-areas: "controls";
+  justify-content: center;
+}
+
+.screen-challenges .game-panel,
+.screen-leaderboard .game-panel,
+.screen-history .game-panel,
+.screen-profile .game-panel {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gds-vibe-accent) 10%, transparent), transparent 46%),
+    color-mix(in srgb, var(--gds-vibe-shell) 94%, black);
+  border-color: color-mix(in srgb, var(--gds-vibe-primary) 38%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 12%, transparent),
+    0 28px 72px color-mix(in srgb, var(--gds-vibe-glow) 38%, transparent);
+}
+
 .visually-spaced {
   display: grid;
   gap: 12px;
@@ -373,9 +503,13 @@ select {
     padding:
       max(6px, env(safe-area-inset-top))
       max(6px, env(safe-area-inset-right))
-      max(6px, env(safe-area-inset-bottom))
+      calc(max(6px, env(safe-area-inset-bottom)) + 74px)
       max(6px, env(safe-area-inset-left));
     overflow: hidden;
+  }
+
+  .screen-match {
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
   }
 
   .game-shell {
@@ -552,6 +686,30 @@ select {
   }
 }
 
+@media (max-width: 860px) {
+  .screen-challenges .game-shell,
+  .screen-leaderboard .game-shell,
+  .screen-history .game-shell,
+  .screen-profile .game-shell {
+    grid-template-columns: 1fr;
+    grid-template-areas: "controls";
+    align-content: end;
+  }
+
+  .screen-challenges .game-panel,
+  .screen-leaderboard .game-panel,
+  .screen-history .game-panel,
+  .screen-profile .game-panel {
+    padding: 14px;
+    border-radius: 28px;
+    overflow: auto;
+  }
+
+  .feature-screen {
+    min-height: min(620px, calc(100dvh - 118px));
+  }
+}
+
 @media (max-width: 420px) {
   .mode-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -570,6 +728,22 @@ select {
   .score-card .gds-body-text,
   .turn-strip {
     font-size: 0.78rem;
+  }
+
+  .app-bottom-nav {
+    width: calc(100vw - max(12px, env(safe-area-inset-left)) - max(12px, env(safe-area-inset-right)));
+    border-radius: 20px;
+    padding: 6px;
+  }
+
+  .app-nav-button {
+    min-height: 44px;
+    border-radius: 15px;
+    font-size: 0.65rem;
+  }
+
+  .feature-card-grid {
+    grid-template-columns: 1fr;
   }
 }
 

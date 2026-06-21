@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveScreen } from "@/lib/game/screen-state";
+import { destinationToScreen, resolveScreen, screenToDestination, shouldShowAppNav } from "@/lib/game/screen-state";
 
 describe("screen state resolver", () => {
   it("uses the setup screen when no game is loaded", () => {
@@ -20,5 +20,23 @@ describe("screen state resolver", () => {
     expect(resolveScreen({ mode: "pvp", status: "finished" }, "home")).toBe("result");
     expect(resolveScreen({ mode: "pvp", status: "expired" }, "home")).toBe("result");
     expect(resolveScreen({ mode: "pvp", status: "abandoned" }, "home")).toBe("result");
+  });
+
+  it("maps app destinations to explicit screen states", () => {
+    expect(destinationToScreen("home")).toBe("home");
+    expect(destinationToScreen("battle")).toBe("setup");
+    expect(destinationToScreen("challenges")).toBe("challenges");
+    expect(destinationToScreen("leaderboard")).toBe("leaderboard");
+    expect(destinationToScreen("history")).toBe("history");
+    expect(destinationToScreen("profile")).toBe("profile");
+  });
+
+  it("keeps match gameplay free of general navigation", () => {
+    expect(shouldShowAppNav("match")).toBe(false);
+    expect(shouldShowAppNav("home")).toBe(true);
+    expect(shouldShowAppNav("battleLobby")).toBe(true);
+    expect(screenToDestination("match")).toBeNull();
+    expect(screenToDestination("battleLobby")).toBe("battle");
+    expect(screenToDestination("setup")).toBe("battle");
   });
 });
