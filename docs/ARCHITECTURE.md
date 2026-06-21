@@ -58,7 +58,8 @@ Matimato is productized as a fixed 9x9 game. The client no longer exposes board-
 - The client resolves explicit screen states: `home`, `setup`, `battleLobby`, `match`, and `result`.
 - The mobile game view is a fixed game canvas: compact title/status HUD at the top, a direct full-width board panel in the center, and fixed bottom actions.
 - Lobby and result flows render as standalone screens without the board. The active match screen renders the HUD, board, and gameplay actions only.
-- Invite, copied-link feedback, profile, history, leaderboard, and challenge flows must be separate screens or non-layout-shifting overlays; they must not stack above the active board.
+- Invite, copied-link feedback, reconnect warnings, stale move errors, profile, history, leaderboard, and challenge flows must be separate screens or non-layout-shifting overlays; they must not stack above the active board.
+- Runtime feedback uses a capped local toast layer with a polite live region. Toasts are mounted outside the game shell and auto-dismiss so feedback never changes board dimensions.
 - The visual direction is based on the supplied references and the GDS `sunset` dark preset: soft raised Sudoku-board cells, separated onboarding/setup/game states, sunset-pulse dark surfaces, compact HUD modules, and animated screen transitions.
 - Board cells render unsigned digits for visual clarity; positive and negative values are communicated through the GDS sunset color roles and accessible cell labels.
 - Document scrolling is disabled for the app shell. Overflow belongs inside explicit setup/control regions only.

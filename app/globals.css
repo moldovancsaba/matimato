@@ -314,6 +314,43 @@ select {
   min-width: 0;
 }
 
+.game-toast-layer {
+  position: fixed;
+  z-index: 40;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  display: grid;
+  width: min(380px, calc(100vw - 28px));
+  gap: 8px;
+  pointer-events: none;
+}
+
+.game-toast {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--gds-vibe-primary) 36%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--gds-vibe-shell) 96%, black);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 12%, transparent),
+    0 18px 42px color-mix(in srgb, var(--gds-vibe-glow) 38%, transparent);
+  backdrop-filter: blur(16px);
+  pointer-events: auto;
+}
+
+.game-toast[data-tone="success"] {
+  border-color: color-mix(in srgb, var(--gds-vibe-primary) 54%, transparent);
+}
+
+.game-toast[data-tone="error"] {
+  border-color: color-mix(in srgb, var(--gds-vibe-accent) 54%, transparent);
+}
+
+.game-toast button {
+  justify-self: end;
+}
+
 .visually-spaced {
   display: grid;
   gap: 12px;
@@ -496,6 +533,14 @@ select {
     min-height: 46px;
     display: inline-grid;
     place-items: center;
+  }
+
+  .game-toast-layer {
+    top: auto;
+    right: max(8px, env(safe-area-inset-right));
+    bottom: calc(max(8px, env(safe-area-inset-bottom)) + 68px);
+    left: max(8px, env(safe-area-inset-left));
+    width: auto;
   }
 
   .dock-label {
