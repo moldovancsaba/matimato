@@ -11,7 +11,7 @@ const joinSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const result = await joinGameByCode(joinSchema.parse(await request.json()));
-    return successResponse(result, { credential: result.credential });
+    return successResponse({ game: result.game }, { credential: result.credential });
   } catch (error) {
     return errorResponse(error);
   }
