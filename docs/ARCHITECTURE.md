@@ -30,6 +30,8 @@ Game state is canonical in server coordinates. Player `north` sees the board dir
 
 Matimato is productized as a fixed 9x9 game. The client no longer exposes board-size selection, and the create-game API only accepts or defaults to `boardSize: 9`.
 
+Completed games write an immutable `match_summaries` record keyed by `gameId`. Summaries store mode, fixed board size, public participants, final scores, winner/draw state, terminal reason, move count, duration, completion timestamp, and a SHA-256 board/move hash. Summary records intentionally exclude cookies, session tokens, raw credentials, and private transport details.
+
 ## Operational Behavior
 
 - `GET /api/health` reports runtime readiness without exposing secrets.
@@ -37,6 +39,7 @@ Matimato is productized as a fixed 9x9 game. The client no longer exposes board-
 - `MATIMATO_USE_MEMORY_STORE=1` enables local/dev fallback.
 - Move writes use version checks and return `409 VERSION_CONFLICT` for stale clients.
 - Waiting BATTLE lobbies can be abandoned through the credential-protected forfeit route; this closes the invite without creating a one-player victory.
+- Finished games retry an idempotent `match_summaries` upsert from terminal move, forfeit, and terminal read flows. Summary write failures are sanitized in server logs and do not block returning the result screen.
 - API responses are `no-store` to avoid stale board/session state in browsers or PWA surfaces.
 - Server logs sanitize upstream messages before writing runtime diagnostics.
 - Rate limits protect create, join, move, and forfeit routes from simple abuse.

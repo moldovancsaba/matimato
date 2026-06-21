@@ -1,8 +1,9 @@
 import crypto from "node:crypto";
 import { applyMove, createInitialGameState, finishGame, maybeApplyAiMove } from "../game/engine";
+import { toMatchSummary } from "../game/match-summary";
 import { toCanonical, toPublicGameDto } from "../game/perspective";
 import type { AiDifficulty, GameState, PlayerSlot } from "../game/types";
-import { AppError } from "./errors";
+import { AppError, sanitizeServerMessage } from "./errors";
 import { createCredential, hashToken, type PlayerCredential } from "./session";
 import { getGameStore } from "./store";
 
@@ -49,6 +50,7 @@ export async function joinGameByCode(input: { code: string; displayName: string 
 
 export async function getGameForViewer(id: string, credential?: PlayerCredential) {
   const game = await requireGame(id);
+  await recordTerminalSummary(game);
   return { game: toPublicGameDto(game, credential?.playerId) };
 }
 
@@ -67,6 +69,7 @@ export async function applyViewerMove(
   let next = applyMove(game, { playerId: player.playerId, row: canonical.row, col: canonical.col });
   next = maybeApplyAiMove(next);
   const saved = await store.update(next, game.version);
+  await recordTerminalSummary(saved);
   return { game: toPublicGameDto(saved, player.playerId) };
 }
 
@@ -84,7 +87,23 @@ export async function forfeitGame(id: string, credential?: PlayerCredential) {
     return { game: toPublicGameDto(saved, player.playerId) };
   }
   const saved = await store.update(finishGame(game, "forfeit", player.playerId), game.version);
+  await recordTerminalSummary(saved);
   return { game: toPublicGameDto(saved, player.playerId) };
+}
+
+async function recordTerminalSummary(game: GameState) {
+  const summary = toMatchSummary(game);
+  if (!summary) return;
+  try {
+    await getGameStore().upsertMatchSummary(summary);
+  } catch (error) {
+    console.error(JSON.stringify({
+      level: "error",
+      code: "MATCH_SUMMARY_WRITE_FAILED",
+      gameId: game.id,
+      message: error instanceof Error ? sanitizeServerMessage(error.message) : "Unknown summary write failure"
+    }));
+  }
 }
 
 function requirePlayer(game: GameState, credential?: PlayerCredential) {

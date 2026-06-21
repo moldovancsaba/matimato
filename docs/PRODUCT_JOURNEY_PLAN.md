@@ -162,6 +162,8 @@ Acceptance criteria:
 - History can be loaded by profile ID with pagination.
 - Failed summary writes retry without blocking the result screen.
 
+Current implementation: terminal SOLO and BATTLE games now upsert immutable `match_summaries` records by `gameId`. The write is idempotent, excludes session credentials, retries on later terminal reads, and logs sanitized failures without blocking the player result screen.
+
 ## Phase 4: Leaderboards
 
 - Add weekly, all-time, and friends-style local leaderboards.
