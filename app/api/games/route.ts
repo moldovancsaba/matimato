@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = createSchema.parse(await request.json());
     const result = await createGameForMode(body);
-    return successResponse(result, { status: 201, credential: result.credential });
+    return successResponse({ game: result.game }, { status: 201, credential: result.credential });
   } catch (error) {
     return errorResponse(error);
   }
