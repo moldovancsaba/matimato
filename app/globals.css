@@ -1,0 +1,174 @@
+:root {
+  --matimato-ink: #15211f;
+  --matimato-muted: #53615d;
+  --matimato-panel: rgba(255, 255, 255, 0.86);
+  --matimato-line: rgba(18, 35, 31, 0.16);
+  --matimato-positive: #147d52;
+  --matimato-negative: #b83232;
+  --matimato-claimed: #5c6663;
+  --matimato-board: #f7f1e6;
+  --matimato-accent: #ffd166;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--matimato-ink);
+  background:
+    linear-gradient(130deg, rgba(17, 100, 102, 0.16), transparent 42%),
+    linear-gradient(35deg, rgba(255, 209, 102, 0.22), transparent 46%),
+    #f5f7ef;
+}
+
+.app-stage {
+  min-height: 100vh;
+  padding: clamp(16px, 3vw, 36px);
+}
+
+.game-shell {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(260px, 360px) minmax(300px, 1fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+.game-panel,
+.board-panel {
+  background: var(--matimato-panel);
+  border: 1px solid var(--matimato-line);
+  border-radius: 8px;
+  box-shadow: 0 18px 50px rgba(23, 37, 33, 0.12);
+  backdrop-filter: blur(16px);
+}
+
+.game-panel {
+  padding: 18px;
+}
+
+.board-panel {
+  padding: clamp(12px, 2vw, 22px);
+  min-width: 0;
+}
+
+.brand-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--matimato-ink);
+  color: white;
+  font-weight: 900;
+}
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.board-grid {
+  display: grid;
+  gap: clamp(6px, 1vw, 10px);
+  width: min(76vh, 100%);
+  margin: 0 auto;
+  aspect-ratio: 1;
+}
+
+.cell-button {
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 1;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: clamp(1rem, 4.5vw, 2.4rem);
+  font-weight: 850;
+  color: var(--matimato-ink);
+  background: var(--matimato-board);
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.cell-button:focus-visible {
+  outline: 4px solid rgba(17, 100, 102, 0.32);
+  outline-offset: 3px;
+}
+
+.cell-button[data-legal="true"] {
+  border-color: var(--matimato-accent);
+  box-shadow: inset 0 0 0 2px rgba(21, 33, 31, 0.14);
+}
+
+.cell-button[data-sign="positive"] {
+  color: var(--matimato-positive);
+}
+
+.cell-button[data-sign="negative"] {
+  color: var(--matimato-negative);
+}
+
+.cell-button[data-claimed="true"] {
+  background: #d8ddd7;
+  color: var(--matimato-claimed);
+  cursor: not-allowed;
+}
+
+.cell-button[data-last="true"] {
+  outline: 4px solid rgba(255, 209, 102, 0.72);
+}
+
+.cell-button:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+.score-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.score-card {
+  border: 1px solid var(--matimato-line);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.score-value {
+  font-size: 1.75rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.visually-spaced {
+  display: grid;
+  gap: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell-button {
+    transition: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .game-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .board-grid {
+    width: 100%;
+  }
+}
