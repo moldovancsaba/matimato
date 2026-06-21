@@ -31,6 +31,7 @@ import type { PublicGameDto } from "@/lib/game/types";
 import { trackEvent } from "@/lib/client/analytics";
 import type { PublicProfile } from "@/lib/profile/types";
 import type { HistoryItem, HistoryModeFilter } from "@/lib/history/history-model";
+import type { LeaderboardEntry, LeaderboardMode, LeaderboardPeriod } from "@/lib/leaderboard/leaderboard-model";
 
 type ApiState = {
   loading: boolean;
@@ -53,6 +54,11 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const [historyMode, setHistoryMode] = useState<HistoryModeFilter>("all");
   const [historyCursor, setHistoryCursor] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [leaderboardEntries, setLeaderboardEntries] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardCurrent, setLeaderboardCurrent] = useState<LeaderboardEntry | null>(null);
+  const [leaderboardMode, setLeaderboardMode] = useState<LeaderboardMode>("battle");
+  const [leaderboardPeriod, setLeaderboardPeriod] = useState<LeaderboardPeriod>("weekly");
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [syncFailures, setSyncFailures] = useState(0);
   const [toasts, setToasts] = useState<GameToast[]>([]);
   const toastTimers = useRef<number[]>([]);
@@ -261,6 +267,31 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     void loadHistory(mode);
   }
 
+  const loadLeaderboard = useCallback(async (period: LeaderboardPeriod, mode: LeaderboardMode) => {
+    setLeaderboardLoading(true);
+    try {
+      const params = new URLSearchParams({ period, mode });
+      const response = await fetch(`/api/leaderboard?${params.toString()}`, { cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error?.message ?? "Could not load leaderboard.");
+      setLeaderboardEntries(payload.entries);
+      setLeaderboardCurrent(payload.currentEntry);
+      setLeaderboardLoading(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not load leaderboard.";
+      setLeaderboardLoading(false);
+      pushToast({ tone: "error", title: "Ranks unavailable", message });
+    }
+  }, [pushToast]);
+
+  function changeLeaderboard(input: { period?: LeaderboardPeriod; mode?: LeaderboardMode }) {
+    const nextPeriod = input.period ?? leaderboardPeriod;
+    const nextMode = input.mode ?? leaderboardMode;
+    setLeaderboardPeriod(nextPeriod);
+    setLeaderboardMode(nextMode);
+    void loadLeaderboard(nextPeriod, nextMode);
+  }
+
   useEffect(() => {
     if (currentScreen !== "result" || !game || !resultView || trackedResultGameId.current === game.id) return;
     trackedResultGameId.current = game.id;
@@ -278,6 +309,12 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       void loadHistory(historyMode);
     }
   }, [currentScreen, historyItems.length, historyLoading, historyMode, loadHistory]);
+
+  useEffect(() => {
+    if (currentScreen === "leaderboard" && leaderboardEntries.length === 0 && !leaderboardLoading) {
+      void loadLeaderboard(leaderboardPeriod, leaderboardMode);
+    }
+  }, [currentScreen, leaderboardEntries.length, leaderboardLoading, leaderboardPeriod, leaderboardMode, loadLeaderboard]);
 
   async function copyInviteLink() {
     if (!inviteUrl) return;
@@ -403,6 +440,18 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 onModeChange={changeHistoryMode}
                 onLoadMore={() => loadHistory(historyMode, historyCursor)}
                 onRetry={() => loadHistory(historyMode)}
+              />
+            ) : null}
+
+            {currentScreen === "leaderboard" ? (
+              <LeaderboardScreen
+                entries={leaderboardEntries}
+                currentEntry={leaderboardCurrent}
+                period={leaderboardPeriod}
+                mode={leaderboardMode}
+                loading={leaderboardLoading}
+                onChange={changeLeaderboard}
+                onRetry={() => loadLeaderboard(leaderboardPeriod, leaderboardMode)}
               />
             ) : null}
 
@@ -648,11 +697,11 @@ function AppNav({ activeDestination, onNavigate }: { activeDestination: AppDesti
   );
 }
 
-function isFeatureScreen(screen: GameScreen): screen is "challenges" | "leaderboard" {
-  return screen === "challenges" || screen === "leaderboard";
+function isFeatureScreen(screen: GameScreen): screen is "challenges" {
+  return screen === "challenges";
 }
 
-function FeaturePlaceholder({ screen, onPlay }: { screen: "challenges" | "leaderboard"; onPlay: () => void }) {
+function FeaturePlaceholder({ screen, onPlay }: { screen: "challenges"; onPlay: () => void }) {
   const content = featureContent(screen);
 
   return (
@@ -674,7 +723,7 @@ function FeaturePlaceholder({ screen, onPlay }: { screen: "challenges" | "leader
   );
 }
 
-function featureContent(screen: "challenges" | "leaderboard") {
+function featureContent(screen: "challenges") {
   const content = {
     challenges: {
       kicker: "Daily quests",
@@ -683,15 +732,6 @@ function featureContent(screen: "challenges" | "leaderboard") {
       cards: [
         { badge: "Daily", title: "Sunset run", copy: "One shared 9x9 seed for every player." },
         { badge: "Streak", title: "Keep heat", copy: "Finish matches to keep your return loop alive." }
-      ]
-    },
-    leaderboard: {
-      kicker: "Rank board",
-      title: "Climb the arena.",
-      body: "Weekly, all-time, SOLO, and BATTLE rankings get a dedicated screen instead of crowding the board.",
-      cards: [
-        { badge: "Weekly", title: "Pulse ladder", copy: "A clean competitive reset window." },
-        { badge: "Pinned", title: "Your rank", copy: "Your position stays visible even outside the top rows." }
       ]
     }
   } satisfies Record<typeof screen, {
@@ -702,6 +742,68 @@ function featureContent(screen: "challenges" | "leaderboard") {
   }>;
 
   return content[screen];
+}
+
+function LeaderboardScreen({
+  entries,
+  currentEntry,
+  period,
+  mode,
+  loading,
+  onChange,
+  onRetry
+}: {
+  entries: LeaderboardEntry[];
+  currentEntry: LeaderboardEntry | null;
+  period: LeaderboardPeriod;
+  mode: LeaderboardMode;
+  loading: boolean;
+  onChange: (input: { period?: LeaderboardPeriod; mode?: LeaderboardMode }) => void;
+  onRetry: () => void;
+}) {
+  const currentOutsideTop = currentEntry && !entries.some((entry) => entry.profileId === currentEntry.profileId);
+  return (
+    <div className="leaderboard-screen">
+      <div className="hero-kicker">Rank board</div>
+      <h1>Climb the arena.</h1>
+      <div className="history-tabs" role="tablist" aria-label="Leaderboard period">
+        {(["weekly", "all_time"] as const).map((item) => (
+          <button key={item} type="button" role="tab" aria-selected={period === item} data-active={period === item} onClick={() => onChange({ period: item })}>
+            {item === "all_time" ? "all time" : item}
+          </button>
+        ))}
+      </div>
+      <div className="history-tabs" role="tablist" aria-label="Leaderboard mode">
+        {(["battle", "solo"] as const).map((item) => (
+          <button key={item} type="button" role="tab" aria-selected={mode === item} data-active={mode === item} onClick={() => onChange({ mode: item })}>
+            {item}
+          </button>
+        ))}
+      </div>
+      <div className="leaderboard-list" aria-live="polite">
+        {entries.length === 0 && !loading ? (
+          <div className="history-empty">
+            <strong>No ranked matches yet.</strong>
+            <span>Completed matches with at least one move appear here.</span>
+            <Button variant="secondary" onClick={onRetry}>Refresh ranks</Button>
+          </div>
+        ) : null}
+        {entries.map((entry) => <LeaderboardRow entry={entry} key={entry.profileId} />)}
+        {currentOutsideTop ? <LeaderboardRow entry={currentEntry} pinned /> : null}
+      </div>
+    </div>
+  );
+}
+
+function LeaderboardRow({ entry, pinned = false }: { entry: LeaderboardEntry; pinned?: boolean }) {
+  return (
+    <article className="leaderboard-row" data-current={entry.current} data-pinned={pinned}>
+      <Badge>{pinned ? "You" : `#${entry.rank}`}</Badge>
+      <strong>{entry.displayTag}</strong>
+      <span>{entry.matches} matches</span>
+      <b>{entry.rankValue}</b>
+    </article>
+  );
 }
 
 function HistoryScreen({
