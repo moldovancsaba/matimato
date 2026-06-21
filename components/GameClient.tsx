@@ -30,6 +30,7 @@ import { toResultView } from "@/lib/game/result-view";
 import type { PublicGameDto } from "@/lib/game/types";
 import { trackEvent } from "@/lib/client/analytics";
 import type { PublicProfile } from "@/lib/profile/types";
+import type { HistoryItem, HistoryModeFilter } from "@/lib/history/history-model";
 
 type ApiState = {
   loading: boolean;
@@ -48,6 +49,10 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [profileDraft, setProfileDraft] = useState("");
   const [profileLoading, setProfileLoading] = useState(false);
+  const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
+  const [historyMode, setHistoryMode] = useState<HistoryModeFilter>("all");
+  const [historyCursor, setHistoryCursor] = useState<string | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [syncFailures, setSyncFailures] = useState(0);
   const [toasts, setToasts] = useState<GameToast[]>([]);
   const toastTimers = useRef<number[]>([]);
@@ -231,6 +236,31 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     }
   }, [profileDraft, pushToast]);
 
+  const loadHistory = useCallback(async (mode: HistoryModeFilter, cursor?: string | null) => {
+    setHistoryLoading(true);
+    try {
+      const params = new URLSearchParams({ mode, limit: "10" });
+      if (cursor) params.set("cursor", cursor);
+      const response = await fetch(`/api/history?${params.toString()}`, { cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error?.message ?? "Could not load history.");
+      setHistoryItems((current) => cursor ? [...current, ...payload.items] : payload.items);
+      setHistoryCursor(payload.nextCursor);
+      setHistoryLoading(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not load history.";
+      setHistoryLoading(false);
+      pushToast({ tone: "error", title: "History unavailable", message });
+    }
+  }, [pushToast]);
+
+  function changeHistoryMode(mode: HistoryModeFilter) {
+    setHistoryMode(mode);
+    setHistoryItems([]);
+    setHistoryCursor(null);
+    void loadHistory(mode);
+  }
+
   useEffect(() => {
     if (currentScreen !== "result" || !game || !resultView || trackedResultGameId.current === game.id) return;
     trackedResultGameId.current = game.id;
@@ -242,6 +272,12 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       void loadProfile();
     }
   }, [currentScreen, profile, profileLoading, loadProfile]);
+
+  useEffect(() => {
+    if (currentScreen === "history" && historyItems.length === 0 && !historyLoading) {
+      void loadHistory(historyMode);
+    }
+  }, [currentScreen, historyItems.length, historyLoading, historyMode, loadHistory]);
 
   async function copyInviteLink() {
     if (!inviteUrl) return;
@@ -356,6 +392,18 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
 
             {isFeatureScreen(currentScreen) ? (
               <FeaturePlaceholder screen={currentScreen} onPlay={() => navigate("battle")} />
+            ) : null}
+
+            {currentScreen === "history" ? (
+              <HistoryScreen
+                items={historyItems}
+                mode={historyMode}
+                cursor={historyCursor}
+                loading={historyLoading}
+                onModeChange={changeHistoryMode}
+                onLoadMore={() => loadHistory(historyMode, historyCursor)}
+                onRetry={() => loadHistory(historyMode)}
+              />
             ) : null}
 
             {currentScreen === "profile" ? (
@@ -600,11 +648,11 @@ function AppNav({ activeDestination, onNavigate }: { activeDestination: AppDesti
   );
 }
 
-function isFeatureScreen(screen: GameScreen): screen is "challenges" | "leaderboard" | "history" {
-  return screen === "challenges" || screen === "leaderboard" || screen === "history";
+function isFeatureScreen(screen: GameScreen): screen is "challenges" | "leaderboard" {
+  return screen === "challenges" || screen === "leaderboard";
 }
 
-function FeaturePlaceholder({ screen, onPlay }: { screen: "challenges" | "leaderboard" | "history"; onPlay: () => void }) {
+function FeaturePlaceholder({ screen, onPlay }: { screen: "challenges" | "leaderboard"; onPlay: () => void }) {
   const content = featureContent(screen);
 
   return (
@@ -626,7 +674,7 @@ function FeaturePlaceholder({ screen, onPlay }: { screen: "challenges" | "leader
   );
 }
 
-function featureContent(screen: "challenges" | "leaderboard" | "history") {
+function featureContent(screen: "challenges" | "leaderboard") {
   const content = {
     challenges: {
       kicker: "Daily quests",
@@ -645,15 +693,6 @@ function featureContent(screen: "challenges" | "leaderboard" | "history") {
         { badge: "Weekly", title: "Pulse ladder", copy: "A clean competitive reset window." },
         { badge: "Pinned", title: "Your rank", copy: "Your position stays visible even outside the top rows." }
       ]
-    },
-    history: {
-      kicker: "Match memory",
-      title: "Review every duel.",
-      body: "Completed games will become compact summaries with rival, score, result, and replay context.",
-      cards: [
-        { badge: "Battle", title: "Rival log", copy: "Privacy-safe records of past battles." },
-        { badge: "Solo", title: "Score chase", copy: "Track your strongest AI runs over time." }
-      ]
     }
   } satisfies Record<typeof screen, {
     kicker: string;
@@ -663,6 +702,69 @@ function featureContent(screen: "challenges" | "leaderboard" | "history") {
   }>;
 
   return content[screen];
+}
+
+function HistoryScreen({
+  items,
+  mode,
+  cursor,
+  loading,
+  onModeChange,
+  onLoadMore,
+  onRetry
+}: {
+  items: HistoryItem[];
+  mode: HistoryModeFilter;
+  cursor: string | null;
+  loading: boolean;
+  onModeChange: (mode: HistoryModeFilter) => void;
+  onLoadMore: () => void;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="history-screen">
+      <div className="hero-kicker">Match memory</div>
+      <h1>Review every duel.</h1>
+      <div className="history-tabs" role="tablist" aria-label="History filter">
+        {(["all", "solo", "battle"] as const).map((item) => (
+          <button key={item} type="button" role="tab" aria-selected={mode === item} data-active={mode === item} onClick={() => onModeChange(item)}>
+            {item}
+          </button>
+        ))}
+      </div>
+      <div className="history-list" aria-live="polite">
+        {items.length === 0 && !loading ? (
+          <div className="history-empty">
+            <strong>No matches yet.</strong>
+            <span>Finish a SOLO or BATTLE match and it will appear here.</span>
+            <Button variant="secondary" onClick={onRetry}>Refresh history</Button>
+          </div>
+        ) : null}
+        {items.map((item) => (
+          <article className="history-card" key={item.gameId}>
+            <Badge>{item.mode}</Badge>
+            <strong>{historyResultLabel(item.result)}</strong>
+            <span>{item.rivalName ? `vs ${item.rivalName}` : "Solo run"}</span>
+            <div className="history-meta">
+              <span>{item.playerScore}{item.rivalScore !== undefined ? ` / ${item.rivalScore}` : ""}</span>
+              <time dateTime={item.completedAt}>{new Date(item.completedAt).toLocaleDateString()}</time>
+            </div>
+          </article>
+        ))}
+      </div>
+      {cursor ? (
+        <Button variant="secondary" onClick={onLoadMore} loading={loading}>
+          Load more
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+function historyResultLabel(result: HistoryItem["result"]) {
+  if (result === "win") return "Victory";
+  if (result === "loss") return "Defeat";
+  return "Draw";
 }
 
 function ProfileScreen({

@@ -166,6 +166,8 @@ Acceptance criteria:
 
 Current implementation: terminal SOLO and BATTLE games now upsert immutable `match_summaries` records by `gameId`. The write is idempotent, excludes session credentials, retries on later terminal reads, and logs sanitized failures without blocking the player result screen.
 
+Current UI/API implementation: History now has a profile-scoped `/api/history` endpoint and a standalone History tab with All, SOLO, and BATTLE filters, empty state, retry, pagination, public rival label, result, score, and completion date.
+
 ## Phase 4: Leaderboards
 
 - Add weekly, all-time, and friends-style local leaderboards.

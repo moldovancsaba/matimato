@@ -467,6 +467,95 @@ select {
   padding: clamp(10px, 3vw, 28px) 0 4px;
 }
 
+.history-screen {
+  min-height: min(640px, 74dvh);
+  display: grid;
+  align-content: end;
+  gap: 14px;
+  padding: clamp(10px, 3vw, 28px) 0 4px;
+}
+
+.history-screen h1 {
+  margin: 0;
+  max-width: 9ch;
+  font-size: clamp(2.45rem, 8vw, 4.8rem);
+  line-height: 0.94;
+  letter-spacing: -0.06em;
+}
+
+.history-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, var(--gds-vibe-primary) 28%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--gds-vibe-surface) 62%, transparent);
+}
+
+.history-tabs button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  color: var(--gds-vibe-muted);
+  font: inherit;
+  font-weight: 850;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.history-tabs button[data-active="true"] {
+  color: var(--gds-vibe-text);
+  background: linear-gradient(135deg, var(--gds-vibe-primary), var(--gds-vibe-accent));
+}
+
+.history-tabs button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--gds-vibe-focus) 64%, transparent);
+  outline-offset: 3px;
+}
+
+.history-list {
+  display: grid;
+  gap: 8px;
+  max-height: min(320px, 38dvh);
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.history-card,
+.history-empty {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--gds-vibe-primary) 28%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--gds-vibe-surface) 78%, transparent);
+}
+
+.history-card strong {
+  font-size: 1.24rem;
+  line-height: 1;
+}
+
+.history-card span,
+.history-empty span {
+  min-width: 0;
+  color: var(--gds-vibe-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--gds-vibe-muted);
+  font-size: 0.88rem;
+}
+
 .profile-hero {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -787,6 +876,10 @@ select {
   }
 
   .profile-screen {
+    min-height: min(640px, calc(100dvh - 118px));
+  }
+
+  .history-screen {
     min-height: min(640px, calc(100dvh - 118px));
   }
 }
