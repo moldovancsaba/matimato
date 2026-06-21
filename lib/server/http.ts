@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { getRuntimeConfig } from "../config";
-import { toAppError } from "./errors";
+import { sanitizeServerMessage, toAppError } from "./errors";
 import type { PlayerCredential } from "./session";
 import { encodeCredentialCookie, getCredentialCookieName } from "./session";
 
@@ -10,6 +10,8 @@ export function successResponse(
   options?: { status?: number; credential?: PlayerCredential; gameId?: string; existingCredentialCookie?: string }
 ) {
   const response = NextResponse.json(data, { status: options?.status ?? 200 });
+  response.headers.set("Cache-Control", "no-store, max-age=0");
+  response.headers.set("X-Content-Type-Options", "nosniff");
   if (options?.credential && options.gameId) {
     setCredentialCookie(response, options.gameId, options.credential, options.existingCredentialCookie);
   }
@@ -26,12 +28,15 @@ export function errorResponse(error: unknown, context?: { route?: string; reques
     code: appError.code,
     status: appError.status,
     retryable: appError.retryable,
-    message: appError.message
+    message: sanitizeServerMessage(appError.message)
   }));
-  return NextResponse.json(
+  const response = NextResponse.json(
     { error: { code: appError.code, message: appError.publicMessage, retryable: appError.retryable, requestId } },
     { status: appError.status }
   );
+  response.headers.set("Cache-Control", "no-store, max-age=0");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  return response;
 }
 
 function setCredentialCookie(response: NextResponse, gameId: string, credential: PlayerCredential, existing?: string) {

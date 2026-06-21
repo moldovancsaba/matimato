@@ -1,7 +1,7 @@
 import { MongoClient } from "mongodb";
 import { getRuntimeConfig } from "../config";
 import type { GameState } from "../game/types";
-import { AppError } from "./errors";
+import { AppError, sanitizeServerMessage } from "./errors";
 
 type GameStore = {
   create(game: GameState): Promise<GameState>;
@@ -40,7 +40,7 @@ export async function checkDatabaseReady() {
       level: "error",
       route: "/api/health",
       code: "DATABASE_HEALTH_FAILED",
-      message: error instanceof Error ? error.message : "Unknown database health failure"
+      message: error instanceof Error ? sanitizeServerMessage(error.message) : "Unknown database health failure"
     }));
     return { ok: false, db: "down" as const };
   }

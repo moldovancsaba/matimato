@@ -30,6 +30,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const [game, setGame] = useState<PublicGameDto | null>(null);
   const [api, setApi] = useState<ApiState>({ loading: false });
   const [syncFailures, setSyncFailures] = useState(0);
+  const [notice, setNotice] = useState<string | undefined>();
 
   const fetchGame = useCallback(async (id: string, quiet = false) => {
     if (!quiet) setApi({ loading: true });
@@ -50,13 +51,15 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   useEffect(() => {
     if (!game || game.status === "finished" || game.status === "expired") return;
     const interval = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
       fetchGame(game.id, true).catch(() => setSyncFailures((value) => value + 1));
-    }, document.visibilityState === "visible" ? 2200 : 10000);
+    }, 2200);
     return () => window.clearInterval(interval);
   }, [fetchGame, game]);
 
   async function createGame() {
     setApi({ loading: true });
+    setNotice(undefined);
     try {
       const response = await fetch("/api/games", {
         method: "POST",
@@ -76,6 +79,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
 
   async function joinGame(code = joinCode) {
     setApi({ loading: true });
+    setNotice(undefined);
     try {
       const response = await fetch("/api/games/join", {
         method: "POST",
@@ -96,6 +100,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   async function submitMove(viewRow: number, viewCol: number) {
     if (!game?.viewer?.canMove) return;
     setApi({ loading: true });
+    setNotice(undefined);
     try {
       const response = await fetch(`/api/games/${game.id}/move`, {
         method: "POST",
@@ -114,11 +119,22 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   }
 
   const legalKey = useMemo(() => new Set(game?.legalCellsView.map((cell) => `${cell.viewRow}:${cell.viewCol}`) ?? []), [game]);
-  const inviteUrl = game ? `${window.location.origin}/play/${game.id}` : "";
+  const inviteUrl = game && typeof window !== "undefined" ? `${window.location.origin}/play/${game.id}` : "";
+
+  async function copyInviteLink() {
+    if (!inviteUrl) return;
+    try {
+      await navigator.clipboard?.writeText(inviteUrl);
+      setNotice("Invite link copied.");
+      trackEvent({ action: "copy_invite_link", category: "sharing", label: game?.mode });
+    } catch {
+      setNotice("Copy failed. Select and copy the invite link manually.");
+    }
+  }
 
   return (
     <main className="app-stage">
-      <div className="game-shell">
+      <div className={`game-shell ${game ? "is-playing" : "is-setup"}`}>
         <section className="game-panel" aria-label="Game controls">
           <Stack gap="md">
             <Group justify="space-between" align="center">
@@ -144,6 +160,10 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 title="Reconnecting"
                 message="Live updates are retrying. Moves are disabled until the next successful sync."
               />
+            ) : null}
+
+            {notice ? (
+              <InlineAlert severity="success" title="Notice" message={notice} />
             ) : null}
 
             {!game ? (
@@ -203,13 +223,8 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 {game.mode === "pvp" && game.status === "waiting" ? (
                   <Stack gap="xs">
                     <TextInput readOnly label="Invite code" value={game.code} />
-                    <Button
-                      variant="secondary"
-                      onClick={() => {
-                        navigator.clipboard?.writeText(inviteUrl);
-                        trackEvent({ action: "copy_invite_link", category: "sharing", label: game.mode });
-                      }}
-                    >
+                    <TextInput readOnly label="Invite link" value={inviteUrl} />
+                    <Button variant="secondary" onClick={copyInviteLink}>
                       Copy invite link
                     </Button>
                   </Stack>

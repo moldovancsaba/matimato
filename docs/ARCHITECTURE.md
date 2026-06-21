@@ -21,6 +21,8 @@ Browser
 - `lib/game/`: deterministic rules, signed board generation, perspective transforms, and DTO conversion.
 - `lib/server/`: session, persistence, HTTP errors, and service orchestration.
 - `scripts/gds-check.mjs`: local GDS adoption guard.
+- `next.config.ts`: security headers, CSP, and API cache-control headers.
+- `app/manifest.ts` and `public/icon.svg`: installable app metadata.
 
 ## Data Contract
 
@@ -32,7 +34,27 @@ Game state is canonical in server coordinates. Player `north` sees the board dir
 - `MONGODB_URI` enables MongoDB persistence.
 - `MATIMATO_USE_MEMORY_STORE=1` enables local/dev fallback.
 - Move writes use version checks and return `409 VERSION_CONFLICT` for stale clients.
+- API responses are `no-store` to avoid stale board/session state in browsers or PWA surfaces.
+- Server logs sanitize upstream messages before writing runtime diagnostics.
+- Rate limits protect create, join, move, and forfeit routes from simple abuse.
+- The client polls only while visible and disables moves during reconnect failures.
+
+## Security Contract
+
+- Player authentication is anonymous and game-scoped.
+- The cookie is HTTP-only, same-site, secure in production, bounded in size, shape-validated, and keyed by game ID to avoid cross-game credential overwrite.
+- Raw MongoDB/auth/network errors are never sent to the browser.
+- Public errors include stable codes and request IDs for support without leaking secrets.
+- CSP allows only the app itself plus Google Analytics endpoints needed by the configured tag.
+- Frame embedding is denied and browser permissions are restricted by default.
+
+## PWA and Mobile Contract
+
+- The app exposes installable metadata through `app/manifest.ts`.
+- It intentionally does not register a service worker because game state is realtime and session-bound.
+- `PwaGuard` unregisters old service workers and deletes old Matimato caches when present.
+- The mobile game view prioritizes the board, constrains panels to the visual viewport, and prevents accidental input zoom.
 
 ## Rollback
 
-The legacy static files remain in the repository as a temporary fallback while the Next/Vercel path is hardened. Vercel deployment rollback can restore the previous deployment. MongoDB changes are additive game documents and indexes.
+Use Vercel deployment rollback to restore a previous production deployment. MongoDB changes are additive game documents and indexes; no destructive migration is required for the current MVP.

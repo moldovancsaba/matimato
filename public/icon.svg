@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Matimato">
+  <rect width="512" height="512" rx="104" fill="#15211f"/>
+  <path fill="#ffd166" d="M116 132h280v64H116zM116 224h122v64H116zM274 224h122v64H274zM116 316h280v64H116z"/>
+  <path fill="#f5f7ef" d="M156 152h200v24H156zM156 244h42v24h-42zM314 244h42v24h-42zM156 336h200v24H156z"/>
+</svg>
