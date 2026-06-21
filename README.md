@@ -9,12 +9,14 @@ Matimato is a signed-number strategy board game rebuilt for Vercel, MongoDB, and
 - Next.js App Router runtime for Vercel.
 - Google Analytics page/event tracking with measurement ID `G-JZZ0GMDVB6`.
 - MongoDB-backed canonical game state with in-memory local fallback.
+- Installable PWA metadata with stale service-worker/cache cleanup.
 - Player-to-player games with invite codes.
 - Player-relative board perspective: each side sees the board from their own table side.
 - Positive and negative random board values.
 - Server-side move validation, score calculation, turn constraints, and terminal-state detection.
 - GDS-only UI through `@doneisbetter/gds`.
 - Accessibility states for turn changes, legal cells, reconnecting, and results.
+- Security headers, no-store API responses, sanitized server logs, and hardened session cookies.
 
 ## Local Development
 
@@ -38,6 +40,15 @@ MATIMATO_COOKIE_SECURE=0
 
 Set `MONGODB_URI` in Vercel for production persistence. Without it, local development uses the memory store.
 
+## Security and PWA Behavior
+
+- API responses set `Cache-Control: no-store` so game state, player credentials, and health checks are not cached.
+- Player credentials are stored in an HTTP-only, same-site cookie keyed by game ID. Cookie decoding validates shape and size and prunes old entries.
+- Server errors return safe public messages with request IDs. Runtime logs redact MongoDB URIs, bearer values, tokens, and secret-like query values.
+- The Next.js config applies CSP, frame denial, content-type protection, referrer policy, and restricted browser permissions.
+- The app is installable through `app/manifest.ts`, but no service worker is registered. `PwaGuard` unregisters legacy workers and clears old Matimato caches to prevent stale game sessions.
+- Mobile/PWA layout uses `svh`, safe-area padding, compact in-game controls, and board-first mobile ordering.
+
 ## Verification
 
 ```bash
@@ -46,6 +57,8 @@ npm test
 npm run build
 npm run verify
 ```
+
+`npm run verify` is the release gate and runs GDS compliance, lint, tests, and production build.
 
 ## Architecture
 
