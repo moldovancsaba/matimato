@@ -40,6 +40,8 @@ Leaderboards are deterministic projections over completed `match_summaries`. Wee
 
 Progression is deterministic and idempotent through the same profile summary ledger. XP uses `25 completed + 50 win + 10 draw + min(50, abs(scoreDelta) * 2) + dailyBonus`; level uses `floor(sqrt(totalXP / 100)) + 1`. Daily missions reset by UTC date. Badges are stored once by `badgeId`.
 
+Daily challenges use a UTC date key and SHA-256-derived deterministic seed to generate the same 9x9 signed board for every player. Challenge games are normal SOLO games with `challengeDate` attached; terminal summaries become challenge attempts and are ranked by score descending, duration ascending, then completion time.
+
 ## Operational Behavior
 
 - `GET /api/health` reports runtime readiness without exposing secrets.

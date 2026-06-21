@@ -13,6 +13,7 @@ export type MatchSummaryParticipant = {
 export type MatchSummary = {
   gameId: string;
   mode: "ai" | "pvp";
+  challengeDate?: string;
   boardSize: 9;
   participants: MatchSummaryParticipant[];
   winnerPlayerId?: string;
@@ -34,6 +35,7 @@ export function toMatchSummary(game: GameState, now = new Date()): MatchSummary 
   return {
     gameId: game.id,
     mode: game.mode,
+    challengeDate: game.challengeDate,
     boardSize: 9,
     participants: game.players.map((player) => ({
       playerId: player.playerId,
