@@ -22,11 +22,14 @@ type ApiState = {
   error?: string;
 };
 
+type ScreenState = "welcome" | "setup";
+
 export default function GameClient({ initialGameId }: { initialGameId?: string }) {
   const [mode, setMode] = useState<"pvp" | "ai">("pvp");
   const [boardSize, setBoardSize] = useState(5);
   const [displayName, setDisplayName] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  const [screen, setScreen] = useState<ScreenState>(initialGameId ? "setup" : "welcome");
   const [game, setGame] = useState<PublicGameDto | null>(null);
   const [api, setApi] = useState<ApiState>({ loading: false });
   const [syncFailures, setSyncFailures] = useState(0);
@@ -120,6 +123,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
 
   const legalKey = useMemo(() => new Set(game?.legalCellsView.map((cell) => `${cell.viewRow}:${cell.viewCol}`) ?? []), [game]);
   const inviteUrl = game && typeof window !== "undefined" ? `${window.location.origin}/play/${game.id}` : "";
+  const surfaceState = game ? "game" : screen;
 
   async function copyInviteLink() {
     if (!inviteUrl) return;
@@ -133,7 +137,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   }
 
   return (
-    <main className="app-stage">
+    <main className={`app-stage screen-${surfaceState}`}>
       <div className={`game-shell ${game ? "is-playing" : "is-setup"}`}>
         <section className="game-panel" aria-label="Game controls">
           <Stack gap="sm">
@@ -166,8 +170,26 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
               <InlineAlert severity="success" title="Notice" message={notice} />
             ) : null}
 
-            {!game ? (
+            {!game && screen === "welcome" ? (
+              <div className="welcome-screen">
+                <div className="hero-kicker">Signed number tactics</div>
+                <h1>Make every column count.</h1>
+                <p>
+                  A compact board game with positive rewards, negative traps, and player-to-player tables.
+                </p>
+                <div className="hero-actions">
+                  <Button onClick={() => setScreen("setup")}>Get started</Button>
+                  <Button variant="subtle" onClick={() => setScreen("setup")}>Join table</Button>
+                </div>
+              </div>
+            ) : null}
+
+            {!game && screen === "setup" ? (
               <Stack gap="sm">
+                <div className="setup-title">
+                  <h2>Choose table</h2>
+                  <p>Setup stays here. The game screen stays focused.</p>
+                </div>
                 <TextInput
                   label="Display name"
                   placeholder="Player"
@@ -178,7 +200,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                   <ChoiceChip label="Player to player" active={mode === "pvp"} onClick={() => setMode("pvp")} />
                   <ChoiceChip label="Solo AI" active={mode === "ai"} onClick={() => setMode("ai")} />
                 </div>
-                <Group gap="xs" aria-label="Board size">
+                <Group className="size-row" gap="xs" aria-label="Board size">
                   {[4, 5, 6, 7, 8, 9].map((size) => (
                     <ChoiceChip key={size} label={`${size}x${size}`} active={boardSize === size} onClick={() => setBoardSize(size)} />
                   ))}
@@ -187,7 +209,9 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 <TextInput label="Invite code" value={joinCode} onChange={(event) => setJoinCode(event.currentTarget.value.toUpperCase())} />
                 <Button variant="secondary" onClick={() => joinGame()} disabled={!joinCode || api.loading}>Join game</Button>
               </Stack>
-            ) : (
+            ) : null}
+
+            {game ? (
               <div className="play-controls">
                 {!game.viewer && game.status === "waiting" ? (
                   <Stack gap="sm">
@@ -246,7 +270,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                   </Button>
                 </Group>
               </div>
-            )}
+            ) : null}
           </Stack>
         </section>
 
@@ -290,10 +314,11 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
               </div>
             </Stack>
           ) : (
-            <Stack gap="sm">
-              <PageTitle>Choose a table</PageTitle>
-              <BodyText>Create a solo or player-to-player game. Positive cells build your score; negative cells take it away.</BodyText>
-            </Stack>
+            <div className="preview-board" aria-hidden="true">
+              {[8, -2, 4, -7, 1, 3, -5, 9, 6, -1, 7, 2, -8, 5, 4, -3, 8, 1, -6, 9, 2, -4, 7, 3, -9].map((value, index) => (
+                <span key={index} data-sign={value > 0 ? "positive" : "negative"}>{value > 0 ? `+${value}` : value}</span>
+              ))}
+            </div>
           )}
         </section>
       </div>
