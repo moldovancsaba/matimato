@@ -68,7 +68,7 @@ The app moves through explicit screen states instead of rendering everything abo
 - UI: victory/draw/loss state, final scores, XP, streak, rank delta, rematch, share result, home.
 - Recovery: if result write fails, show saved-later state and retry in the background.
 - Analytics: match finished, rematch tapped, result shared.
-- Current implementation: terminal games resolve to a dedicated result screen with outcome, final scores, run-it-back, and home actions.
+- Current implementation: terminal games resolve to a dedicated result screen with outcome, final scores, run-it-back, home, and share-result actions. Sharing uses native share when available and clipboard fallback otherwise.
 
 ### Profile Screen
 
