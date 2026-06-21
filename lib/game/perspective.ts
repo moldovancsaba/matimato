@@ -49,7 +49,7 @@ export function toPublicGameDto(state: GameState, viewerPlayerId?: string): Publ
     turnPlayerId: state.turnPlayerId,
     turnDisplayName: state.players.find((player) => player.playerId === state.turnPlayerId)?.displayName,
     constraintView: lineToView(side, state.boardSize, state.constraint),
-    legalCellsView: getLegalCells(state, viewerPlayerId).map((cell) => toView(side, state.boardSize, cell)),
+    legalCellsView: viewer ? getLegalCells(state, viewerPlayerId).map((cell) => toView(side, state.boardSize, cell)) : [],
     lastMoveView: lastMove ? { ...toView(side, state.boardSize, lastMove), playerId: lastMove.playerId, value: lastMove.value } : undefined,
     winnerPlayerId: state.winnerPlayerId,
     terminal: state.terminal,

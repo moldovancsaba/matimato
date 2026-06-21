@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyMove, generateSignedBoard, getLegalCells } from "@/lib/game/engine";
-import { toCanonical, toView } from "@/lib/game/perspective";
+import { toCanonical, toPublicGameDto, toView } from "@/lib/game/perspective";
 import type { GameState } from "@/lib/game/types";
 
 function fixture(): GameState {
@@ -53,5 +53,11 @@ describe("game engine", () => {
     const view = toView("south", 3, canonical);
     expect(view).toEqual({ viewRow: 2, viewCol: 0 });
     expect(toCanonical("south", 3, view)).toEqual(canonical);
+  });
+
+  it("does not expose legal move cells to spectators", () => {
+    const dto = toPublicGameDto(fixture());
+    expect(dto.viewer).toBeUndefined();
+    expect(dto.legalCellsView).toEqual([]);
   });
 });

@@ -7,10 +7,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
     "gds:check": "node scripts/gds-check.mjs",
-    "verify": "npm run gds:check && npm run test && npm run build"
+    "verify": "npm run gds:check && npm run lint && npm run test && npm run build"
   },
   "dependencies": {
     "@doneisbetter/gds": "3.4.14",
@@ -37,5 +37,8 @@
     "jsdom": "^27.3.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.8"
+  },
+  "overrides": {
+    "postcss": "8.5.15"
   }
 }

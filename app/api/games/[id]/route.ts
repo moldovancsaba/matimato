@@ -6,10 +6,10 @@ import { getCredentialFromRequest } from "@/lib/server/session";
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const credential = getCredentialFromRequest(request);
+    const credential = getCredentialFromRequest(request, id);
     const result = await getGameForViewer(id, credential);
     return successResponse(result);
   } catch (error) {
-    return errorResponse(error);
+    return errorResponse(error, { route: "/api/games/[id]", request });
   }
 }
