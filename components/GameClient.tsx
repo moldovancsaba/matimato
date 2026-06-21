@@ -13,6 +13,8 @@ import {
   TextInput,
   VisuallyHidden
 } from "@doneisbetter/gds/client";
+import { IconPlus, IconRefresh } from "@tabler/icons-react";
+import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { PublicGameDto } from "@/lib/game/types";
 import { trackEvent } from "@/lib/client/analytics";
@@ -26,7 +28,7 @@ type ScreenState = "welcome" | "setup";
 
 export default function GameClient({ initialGameId }: { initialGameId?: string }) {
   const [mode, setMode] = useState<"pvp" | "ai">("pvp");
-  const [boardSize, setBoardSize] = useState(5);
+  const [boardSize, setBoardSize] = useState(9);
   const [displayName, setDisplayName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [screen, setScreen] = useState<ScreenState>(initialGameId ? "setup" : "welcome");
@@ -269,12 +271,12 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                       window.history.replaceState(null, "", "/");
                     }}
                   >
-                    <span aria-hidden="true">＋</span>
+                    <IconPlus aria-hidden="true" className="dock-icon" size={20} stroke={2.4} />
                     <span className="dock-label">New</span>
                     <VisuallyHidden>Start new game</VisuallyHidden>
                   </Button>
                   <Button aria-label="Refresh game" variant="subtle" onClick={() => fetchGame(game.id)} disabled={api.loading}>
-                    <span aria-hidden="true">⟳</span>
+                    <IconRefresh aria-hidden="true" className="dock-icon" size={20} stroke={2.4} />
                     <span className="dock-label">Refresh</span>
                     <VisuallyHidden>Refresh game</VisuallyHidden>
                   </Button>
@@ -292,7 +294,10 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
               </VisuallyHidden>
               <div
                 className="board-grid"
-                style={{ gridTemplateColumns: `repeat(${game.boardSize}, minmax(0, 1fr))` }}
+                style={{
+                  "--board-size": game.boardSize,
+                  gridTemplateColumns: `repeat(${game.boardSize}, minmax(0, 1fr))`
+                } as CSSProperties}
                 role="grid"
                 aria-label={`Matimato ${game.boardSize} by ${game.boardSize} board`}
               >
@@ -316,7 +321,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                         aria-label={cellLabel(value, rowIndex, colIndex, legal, last)}
                         onClick={() => submitMove(rowIndex, colIndex)}
                       >
-                        {value === null ? "x" : value > 0 ? `+${value}` : value}
+                        {value === null ? "x" : Math.abs(value)}
                       </button>
                     );
                   })
@@ -326,7 +331,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
           ) : (
             <div className="preview-board" aria-hidden="true">
               {[8, -2, 4, -7, 1, 3, -5, 9, 6, -1, 7, 2, -8, 5, 4, -3, 8, 1, -6, 9, 2, -4, 7, 3, -9].map((value, index) => (
-                <span key={index} data-sign={value > 0 ? "positive" : "negative"}>{value > 0 ? `+${value}` : value}</span>
+                <span key={index} data-sign={value > 0 ? "positive" : "negative"}>{Math.abs(value)}</span>
               ))}
             </div>
           )}
