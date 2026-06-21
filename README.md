@@ -7,6 +7,7 @@ Matimato is a signed-number strategy board game rebuilt for Vercel, MongoDB, and
 ## Features
 
 - Next.js App Router runtime for Vercel.
+- Google Analytics page/event tracking with measurement ID `G-JZZ0GMDVB6`.
 - MongoDB-backed canonical game state with in-memory local fallback.
 - Player-to-player games with invite codes.
 - Player-relative board perspective: each side sees the board from their own table side.

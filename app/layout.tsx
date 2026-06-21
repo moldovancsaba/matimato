@@ -3,6 +3,7 @@ import "./globals.css";
 
 import { ColorSchemeScript } from "@mantine/core";
 import type { Metadata } from "next";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import Providers from "./providers";
 
 export const metadata: Metadata = {
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ColorSchemeScript defaultColorScheme="light" />
       </head>
       <body>
+        <GoogleAnalytics />
         <Providers>{children}</Providers>
       </body>
     </html>

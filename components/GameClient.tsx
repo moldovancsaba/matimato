@@ -15,6 +15,7 @@ import {
 } from "@doneisbetter/gds/client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { PublicGameDto } from "@/lib/game/types";
+import { trackEvent } from "@/lib/client/analytics";
 
 type ApiState = {
   loading: boolean;
@@ -65,6 +66,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "Could not create game.");
       setGame(payload.game);
+      trackEvent({ action: "create_game", category: "game", label: mode, value: boardSize });
       window.history.replaceState(null, "", `/play/${payload.game.id}`);
       setApi({ loading: false });
     } catch (error) {
@@ -83,6 +85,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "Could not join game.");
       setGame(payload.game);
+      trackEvent({ action: "join_game", category: "game", label: "pvp" });
       window.history.replaceState(null, "", `/play/${payload.game.id}`);
       setApi({ loading: false });
     } catch (error) {
@@ -102,6 +105,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "Move failed.");
       setGame(payload.game);
+      trackEvent({ action: "submit_move", category: "game", label: game.mode, value: game.boardSize });
       setApi({ loading: false });
     } catch (error) {
       await fetchGame(game.id, true).catch(() => undefined);
@@ -175,7 +179,13 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 {game.mode === "pvp" && game.status === "waiting" ? (
                   <Stack gap="xs">
                     <TextInput readOnly label="Invite code" value={game.code} />
-                    <Button variant="secondary" onClick={() => navigator.clipboard?.writeText(inviteUrl)}>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        navigator.clipboard?.writeText(inviteUrl);
+                        trackEvent({ action: "copy_invite_link", category: "sharing", label: game.mode });
+                      }}
+                    >
                       Copy invite link
                     </Button>
                   </Stack>
