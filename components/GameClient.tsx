@@ -25,10 +25,10 @@ type ApiState = {
 };
 
 type ScreenState = "welcome" | "setup";
+const BOARD_SIZE = 9;
 
 export default function GameClient({ initialGameId }: { initialGameId?: string }) {
   const [mode, setMode] = useState<"pvp" | "ai">("pvp");
-  const [boardSize, setBoardSize] = useState(9);
   const [displayName, setDisplayName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [screen, setScreen] = useState<ScreenState>(initialGameId ? "setup" : "welcome");
@@ -69,12 +69,12 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       const response = await fetch("/api/games", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ mode, boardSize, displayName: displayName.trim() || undefined, difficulty: "standard" })
+        body: JSON.stringify({ mode, boardSize: BOARD_SIZE, displayName: displayName.trim() || undefined, difficulty: "standard" })
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "Could not create game.");
       setGame(payload.game);
-      trackEvent({ action: "create_game", category: "game", label: mode, value: boardSize });
+      trackEvent({ action: "create_game", category: "game", label: mode, value: BOARD_SIZE });
       window.history.replaceState(null, "", `/play/${payload.game.id}`);
       setApi({ loading: false });
     } catch (error) {
@@ -148,7 +148,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 <div className="brand-mark" aria-hidden="true">M</div>
                 <div>
                   <PageTitle>Matimato</PageTitle>
-                  <BodyText>Signed strategy table</BodyText>
+                  <BodyText>Number duel arena</BodyText>
                 </div>
               </Group>
               <StatusBadge status={game?.status === "active" ? "success" : game?.status === "finished" ? "neutral" : "warning"}>
@@ -174,14 +174,14 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
 
             {!game && screen === "welcome" ? (
               <div className="welcome-screen">
-                <div className="hero-kicker">Signed number tactics</div>
-                <h1>Make every column count.</h1>
+                <div className="hero-kicker">9x9 score chase</div>
+                <h1>Own the grid.</h1>
                 <p>
-                  A compact board game with positive rewards, negative traps, and player-to-player tables.
+                  Pick bright cells, dodge shadow traps, and force the next move on your terms.
                 </p>
                 <div className="hero-actions">
-                  <Button onClick={() => setScreen("setup")}>Get started</Button>
-                  <Button variant="subtle" onClick={() => setScreen("setup")}>Join table</Button>
+                  <Button onClick={() => setScreen("setup")}>Play now</Button>
+                  <Button variant="subtle" onClick={() => setScreen("setup")}>Enter code</Button>
                 </div>
               </div>
             ) : null}
@@ -189,27 +189,22 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
             {!game && screen === "setup" ? (
               <Stack gap="sm">
                 <div className="setup-title">
-                  <h2>Choose table</h2>
-                  <p>Setup stays here. The game screen stays focused.</p>
+                  <h2>Choose mode</h2>
+                  <p>Lock in your player tag and jump into the 9x9 arena.</p>
                 </div>
                 <TextInput
-                  label="Display name"
-                  placeholder="Your name"
+                  label="Player tag"
+                  placeholder="Enter your tag"
                   value={displayName}
                   onChange={(event) => setDisplayName(event.currentTarget.value)}
                 />
                 <div className="mode-grid" role="group" aria-label="Game mode">
-                  <ChoiceChip label="Player to player" active={mode === "pvp"} onClick={() => setMode("pvp")} />
-                  <ChoiceChip label="Solo AI" active={mode === "ai"} onClick={() => setMode("ai")} />
+                  <ChoiceChip label="BATTLE" active={mode === "pvp"} onClick={() => setMode("pvp")} />
+                  <ChoiceChip label="SOLO" active={mode === "ai"} onClick={() => setMode("ai")} />
                 </div>
-                <Group className="size-row" gap="xs" aria-label="Board size">
-                  {[4, 5, 6, 7, 8, 9].map((size) => (
-                    <ChoiceChip key={size} label={`${size}x${size}`} active={boardSize === size} onClick={() => setBoardSize(size)} />
-                  ))}
-                </Group>
-                <Button onClick={createGame} loading={api.loading}>Create game</Button>
-                <TextInput label="Invite code" value={joinCode} onChange={(event) => setJoinCode(event.currentTarget.value.toUpperCase())} />
-                <Button variant="secondary" onClick={() => joinGame()} disabled={!joinCode || api.loading}>Join game</Button>
+                <Button onClick={createGame} loading={api.loading}>Start match</Button>
+                <TextInput label="Battle code" value={joinCode} onChange={(event) => setJoinCode(event.currentTarget.value.toUpperCase())} />
+                <Button variant="secondary" onClick={() => joinGame()} disabled={!joinCode || api.loading}>Join battle</Button>
               </Stack>
             ) : null}
 
@@ -240,24 +235,24 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                       title="Join this table"
                       message="Enter your player name and join from this invite link."
                     />
-                    <TextInput
-                      label="Display name"
-                      placeholder="Your name"
+                      <TextInput
+                      label="Player tag"
+                      placeholder="Enter your tag"
                       value={displayName}
                       onChange={(event) => setDisplayName(event.currentTarget.value)}
                     />
                     <Button onClick={() => joinGame(game.code)} loading={api.loading}>
-                      Join this game
+                      Join battle
                     </Button>
                   </Stack>
                 ) : null}
 
                 {game.mode === "pvp" && game.status === "waiting" ? (
                   <Stack gap="xs">
-                    <TextInput readOnly label="Invite code" value={game.code} />
+                    <TextInput readOnly label="Battle code" value={game.code} />
                     <TextInput readOnly label="Invite link" value={inviteUrl} />
                     <Button variant="secondary" onClick={copyInviteLink}>
-                      Copy invite link
+                      Copy battle link
                     </Button>
                   </Stack>
                 ) : null}
@@ -342,20 +337,20 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
 }
 
 function turnTitle(game: PublicGameDto) {
-  if (game.status === "waiting") return "Waiting for opponent";
+  if (game.status === "waiting") return "Waiting for rival";
   if (game.status === "finished") {
     if (game.terminal?.draw) return "Draw";
-    return game.winnerPlayerId === game.viewer?.playerId ? "You won" : "Game finished";
+    return game.winnerPlayerId === game.viewer?.playerId ? "Victory" : "Match over";
   }
-  if (game.viewer?.canMove) return "Your turn";
+  if (game.viewer?.canMove) return "Your move";
   return `${game.turnDisplayName ?? "Opponent"} to move`;
 }
 
 function turnMessage(game: PublicGameDto) {
-  if (game.status === "waiting") return `Share code ${game.code} with another player.`;
-  if (game.status === "finished") return "Start a new game when you are ready.";
-  if (!game.constraintView) return "Select any open cell.";
-  return `Select from ${game.constraintView.axis} ${game.constraintView.index + 1}.`;
+  if (game.status === "waiting") return `Share battle code ${game.code}.`;
+  if (game.status === "finished") return "Run it back when you are ready.";
+  if (!game.constraintView) return "Claim any open tile.";
+  return `Claim ${game.constraintView.axis} ${game.constraintView.index + 1}.`;
 }
 
 function cellLabel(value: number | null, row: number, col: number, legal: boolean, last: boolean) {

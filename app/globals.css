@@ -138,6 +138,23 @@ select {
   gap: 8px;
 }
 
+.mode-grid button {
+  min-height: 58px;
+  border-radius: 14px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  box-shadow:
+    inset 1px 1px 1px color-mix(in srgb, white 16%, transparent),
+    inset -2px -2px 8px color-mix(in srgb, black 22%, transparent),
+    0 10px 22px color-mix(in srgb, var(--gds-vibe-glow) 26%, transparent);
+}
+
+.mode-grid button[aria-pressed="true"],
+.mode-grid button[data-active="true"] {
+  background: linear-gradient(135deg, var(--gds-vibe-primary), var(--gds-vibe-accent));
+  color: var(--gds-vibe-text);
+}
+
 .board-grid {
   display: grid;
   container-type: inline-size;
@@ -488,7 +505,7 @@ select {
 
 @media (max-width: 420px) {
   .mode-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .board-grid {
@@ -639,12 +656,6 @@ select {
 
 .setup-title h2 {
   font-size: clamp(2rem, 5vw, 3rem);
-}
-
-.size-row {
-  padding: 4px;
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--gds-vibe-surface) 62%, transparent);
 }
 
 .preview-board {
