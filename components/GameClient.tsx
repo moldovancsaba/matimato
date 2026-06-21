@@ -18,6 +18,7 @@ import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { resolveScreen, type GameScreen, type SetupScreen } from "@/lib/game/screen-state";
 import { addToast, dismissToast, type GameToast, type GameToastTone } from "@/lib/game/toasts";
+import { toResultView } from "@/lib/game/result-view";
 import type { PublicGameDto } from "@/lib/game/types";
 import { trackEvent } from "@/lib/client/analytics";
 
@@ -39,6 +40,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const [toasts, setToasts] = useState<GameToast[]>([]);
   const toastTimers = useRef<number[]>([]);
   const lastSyncToastAt = useRef(0);
+  const trackedResultGameId = useRef<string | null>(null);
 
   const dismiss = useCallback((id: string) => {
     setToasts((current) => dismissToast(current, id));
@@ -167,6 +169,13 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const legalKey = useMemo(() => new Set(game?.legalCellsView.map((cell) => `${cell.viewRow}:${cell.viewCol}`) ?? []), [game]);
   const inviteUrl = game && typeof window !== "undefined" ? `${window.location.origin}/play/${game.id}` : "";
   const currentScreen = resolveScreen(game, screen);
+  const resultView = game ? toResultView(game) : null;
+
+  useEffect(() => {
+    if (currentScreen !== "result" || !game || !resultView || trackedResultGameId.current === game.id) return;
+    trackedResultGameId.current = game.id;
+    trackEvent({ action: "match_finished", category: "game", label: `${game.mode}:${resultView.outcome}`, value: game.boardSize });
+  }, [currentScreen, game, resultView]);
 
   async function copyInviteLink() {
     if (!inviteUrl) return;
@@ -202,6 +211,22 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       const message = error instanceof Error ? error.message : "Could not leave lobby.";
       setApi({ loading: false, error: message });
       pushToast({ tone: "error", title: "Leave failed", message });
+    }
+  }
+
+  async function shareResult() {
+    if (!game) return;
+    const view = toResultView(game);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `Matimato ${view.title}`, text: view.shareText });
+      } else {
+        await navigator.clipboard?.writeText(view.shareText);
+      }
+      pushToast({ tone: "success", title: "Result ready to share", message: "Your match summary is copied." });
+      trackEvent({ action: "share_result", category: "sharing", label: game.mode });
+    } catch {
+      pushToast({ tone: "error", title: "Share blocked", message: "Copy or share was cancelled by the browser." });
     }
   }
 
@@ -353,10 +378,10 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
               </div>
             ) : null}
 
-            {currentScreen === "result" && game ? (
+            {currentScreen === "result" && game && resultView ? (
               <div className="result-screen">
-                <div className="hero-kicker">{resultTitle(game)}</div>
-                <h1>{resultHeadline(game)}</h1>
+                <div className="hero-kicker">{resultView.title}</div>
+                <h1>{resultView.headline}</h1>
                 <div className="score-grid" aria-label="Final score">
                   {game.players.map((player) => (
                     <div className="score-card" key={player.playerId}>
@@ -371,6 +396,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 <Group className="result-actions" gap="xs">
                   <Button
                     onClick={() => {
+                      setMode(game.mode);
                       setGame(null);
                       setScreen("setup");
                       window.history.replaceState(null, "", "/");
@@ -387,6 +413,9 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                     }}
                   >
                     Home
+                  </Button>
+                  <Button variant="subtle" onClick={shareResult}>
+                    Share result
                   </Button>
                 </Group>
               </div>
@@ -456,7 +485,10 @@ function screenAnnouncement(screen: GameScreen, game: PublicGameDto | null) {
   if (screen === "home") return "Home screen.";
   if (screen === "setup") return "Choose game mode screen.";
   if (screen === "battleLobby") return "Battle lobby. Waiting for rival.";
-  if (screen === "result") return game ? `${resultTitle(game)}. ${resultHeadline(game)}.` : "Result screen.";
+  if (screen === "result") {
+    const result = game ? toResultView(game) : null;
+    return result ? `${result.title}. ${result.headline}.` : "Result screen.";
+  }
   return game ? `${turnTitle(game)}. ${turnMessage(game)}` : "Match screen.";
 }
 
@@ -504,20 +536,4 @@ function turnMessage(game: PublicGameDto) {
 function cellLabel(value: number | null, row: number, col: number, legal: boolean, last: boolean) {
   const state = value === null ? "claimed" : `${value > 0 ? "positive" : "negative"} ${Math.abs(value)}`;
   return `Row ${row + 1}, column ${col + 1}, ${state}${legal ? ", legal move" : ""}${last ? ", last move" : ""}`;
-}
-
-function resultTitle(game: PublicGameDto) {
-  if (game.status === "abandoned") return "Lobby closed";
-  if (game.status === "expired") return "Battle expired";
-  if (game.terminal?.draw) return "Draw";
-  if (!game.viewer) return "Match over";
-  return game.winnerPlayerId === game.viewer.playerId ? "Victory" : "Defeat";
-}
-
-function resultHeadline(game: PublicGameDto) {
-  if (game.status === "abandoned") return "This invite is no longer active.";
-  if (game.status === "expired") return "Start a fresh battle.";
-  if (game.terminal?.draw) return "Both sides held the grid.";
-  if (!game.viewer) return "The board is closed.";
-  return game.winnerPlayerId === game.viewer.playerId ? "You owned the grid." : "Your rival took the grid.";
 }
