@@ -47,7 +47,7 @@ Set `MONGODB_URI` in Vercel for production persistence. Without it, local develo
 - Server errors return safe public messages with request IDs. Runtime logs redact MongoDB URIs, bearer values, tokens, and secret-like query values.
 - The Next.js config applies CSP, frame denial, content-type protection, referrer policy, and restricted browser permissions.
 - The app is installable through `app/manifest.ts`, but no service worker is registered. `PwaGuard` unregisters legacy workers and clears old Matimato caches to prevent stale game sessions.
-- Mobile/PWA layout uses `svh`, safe-area padding, compact in-game controls, and board-first mobile ordering.
+- Mobile/PWA layout is treated as a locked game canvas, not a scrolling webpage. The current visual direction combines Sudoku-like board clarity with compact game-dashboard HUD modules and a thumb-zone action dock.
 
 ## Verification
 

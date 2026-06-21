@@ -188,7 +188,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 <Button variant="secondary" onClick={() => joinGame()} disabled={!joinCode || api.loading}>Join game</Button>
               </Stack>
             ) : (
-              <Stack gap="md">
+              <div className="play-controls">
                 {!game.viewer && game.status === "waiting" ? (
                   <Stack gap="sm">
                     <InlineAlert
@@ -245,7 +245,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                     <span className="dock-label">Refresh</span>
                   </Button>
                 </Group>
-              </Stack>
+              </div>
             )}
           </Stack>
         </section>
