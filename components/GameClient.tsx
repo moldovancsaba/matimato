@@ -16,6 +16,7 @@ import {
 import { IconPlus, IconRefresh } from "@tabler/icons-react";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { resolveScreen, type GameScreen, type SetupScreen } from "@/lib/game/screen-state";
 import type { PublicGameDto } from "@/lib/game/types";
 import { trackEvent } from "@/lib/client/analytics";
 
@@ -24,14 +25,13 @@ type ApiState = {
   error?: string;
 };
 
-type ScreenState = "welcome" | "setup";
 const BOARD_SIZE = 9;
 
 export default function GameClient({ initialGameId }: { initialGameId?: string }) {
   const [mode, setMode] = useState<"pvp" | "ai">("pvp");
   const [displayName, setDisplayName] = useState("");
   const [joinCode, setJoinCode] = useState("");
-  const [screen, setScreen] = useState<ScreenState>(initialGameId ? "setup" : "welcome");
+  const [screen, setScreen] = useState<SetupScreen>(initialGameId ? "setup" : "home");
   const [game, setGame] = useState<PublicGameDto | null>(null);
   const [api, setApi] = useState<ApiState>({ loading: false });
   const [syncFailures, setSyncFailures] = useState(0);
@@ -125,7 +125,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
 
   const legalKey = useMemo(() => new Set(game?.legalCellsView.map((cell) => `${cell.viewRow}:${cell.viewCol}`) ?? []), [game]);
   const inviteUrl = game && typeof window !== "undefined" ? `${window.location.origin}/play/${game.id}` : "";
-  const surfaceState = game ? "game" : screen;
+  const currentScreen = resolveScreen(game, screen);
 
   async function copyInviteLink() {
     if (!inviteUrl) return;
@@ -139,7 +139,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   }
 
   return (
-    <main className={`app-stage screen-${surfaceState}`}>
+    <main className={`app-stage screen-${currentScreen}`}>
       <div className={`game-shell ${game ? "is-playing" : "is-setup"}`}>
         <section className="game-panel" aria-label="Game controls">
           <Stack gap="sm">
@@ -155,6 +155,10 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 {game?.status ?? "ready"}
               </StatusBadge>
             </Group>
+
+            <VisuallyHidden aria-live="polite">
+              {screenAnnouncement(currentScreen, game)}
+            </VisuallyHidden>
 
             {api.error ? (
               <InlineAlert severity="error" title="Action failed" message={api.error} />
@@ -172,7 +176,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
               <InlineAlert severity="success" title="Notice" message={notice} />
             ) : null}
 
-            {!game && screen === "welcome" ? (
+            {currentScreen === "home" ? (
               <div className="welcome-screen">
                 <div className="hero-kicker">9x9 score chase</div>
                 <h1>Own the grid.</h1>
@@ -186,7 +190,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
               </div>
             ) : null}
 
-            {!game && screen === "setup" ? (
+            {currentScreen === "setup" ? (
               <Stack gap="sm">
                 <div className="setup-title">
                   <h2>Choose mode</h2>
@@ -208,7 +212,51 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
               </Stack>
             ) : null}
 
-            {game ? (
+            {currentScreen === "battleLobby" && game ? (
+              <Stack gap="sm">
+                <div className="setup-title">
+                  <h2>{game.viewer ? "Battle lobby" : "Join battle"}</h2>
+                  <p>{game.viewer ? "Share the code and wait for your rival." : "Enter your tag and step into the arena."}</p>
+                </div>
+
+                {!game.viewer ? (
+                  <>
+                    <TextInput
+                      label="Player tag"
+                      placeholder="Enter your tag"
+                      value={displayName}
+                      onChange={(event) => setDisplayName(event.currentTarget.value)}
+                    />
+                    <Button onClick={() => joinGame(game.code)} loading={api.loading}>
+                      Join battle
+                    </Button>
+                  </>
+                ) : null}
+
+                {game.viewer ? (
+                  <>
+                    <TextInput readOnly label="Battle code" value={game.code} />
+                    <TextInput readOnly label="Invite link" value={inviteUrl} />
+                    <Button variant="secondary" onClick={copyInviteLink}>
+                      Copy battle link
+                    </Button>
+                  </>
+                ) : null}
+
+                <Button
+                  variant="subtle"
+                  onClick={() => {
+                    setGame(null);
+                    setScreen("home");
+                    window.history.replaceState(null, "", "/");
+                  }}
+                >
+                  Leave lobby
+                </Button>
+              </Stack>
+            ) : null}
+
+            {currentScreen === "match" && game ? (
               <div className="play-controls">
                 <div className="play-hud" aria-live="polite">
                   <div className="turn-strip" data-active={game.viewer?.canMove ? "true" : "false"} role="status">
@@ -227,35 +275,6 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                     ))}
                   </div>
                 </div>
-
-                {!game.viewer && game.status === "waiting" ? (
-                  <Stack gap="sm">
-                    <InlineAlert
-                      severity="info"
-                      title="Join this table"
-                      message="Enter your player name and join from this invite link."
-                    />
-                      <TextInput
-                      label="Player tag"
-                      placeholder="Enter your tag"
-                      value={displayName}
-                      onChange={(event) => setDisplayName(event.currentTarget.value)}
-                    />
-                    <Button onClick={() => joinGame(game.code)} loading={api.loading}>
-                      Join battle
-                    </Button>
-                  </Stack>
-                ) : null}
-
-                {game.mode === "pvp" && game.status === "waiting" ? (
-                  <Stack gap="xs">
-                    <TextInput readOnly label="Battle code" value={game.code} />
-                    <TextInput readOnly label="Invite link" value={inviteUrl} />
-                    <Button variant="secondary" onClick={copyInviteLink}>
-                      Copy battle link
-                    </Button>
-                  </Stack>
-                ) : null}
 
                 <Group className="action-dock" gap="xs">
                   <Button
@@ -278,11 +297,51 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 </Group>
               </div>
             ) : null}
+
+            {currentScreen === "result" && game ? (
+              <div className="result-screen">
+                <div className="hero-kicker">{resultTitle(game)}</div>
+                <h1>{resultHeadline(game)}</h1>
+                <div className="score-grid" aria-label="Final score">
+                  {game.players.map((player) => (
+                    <div className="score-card" key={player.playerId}>
+                      <BodyText>{player.displayName}</BodyText>
+                      <div className="score-meta">
+                        <span className="score-value">{player.score}</span>
+                        <Badge>{player.side}</Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Group className="result-actions" gap="xs">
+                  <Button
+                    onClick={() => {
+                      setGame(null);
+                      setScreen("setup");
+                      window.history.replaceState(null, "", "/");
+                    }}
+                  >
+                    Run it back
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setGame(null);
+                      setScreen("home");
+                      window.history.replaceState(null, "", "/");
+                    }}
+                  >
+                    Home
+                  </Button>
+                </Group>
+              </div>
+            ) : null}
           </Stack>
         </section>
 
-        <section className="board-panel" aria-label="Matimato board">
-          {game ? (
+        {currentScreen === "match" || currentScreen === "home" || currentScreen === "setup" ? (
+          <section className="board-panel" aria-label="Matimato board">
+            {currentScreen === "match" && game ? (
             <>
               <VisuallyHidden aria-live="polite">
                 {turnTitle(game)}. {turnMessage(game)}
@@ -323,17 +382,26 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 )}
               </div>
             </>
-          ) : (
-            <div className="preview-board" aria-hidden="true">
+            ) : (
+              <div className="preview-board" aria-hidden="true">
               {[8, -2, 4, -7, 1, 3, -5, 9, 6, -1, 7, 2, -8, 5, 4, -3, 8, 1, -6, 9, 2, -4, 7, 3, -9].map((value, index) => (
                 <span key={index} data-sign={value > 0 ? "positive" : "negative"}>{Math.abs(value)}</span>
               ))}
-            </div>
-          )}
-        </section>
+              </div>
+            )}
+          </section>
+        ) : null}
       </div>
     </main>
   );
+}
+
+function screenAnnouncement(screen: GameScreen, game: PublicGameDto | null) {
+  if (screen === "home") return "Home screen.";
+  if (screen === "setup") return "Choose game mode screen.";
+  if (screen === "battleLobby") return "Battle lobby. Waiting for rival.";
+  if (screen === "result") return game ? `${resultTitle(game)}. ${resultHeadline(game)}.` : "Result screen.";
+  return game ? `${turnTitle(game)}. ${turnMessage(game)}` : "Match screen.";
 }
 
 function turnTitle(game: PublicGameDto) {
@@ -356,4 +424,16 @@ function turnMessage(game: PublicGameDto) {
 function cellLabel(value: number | null, row: number, col: number, legal: boolean, last: boolean) {
   const state = value === null ? "claimed" : `${value > 0 ? "positive" : "negative"} ${Math.abs(value)}`;
   return `Row ${row + 1}, column ${col + 1}, ${state}${legal ? ", legal move" : ""}${last ? ", last move" : ""}`;
+}
+
+function resultTitle(game: PublicGameDto) {
+  if (game.terminal?.draw) return "Draw";
+  if (!game.viewer) return "Match over";
+  return game.winnerPlayerId === game.viewer.playerId ? "Victory" : "Defeat";
+}
+
+function resultHeadline(game: PublicGameDto) {
+  if (game.terminal?.draw) return "Both sides held the grid.";
+  if (!game.viewer) return "The board is closed.";
+  return game.winnerPlayerId === game.viewer.playerId ? "You owned the grid." : "Your rival took the grid.";
 }

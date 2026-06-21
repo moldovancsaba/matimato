@@ -34,7 +34,7 @@ This plan refines Matimato from MVP into a modern competitive mobile board game.
 
 ## Screen Architecture
 
-The app should move through explicit screen states instead of rendering everything above the same board. This prevents the lobby, invite form, notices, and active match HUD from pushing the board around.
+The app moves through explicit screen states instead of rendering everything above the same board: `home`, `setup`, `battleLobby`, `match`, and `result`. This prevents the lobby, invite form, notices, and active match HUD from pushing the board around.
 
 ### Home Screen
 
@@ -51,6 +51,7 @@ The app should move through explicit screen states instead of rendering everythi
 - Copy feedback: show non-layout-shifting toast such as "Battle link copied" for 2 seconds; keep screen-reader live region text.
 - Error states: clipboard blocked, code expired, rival already joined, network retry.
 - Operational behavior: lobby polls game status; when rival joins, transition to Match Screen.
+- Current implementation: lobby is now a standalone screen and never renders the board while waiting.
 
 ### Match Screen
 
@@ -59,6 +60,7 @@ The app should move through explicit screen states instead of rendering everythi
 - Rules: no invite inputs, no setup fields, no large notices, no history cards on this screen.
 - Feedback: moves animate on the selected tile; invalid/stale move feedback appears as a toast that does not resize the board.
 - Accessibility: turn state uses polite live region; legal cells have descriptive labels; color-only polarity has accessible text in labels.
+- Current implementation: active matches render only HUD, board, and gameplay actions.
 
 ### Result Screen
 
@@ -66,6 +68,7 @@ The app should move through explicit screen states instead of rendering everythi
 - UI: victory/draw/loss state, final scores, XP, streak, rank delta, rematch, share result, home.
 - Recovery: if result write fails, show saved-later state and retry in the background.
 - Analytics: match finished, rematch tapped, result shared.
+- Current implementation: terminal games resolve to a dedicated result screen with outcome, final scores, run-it-back, and home actions.
 
 ### Profile Screen
 

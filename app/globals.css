@@ -512,7 +512,7 @@ select {
     width: min(100%, 97vw, calc(100dvh - 240px));
   }
 
-  .screen-welcome .welcome-screen h1,
+  .screen-home .welcome-screen h1,
   .screen-setup .setup-title h2 {
     font-size: clamp(2rem, 9.5vw, 2.95rem);
   }
@@ -578,12 +578,12 @@ select {
   animation: surface-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.screen-welcome .game-shell,
+.screen-home .game-shell,
 .screen-setup .game-shell {
   grid-template-columns: minmax(290px, 420px) minmax(280px, 1fr);
 }
 
-.screen-welcome .game-panel,
+.screen-home .game-panel,
 .screen-setup .game-panel {
   background: color-mix(in srgb, var(--gds-vibe-shell) 94%, black);
   color: var(--gds-vibe-text);
@@ -591,7 +591,7 @@ select {
   box-shadow: 0 22px 54px color-mix(in srgb, var(--gds-vibe-glow) 46%, transparent);
 }
 
-.screen-welcome .board-panel,
+.screen-home .board-panel,
 .screen-setup .board-panel {
   background: color-mix(in srgb, var(--gds-vibe-surface) 52%, transparent);
   border-color: color-mix(in srgb, var(--gds-vibe-border) 80%, transparent);
@@ -600,7 +600,7 @@ select {
     0 24px 70px color-mix(in srgb, var(--gds-vibe-glow) 34%, transparent);
 }
 
-.screen-welcome .brand-mark,
+.screen-home .brand-mark,
 .screen-setup .brand-mark {
   background: linear-gradient(135deg, var(--gds-vibe-primary), var(--gds-vibe-accent));
   color: var(--gds-vibe-text);
@@ -629,6 +629,63 @@ select {
   color: var(--gds-vibe-muted);
   font-size: clamp(1rem, 2vw, 1.12rem);
   line-height: 1.35;
+}
+
+.screen-battleLobby .game-shell,
+.screen-result .game-shell {
+  grid-template-columns: minmax(280px, 560px);
+  grid-template-areas: "controls";
+  justify-content: center;
+}
+
+.screen-battleLobby .game-panel,
+.screen-result .game-panel {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gds-vibe-primary) 12%, transparent), transparent 46%),
+    color-mix(in srgb, var(--gds-vibe-shell) 94%, black);
+  border-color: color-mix(in srgb, var(--gds-vibe-primary) 42%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 12%, transparent),
+    0 28px 72px color-mix(in srgb, var(--gds-vibe-glow) 42%, transparent);
+}
+
+.screen-battleLobby .game-shell.is-playing .game-panel,
+.screen-result .game-shell.is-playing .game-panel {
+  align-self: stretch;
+  max-height: none;
+  overflow: auto;
+}
+
+.screen-battleLobby .game-shell,
+.screen-result .game-shell,
+.screen-battleLobby .game-panel,
+.screen-result .game-panel {
+  min-height: 0;
+}
+
+.result-screen {
+  display: grid;
+  gap: 18px;
+  min-height: min(580px, 72dvh);
+  align-content: end;
+  padding: clamp(10px, 3vw, 28px) 0 4px;
+}
+
+.result-screen h1 {
+  margin: 0;
+  max-width: 9ch;
+  font-size: clamp(2.6rem, 9vw, 5.2rem);
+  line-height: 0.94;
+  letter-spacing: 0;
+}
+
+.result-actions {
+  width: 100%;
+}
+
+.result-actions button {
+  min-width: 0;
+  flex: 1 1 0;
 }
 
 .hero-kicker {
@@ -767,7 +824,7 @@ select {
 }
 
 @media (max-width: 860px) {
-  .screen-welcome .game-shell,
+  .screen-home .game-shell,
   .screen-setup .game-shell {
     grid-template-columns: 1fr;
     grid-template-rows: minmax(0, 1fr) auto;
@@ -776,14 +833,14 @@ select {
       "controls";
   }
 
-  .screen-welcome .game-panel,
+  .screen-home .game-panel,
   .screen-setup .game-panel {
     padding: 14px;
     border-radius: 28px;
     overflow: auto;
   }
 
-  .screen-welcome .board-panel,
+  .screen-home .board-panel,
   .screen-setup .board-panel {
     padding: 8px;
     align-content: center;
@@ -797,6 +854,24 @@ select {
 
   .welcome-screen h1 {
     font-size: clamp(2.5rem, 12vw, 4.2rem);
+  }
+
+  .screen-battleLobby .game-shell,
+  .screen-result .game-shell {
+    grid-template-columns: 1fr;
+    grid-template-areas: "controls";
+    align-content: end;
+  }
+
+  .screen-battleLobby .game-panel,
+  .screen-result .game-panel {
+    padding: 14px;
+    border-radius: 28px;
+    overflow: auto;
+  }
+
+  .result-screen {
+    min-height: min(560px, calc(100dvh - 44px));
   }
 
   .preview-board {
