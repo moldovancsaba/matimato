@@ -51,7 +51,7 @@ The app moves through explicit screen states instead of rendering everything abo
 - Copy feedback: show non-layout-shifting toast such as "Battle link copied" for 2 seconds; keep screen-reader live region text.
 - Error states: clipboard blocked, code expired, rival already joined, network retry.
 - Operational behavior: lobby polls game status; when rival joins, transition to Match Screen.
-- Current implementation: lobby is now a standalone screen and never renders the board while waiting. Copy success/failure feedback uses a non-layout-shifting toast layer.
+- Current implementation: lobby is now a standalone screen and never renders the board while waiting. Copy success/failure feedback uses a non-layout-shifting toast layer. Host leave/cancel is server-backed and abandons the waiting invite safely.
 
 ### Match Screen
 

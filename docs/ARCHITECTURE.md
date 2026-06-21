@@ -36,6 +36,7 @@ Matimato is productized as a fixed 9x9 game. The client no longer exposes board-
 - `MONGODB_URI` enables MongoDB persistence.
 - `MATIMATO_USE_MEMORY_STORE=1` enables local/dev fallback.
 - Move writes use version checks and return `409 VERSION_CONFLICT` for stale clients.
+- Waiting BATTLE lobbies can be abandoned through the credential-protected forfeit route; this closes the invite without creating a one-player victory.
 - API responses are `no-store` to avoid stale board/session state in browsers or PWA surfaces.
 - Server logs sanitize upstream messages before writing runtime diagnostics.
 - Rate limits protect create, join, move, and forfeit routes from simple abuse.
