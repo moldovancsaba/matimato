@@ -34,6 +34,7 @@ export function toPublicGameDto(state: GameState, viewerPlayerId?: string): Publ
     boardView: boardToView(side, state.board),
     players: state.players.map((player) => ({
       playerId: player.playerId,
+      profileId: player.profileId,
       displayName: player.displayName,
       side: player.side,
       kind: player.kind,

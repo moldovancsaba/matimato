@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { joinGameByCode } from "@/lib/server/game-service";
 import { errorResponse, successResponse } from "@/lib/server/http";
+import { resolveProfile } from "@/lib/server/profile-service";
 import { assertRateLimit } from "@/lib/server/rate-limit";
 import { getCredentialCookieName } from "@/lib/server/session";
 
@@ -13,13 +14,16 @@ const joinSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     assertRateLimit(request, { route: "/api/games/join", limit: 30, windowMs: 60_000 });
-    const result = await joinGameByCode(joinSchema.parse(await request.json()));
+    const body = joinSchema.parse(await request.json());
+    const profile = await resolveProfile(request, body.displayName);
+    const result = await joinGameByCode({ ...body, profileId: profile.profileId });
     return successResponse(
       { game: result.game },
       {
         credential: result.credential,
         gameId: result.game.id,
-        existingCredentialCookie: request.cookies.get(getCredentialCookieName())?.value
+        existingCredentialCookie: request.cookies.get(getCredentialCookieName())?.value,
+        profileCredential: profile.credential
       }
     );
   } catch (error) {

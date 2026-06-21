@@ -145,6 +145,8 @@ Acceptance criteria:
 - Profile stats update after completed SOLO and BATTLE matches.
 - Profile screen works offline from cached last-known public stats without exposing secrets.
 
+Current implementation: first-time players receive an anonymous HTTP-only profile session, profile-backed game participants, editable player tag, avatar color, public stats, XP, level, and idempotent summary-driven aggregate updates. The Profile tab now renders a real player card screen with loading, save, refresh, and toast feedback.
+
 ## Phase 3: Game History
 
 - Persist completed match summaries separately from live game documents.

@@ -3,6 +3,7 @@ import type { GameState, PlayerSide } from "./types";
 
 export type MatchSummaryParticipant = {
   playerId: string;
+  profileId?: string;
   displayName: string;
   side: PlayerSide;
   kind: "human" | "ai";
@@ -36,6 +37,7 @@ export function toMatchSummary(game: GameState, now = new Date()): MatchSummary 
     boardSize: 9,
     participants: game.players.map((player) => ({
       playerId: player.playerId,
+      ...(player.profileId ? { profileId: player.profileId } : {}),
       displayName: player.displayName,
       side: player.side,
       kind: player.kind,
