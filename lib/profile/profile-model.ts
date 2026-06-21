@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import type { MatchSummary } from "@/lib/game/match-summary";
+import { applyProgression } from "@/lib/progression/progression-model";
 import type { Profile, ProfileStats } from "./types";
 
 const AVATAR_COLORS = ["#ff6b3d", "#f43f8f", "#f59e0b", "#06b6d4", "#84cc16", "#a855f7"] as const;
@@ -22,6 +23,8 @@ export function createProfile(input: { id: string; tokenHash: string; displayTag
     stats: emptyStats(),
     xp: 0,
     level: 1,
+    missions: [],
+    badges: [],
     appliedSummaryIds: []
   };
 }
@@ -54,12 +57,10 @@ export function applySummaryToProfile(profile: Profile, summary: MatchSummary): 
     bestScore: Math.max(profile.stats.bestScore, participant.score),
     currentStreak: won ? profile.stats.currentStreak + 1 : draw ? profile.stats.currentStreak : 0
   };
-  const xp = profile.xp + 20 + (won ? 30 : draw ? 10 : 0);
+  const progressed = applyProgression({ ...profile, stats }, summary, participant);
   return {
-    ...profile,
+    ...progressed,
     stats,
-    xp,
-    level: Math.floor(xp / 100) + 1,
     lastActiveAt: summary.completedAt,
     appliedSummaryIds: [...profile.appliedSummaryIds, summary.gameId]
   };

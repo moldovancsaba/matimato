@@ -683,6 +683,29 @@ select {
   line-height: 1;
 }
 
+.mission-list {
+  display: grid;
+  gap: 8px;
+}
+
+.mission-card,
+.reward-summary {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--gds-vibe-accent) 34%, transparent);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--gds-vibe-primary) 14%, transparent), color-mix(in srgb, var(--gds-vibe-accent) 12%, transparent)),
+    color-mix(in srgb, var(--gds-vibe-surface) 76%, transparent);
+}
+
+.mission-card span,
+.reward-summary span {
+  color: var(--gds-vibe-muted);
+  line-height: 1.25;
+}
+
 .screen-challenges .game-shell,
 .screen-leaderboard .game-shell,
 .screen-history .game-shell,
