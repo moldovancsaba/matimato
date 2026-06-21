@@ -25,7 +25,7 @@ type ApiState = {
 export default function GameClient({ initialGameId }: { initialGameId?: string }) {
   const [mode, setMode] = useState<"pvp" | "ai">("pvp");
   const [boardSize, setBoardSize] = useState(5);
-  const [displayName, setDisplayName] = useState("Player");
+  const [displayName, setDisplayName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [game, setGame] = useState<PublicGameDto | null>(null);
   const [api, setApi] = useState<ApiState>({ loading: false });
@@ -61,7 +61,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       const response = await fetch("/api/games", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ mode, boardSize, displayName, difficulty: "standard" })
+        body: JSON.stringify({ mode, boardSize, displayName: displayName.trim() || undefined, difficulty: "standard" })
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "Could not create game.");
@@ -74,13 +74,13 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     }
   }
 
-  async function joinGame() {
+  async function joinGame(code = joinCode) {
     setApi({ loading: true });
     try {
       const response = await fetch("/api/games/join", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ code: joinCode, displayName })
+        body: JSON.stringify({ code, displayName: displayName.trim() || undefined })
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "Could not join game.");
@@ -148,7 +148,12 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
 
             {!game ? (
               <Stack gap="sm">
-                <TextInput label="Display name" value={displayName} onChange={(event) => setDisplayName(event.currentTarget.value)} />
+                <TextInput
+                  label="Display name"
+                  placeholder="Player"
+                  value={displayName}
+                  onChange={(event) => setDisplayName(event.currentTarget.value)}
+                />
                 <div className="mode-grid" role="group" aria-label="Game mode">
                   <ChoiceChip label="Player to player" active={mode === "pvp"} onClick={() => setMode("pvp")} />
                   <ChoiceChip label="Solo AI" active={mode === "ai"} onClick={() => setMode("ai")} />
@@ -160,10 +165,29 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 </Group>
                 <Button onClick={createGame} loading={api.loading}>Create game</Button>
                 <TextInput label="Invite code" value={joinCode} onChange={(event) => setJoinCode(event.currentTarget.value.toUpperCase())} />
-                <Button variant="secondary" onClick={joinGame} disabled={!joinCode || api.loading}>Join game</Button>
+                <Button variant="secondary" onClick={() => joinGame()} disabled={!joinCode || api.loading}>Join game</Button>
               </Stack>
             ) : (
               <Stack gap="md">
+                {!game.viewer && game.status === "waiting" ? (
+                  <Stack gap="sm">
+                    <InlineAlert
+                      severity="info"
+                      title="Join this table"
+                      message="Enter your player name and join from this invite link."
+                    />
+                    <TextInput
+                      label="Display name"
+                      placeholder="Player 2"
+                      value={displayName}
+                      onChange={(event) => setDisplayName(event.currentTarget.value)}
+                    />
+                    <Button onClick={() => joinGame(game.code)} loading={api.loading}>
+                      Join this game
+                    </Button>
+                  </Stack>
+                ) : null}
+
                 <div className="score-grid">
                   {game.players.map((player) => (
                     <div className="score-card" key={player.playerId} aria-current={game.turnPlayerId === player.playerId ? "step" : undefined}>

@@ -28,6 +28,24 @@ export async function ensureIndexes() {
   await collection.createIndex({ updatedAt: -1 });
 }
 
+export async function checkDatabaseReady() {
+  const config = getRuntimeConfig();
+  if (config.useMemoryStore) return { ok: true, db: "memory" as const };
+  try {
+    const collection = await getCollection();
+    await collection.db.command({ ping: 1 });
+    return { ok: true, db: "connected" as const };
+  } catch (error) {
+    console.error(JSON.stringify({
+      level: "error",
+      route: "/api/health",
+      code: "DATABASE_HEALTH_FAILED",
+      message: error instanceof Error ? error.message : "Unknown database health failure"
+    }));
+    return { ok: false, db: "down" as const };
+  }
+}
+
 const memoryStore: GameStore = {
   async create(game) {
     memoryGames.set(game.id, structuredClone(game));
