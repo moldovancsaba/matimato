@@ -34,6 +34,8 @@ Completed games write an immutable `match_summaries` record keyed by `gameId`. S
 
 Anonymous profiles are stored separately from game credentials. The `matimato_profile` cookie contains a profile ID and random token, while the profile document stores only the token hash, public player card fields, aggregate stats, XP, level, and applied summary IDs for idempotency.
 
+Game history is a public projection of `match_summaries` for the current anonymous profile. `GET /api/history` filters by current profile ID, optional SOLO/BATTLE mode, cursor, and limit, then returns result cards without opponent private profile metadata or session credentials.
+
 ## Operational Behavior
 
 - `GET /api/health` reports runtime readiness without exposing secrets.

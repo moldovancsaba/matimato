@@ -13,6 +13,7 @@ type GameStore = {
   update(game: GameState, expectedVersion?: number): Promise<GameState>;
   upsertMatchSummary(summary: MatchSummary): Promise<void>;
   getMatchSummary(gameId: string): Promise<MatchSummary | null>;
+  listMatchSummariesByProfile(input: { profileId: string; mode?: "ai" | "pvp"; cursor?: string; limit: number }): Promise<{ summaries: MatchSummary[]; nextCursor: string | null }>;
   createProfile(profile: Profile): Promise<Profile>;
   getProfile(id: string): Promise<Profile | null>;
   updateProfile(profile: Profile): Promise<Profile>;
@@ -95,6 +96,16 @@ const memoryStore: GameStore = {
     const summary = memorySummaries.get(gameId);
     return summary ? structuredClone(summary) : null;
   },
+  async listMatchSummariesByProfile(input) {
+    const offset = decodeOffset(input.cursor);
+    const filtered = [...memorySummaries.values()]
+      .filter((summary) => summary.participants.some((participant) => participant.profileId === input.profileId))
+      .filter((summary) => !input.mode || summary.mode === input.mode)
+      .sort((a, b) => b.completedAt.localeCompare(a.completedAt));
+    const summaries = filtered.slice(offset, offset + input.limit).map((summary) => structuredClone(summary));
+    const nextOffset = offset + summaries.length;
+    return { summaries, nextCursor: nextOffset < filtered.length ? encodeOffset(nextOffset) : null };
+  },
   async createProfile(profile) {
     memoryProfiles.set(profile.id, structuredClone(profile));
     return structuredClone(profile);
@@ -147,6 +158,21 @@ const mongoStore: GameStore = {
   },
   async getMatchSummary(gameId) {
     return (await getMatchSummaryCollection()).findOne({ gameId }, { projection: { _id: 0 } }) as Promise<MatchSummary | null>;
+  },
+  async listMatchSummariesByProfile(input) {
+    const offset = decodeOffset(input.cursor);
+    const query = {
+      "participants.profileId": input.profileId,
+      ...(input.mode ? { mode: input.mode } : {})
+    };
+    const summaries = await (await getMatchSummaryCollection())
+      .find(query, { projection: { _id: 0 } })
+      .sort({ completedAt: -1, gameId: 1 })
+      .skip(offset)
+      .limit(input.limit + 1)
+      .toArray();
+    const page = summaries.slice(0, input.limit);
+    return { summaries: page, nextCursor: summaries.length > input.limit ? encodeOffset(offset + page.length) : null };
   },
   async createProfile(profile) {
     await ensureIndexes();
@@ -201,4 +227,14 @@ async function getProfileCollection() {
   }
   await mongoClient.connect();
   return mongoClient.db(config.mongodbDb).collection<Profile>("profiles");
+}
+
+function encodeOffset(offset: number) {
+  return Buffer.from(String(offset)).toString("base64url");
+}
+
+function decodeOffset(cursor?: string) {
+  if (!cursor) return 0;
+  const value = Number(Buffer.from(cursor, "base64url").toString("utf8"));
+  return Number.isInteger(value) && value >= 0 ? value : 0;
 }
