@@ -13,10 +13,18 @@ import {
   TextInput,
   VisuallyHidden
 } from "@doneisbetter/gds/client";
-import { IconPlus, IconRefresh } from "@tabler/icons-react";
+import { IconBolt, IconCrown, IconHistory, IconHome, IconPlus, IconRefresh, IconSwords, IconUserCircle } from "@tabler/icons-react";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { resolveScreen, type GameScreen, type SetupScreen } from "@/lib/game/screen-state";
+import {
+  destinationToScreen,
+  resolveScreen,
+  screenToDestination,
+  shouldShowAppNav,
+  type AppDestination,
+  type GameScreen,
+  type SetupScreen
+} from "@/lib/game/screen-state";
 import { addToast, dismissToast, type GameToast, type GameToastTone } from "@/lib/game/toasts";
 import { toResultView } from "@/lib/game/result-view";
 import type { PublicGameDto } from "@/lib/game/types";
@@ -169,7 +177,17 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const legalKey = useMemo(() => new Set(game?.legalCellsView.map((cell) => `${cell.viewRow}:${cell.viewCol}`) ?? []), [game]);
   const inviteUrl = game && typeof window !== "undefined" ? `${window.location.origin}/play/${game.id}` : "";
   const currentScreen = resolveScreen(game, screen);
+  const activeDestination = screenToDestination(currentScreen);
+  const showAppNav = shouldShowAppNav(currentScreen);
   const resultView = game ? toResultView(game) : null;
+
+  function navigate(destination: AppDestination) {
+    if (currentScreen === "match") return;
+    setGame(null);
+    setScreen(destinationToScreen(destination));
+    window.history.replaceState(null, "", "/");
+    trackEvent({ action: "navigate", category: "app_shell", label: destination });
+  }
 
   useEffect(() => {
     if (currentScreen !== "result" || !game || !resultView || trackedResultGameId.current === game.id) return;
@@ -286,6 +304,10 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 <TextInput label="Battle code" value={joinCode} onChange={(event) => setJoinCode(event.currentTarget.value.toUpperCase())} />
                 <Button variant="secondary" onClick={() => joinGame()} disabled={!joinCode || api.loading}>Join battle</Button>
               </Stack>
+            ) : null}
+
+            {isFeatureScreen(currentScreen) ? (
+              <FeaturePlaceholder screen={currentScreen} onPlay={() => navigate("battle")} />
             ) : null}
 
             {currentScreen === "battleLobby" && game ? (
@@ -476,14 +498,130 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
           </section>
         ) : null}
       </div>
+      {showAppNav ? <AppNav activeDestination={activeDestination} onNavigate={navigate} /> : null}
       <GameToastLayer toasts={toasts} onDismiss={dismiss} />
     </main>
   );
 }
 
+const NAV_ITEMS: Array<{
+  destination: AppDestination;
+  label: string;
+  icon: typeof IconHome;
+}> = [
+  { destination: "home", label: "Home", icon: IconHome },
+  { destination: "battle", label: "Battle", icon: IconSwords },
+  { destination: "challenges", label: "Quests", icon: IconBolt },
+  { destination: "leaderboard", label: "Ranks", icon: IconCrown },
+  { destination: "history", label: "History", icon: IconHistory },
+  { destination: "profile", label: "Profile", icon: IconUserCircle }
+];
+
+function AppNav({ activeDestination, onNavigate }: { activeDestination: AppDestination | null; onNavigate: (destination: AppDestination) => void }) {
+  return (
+    <nav className="app-bottom-nav" aria-label="Game navigation">
+      {NAV_ITEMS.map((item) => {
+        const Icon = item.icon;
+        const active = activeDestination === item.destination;
+        return (
+          <button
+            key={item.destination}
+            type="button"
+            className="app-nav-button"
+            data-active={active}
+            aria-current={active ? "page" : undefined}
+            onClick={() => onNavigate(item.destination)}
+          >
+            <Icon aria-hidden="true" size={20} stroke={2.25} />
+            <span>{item.label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+function isFeatureScreen(screen: GameScreen): screen is "challenges" | "leaderboard" | "history" | "profile" {
+  return screen === "challenges" || screen === "leaderboard" || screen === "history" || screen === "profile";
+}
+
+function FeaturePlaceholder({ screen, onPlay }: { screen: "challenges" | "leaderboard" | "history" | "profile"; onPlay: () => void }) {
+  const content = featureContent(screen);
+
+  return (
+    <div className="feature-screen">
+      <div className="hero-kicker">{content.kicker}</div>
+      <h1>{content.title}</h1>
+      <p>{content.body}</p>
+      <div className="feature-card-grid" aria-label={`${content.title} preview`}>
+        {content.cards.map((card) => (
+          <div className="feature-card" key={card.title}>
+            <Badge>{card.badge}</Badge>
+            <strong>{card.title}</strong>
+            <span>{card.copy}</span>
+          </div>
+        ))}
+      </div>
+      <Button onClick={onPlay}>Play a 9x9 battle</Button>
+    </div>
+  );
+}
+
+function featureContent(screen: "challenges" | "leaderboard" | "history" | "profile") {
+  const content = {
+    challenges: {
+      kicker: "Daily quests",
+      title: "Fresh grid rituals.",
+      body: "Daily challenge boards, streak missions, and reward claims will live here without interrupting active matches.",
+      cards: [
+        { badge: "Daily", title: "Sunset run", copy: "One shared 9x9 seed for every player." },
+        { badge: "Streak", title: "Keep heat", copy: "Finish matches to keep your return loop alive." }
+      ]
+    },
+    leaderboard: {
+      kicker: "Rank board",
+      title: "Climb the arena.",
+      body: "Weekly, all-time, SOLO, and BATTLE rankings get a dedicated screen instead of crowding the board.",
+      cards: [
+        { badge: "Weekly", title: "Pulse ladder", copy: "A clean competitive reset window." },
+        { badge: "Pinned", title: "Your rank", copy: "Your position stays visible even outside the top rows." }
+      ]
+    },
+    history: {
+      kicker: "Match memory",
+      title: "Review every duel.",
+      body: "Completed games will become compact summaries with rival, score, result, and replay context.",
+      cards: [
+        { badge: "Battle", title: "Rival log", copy: "Privacy-safe records of past battles." },
+        { badge: "Solo", title: "Score chase", copy: "Track your strongest AI runs over time." }
+      ]
+    },
+    profile: {
+      kicker: "Player card",
+      title: "Build your identity.",
+      body: "Your tag, level, XP, streak, and style rewards get a focused home that can later upgrade into full auth.",
+      cards: [
+        { badge: "XP", title: "Level path", copy: "Progression after every completed match." },
+        { badge: "Form", title: "Recent heat", copy: "Wins, draws, losses, and best scores." }
+      ]
+    }
+  } satisfies Record<typeof screen, {
+    kicker: string;
+    title: string;
+    body: string;
+    cards: Array<{ badge: string; title: string; copy: string }>;
+  }>;
+
+  return content[screen];
+}
+
 function screenAnnouncement(screen: GameScreen, game: PublicGameDto | null) {
   if (screen === "home") return "Home screen.";
   if (screen === "setup") return "Choose game mode screen.";
+  if (screen === "challenges") return "Challenges screen.";
+  if (screen === "leaderboard") return "Leaderboard screen.";
+  if (screen === "history") return "History screen.";
+  if (screen === "profile") return "Profile screen.";
   if (screen === "battleLobby") return "Battle lobby. Waiting for rival.";
   if (screen === "result") {
     const result = game ? toResultView(game) : null;
