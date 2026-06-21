@@ -225,6 +225,8 @@ Acceptance criteria:
 - Challenge attempts are ranked separately from normal SOLO matches.
 - Disabled challenge seeds stop new attempts without breaking history.
 
+Current implementation: `/api/challenges/today`, `/api/challenges/:date/start`, and `/api/challenges/:date/leaderboard` support deterministic daily 9x9 boards, challenge SOLO starts, summary-backed attempts, current-player result, share token, and ranked daily attempts. The Challenges tab now shows the daily card, current attempt, leaderboard, start, and refresh states.
+
 ## Phase 7: Operations And Safety
 
 - Add indexes for profile, match summary, leaderboard windows, and challenge seeds.

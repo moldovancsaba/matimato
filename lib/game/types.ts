@@ -48,6 +48,7 @@ export type GameState = {
   code: string;
   status: GameStatus;
   mode: GameMode;
+  challengeDate?: string;
   boardSize: number;
   board: (number | null)[][];
   players: PlayerSlot[];
@@ -78,6 +79,7 @@ export type PublicGameDto = {
   code: string;
   status: GameStatus;
   mode: GameMode;
+  challengeDate?: string;
   boardSize: number;
   boardView: (number | null)[][];
   players: PublicPlayer[];

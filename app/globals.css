@@ -706,6 +706,26 @@ select {
   line-height: 1.25;
 }
 
+.challenge-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--gds-vibe-primary) 34%, transparent);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 16% 0%, color-mix(in srgb, var(--gds-vibe-primary) 22%, transparent), transparent 36%),
+    color-mix(in srgb, var(--gds-vibe-surface) 78%, transparent);
+}
+
+.challenge-card strong {
+  font-size: 1.28rem;
+}
+
+.challenge-card span {
+  color: var(--gds-vibe-muted);
+  overflow-wrap: anywhere;
+}
+
 .screen-challenges .game-shell,
 .screen-leaderboard .game-shell,
 .screen-history .game-shell,

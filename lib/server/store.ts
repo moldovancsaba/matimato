@@ -15,6 +15,7 @@ type GameStore = {
   getMatchSummary(gameId: string): Promise<MatchSummary | null>;
   listMatchSummariesByProfile(input: { profileId: string; mode?: "ai" | "pvp"; cursor?: string; limit: number }): Promise<{ summaries: MatchSummary[]; nextCursor: string | null }>;
   listMatchSummariesForLeaderboard(input: { mode: "ai" | "pvp"; completedAfter?: string; limit: number }): Promise<MatchSummary[]>;
+  listChallengeSummaries(input: { date: string; limit: number }): Promise<MatchSummary[]>;
   createProfile(profile: Profile): Promise<Profile>;
   getProfile(id: string): Promise<Profile | null>;
   updateProfile(profile: Profile): Promise<Profile>;
@@ -115,6 +116,13 @@ const memoryStore: GameStore = {
       .slice(0, input.limit)
       .map((summary) => structuredClone(summary));
   },
+  async listChallengeSummaries(input) {
+    return [...memorySummaries.values()]
+      .filter((summary) => summary.challengeDate === input.date)
+      .sort((a, b) => b.completedAt.localeCompare(a.completedAt))
+      .slice(0, input.limit)
+      .map((summary) => structuredClone(summary));
+  },
   async createProfile(profile) {
     memoryProfiles.set(profile.id, structuredClone(profile));
     return structuredClone(profile);
@@ -190,6 +198,13 @@ const mongoStore: GameStore = {
     };
     return (await getMatchSummaryCollection())
       .find(query, { projection: { _id: 0 } })
+      .sort({ completedAt: -1 })
+      .limit(input.limit)
+      .toArray();
+  },
+  async listChallengeSummaries(input) {
+    return (await getMatchSummaryCollection())
+      .find({ challengeDate: input.date }, { projection: { _id: 0 } })
       .sort({ completedAt: -1 })
       .limit(input.limit)
       .toArray();

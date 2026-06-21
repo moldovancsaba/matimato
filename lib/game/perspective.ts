@@ -30,6 +30,7 @@ export function toPublicGameDto(state: GameState, viewerPlayerId?: string): Publ
     code: state.code,
     status: state.status,
     mode: state.mode,
+    challengeDate: state.challengeDate,
     boardSize: state.boardSize,
     boardView: boardToView(side, state.board),
     players: state.players.map((player) => ({

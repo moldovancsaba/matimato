@@ -32,6 +32,7 @@ import { trackEvent } from "@/lib/client/analytics";
 import type { PublicProfile } from "@/lib/profile/types";
 import type { HistoryItem, HistoryModeFilter } from "@/lib/history/history-model";
 import type { LeaderboardEntry, LeaderboardMode, LeaderboardPeriod } from "@/lib/leaderboard/leaderboard-model";
+import type { ChallengeAttempt, DailyChallenge } from "@/lib/challenges/challenge-model";
 
 type ApiState = {
   loading: boolean;
@@ -59,6 +60,10 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const [leaderboardMode, setLeaderboardMode] = useState<LeaderboardMode>("battle");
   const [leaderboardPeriod, setLeaderboardPeriod] = useState<LeaderboardPeriod>("weekly");
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [dailyChallenge, setDailyChallenge] = useState<DailyChallenge | null>(null);
+  const [challengeAttempts, setChallengeAttempts] = useState<ChallengeAttempt[]>([]);
+  const [challengeCurrent, setChallengeCurrent] = useState<ChallengeAttempt | null>(null);
+  const [challengeLoading, setChallengeLoading] = useState(false);
   const [syncFailures, setSyncFailures] = useState(0);
   const [toasts, setToasts] = useState<GameToast[]>([]);
   const toastTimers = useRef<number[]>([]);
@@ -292,6 +297,41 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     void loadLeaderboard(nextPeriod, nextMode);
   }
 
+  const loadChallenge = useCallback(async () => {
+    setChallengeLoading(true);
+    try {
+      const response = await fetch("/api/challenges/today", { cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error?.message ?? "Could not load challenge.");
+      setDailyChallenge(payload.challenge);
+      setChallengeAttempts(payload.attempts);
+      setChallengeCurrent(payload.currentAttempt);
+      setChallengeLoading(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not load challenge.";
+      setChallengeLoading(false);
+      pushToast({ tone: "error", title: "Challenge unavailable", message });
+    }
+  }, [pushToast]);
+
+  async function startChallenge() {
+    if (!dailyChallenge) return;
+    setChallengeLoading(true);
+    try {
+      const response = await fetch(`/api/challenges/${dailyChallenge.date}/start`, { method: "POST" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error?.message ?? "Could not start challenge.");
+      setGame(payload.game);
+      trackEvent({ action: "start_daily_challenge", category: "challenge", label: dailyChallenge.date });
+      window.history.replaceState(null, "", `/play/${payload.game.id}`);
+      setChallengeLoading(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not start challenge.";
+      setChallengeLoading(false);
+      pushToast({ tone: "error", title: "Challenge start failed", message });
+    }
+  }
+
   useEffect(() => {
     if (currentScreen !== "result" || !game || !resultView || trackedResultGameId.current === game.id) return;
     trackedResultGameId.current = game.id;
@@ -315,6 +355,12 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       void loadLeaderboard(leaderboardPeriod, leaderboardMode);
     }
   }, [currentScreen, leaderboardEntries.length, leaderboardLoading, leaderboardPeriod, leaderboardMode, loadLeaderboard]);
+
+  useEffect(() => {
+    if (currentScreen === "challenges" && !dailyChallenge && !challengeLoading) {
+      void loadChallenge();
+    }
+  }, [currentScreen, dailyChallenge, challengeLoading, loadChallenge]);
 
   async function copyInviteLink() {
     if (!inviteUrl) return;
@@ -427,8 +473,15 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
               </Stack>
             ) : null}
 
-            {isFeatureScreen(currentScreen) ? (
-              <FeaturePlaceholder screen={currentScreen} onPlay={() => navigate("battle")} />
+            {currentScreen === "challenges" ? (
+              <ChallengeScreen
+                challenge={dailyChallenge}
+                attempts={challengeAttempts}
+                currentAttempt={challengeCurrent}
+                loading={challengeLoading}
+                onStart={startChallenge}
+                onRetry={loadChallenge}
+              />
             ) : null}
 
             {currentScreen === "history" ? (
@@ -704,51 +757,54 @@ function AppNav({ activeDestination, onNavigate }: { activeDestination: AppDesti
   );
 }
 
-function isFeatureScreen(screen: GameScreen): screen is "challenges" {
-  return screen === "challenges";
-}
-
-function FeaturePlaceholder({ screen, onPlay }: { screen: "challenges"; onPlay: () => void }) {
-  const content = featureContent(screen);
-
+function ChallengeScreen({
+  challenge,
+  attempts,
+  currentAttempt,
+  loading,
+  onStart,
+  onRetry
+}: {
+  challenge: DailyChallenge | null;
+  attempts: ChallengeAttempt[];
+  currentAttempt: ChallengeAttempt | null;
+  loading: boolean;
+  onStart: () => void;
+  onRetry: () => void;
+}) {
   return (
     <div className="feature-screen">
-      <div className="hero-kicker">{content.kicker}</div>
-      <h1>{content.title}</h1>
-      <p>{content.body}</p>
-      <div className="feature-card-grid" aria-label={`${content.title} preview`}>
-        {content.cards.map((card) => (
-          <div className="feature-card" key={card.title}>
-            <Badge>{card.badge}</Badge>
-            <strong>{card.title}</strong>
-            <span>{card.copy}</span>
-          </div>
+      <div className="hero-kicker">Daily challenge</div>
+      <h1>Same grid. New chase.</h1>
+      <p>Every player gets the same deterministic 9x9 board for the UTC day.</p>
+      <div className="challenge-card">
+        <Badge>{challenge?.status ?? "loading"}</Badge>
+        <strong>{challenge?.date ?? "Today"}</strong>
+        <span>Board hash {challenge?.boardHash.slice(0, 10) ?? "syncing"}</span>
+      </div>
+      {currentAttempt ? (
+        <div className="challenge-card" aria-label="Your challenge attempt">
+          <Badge>Rank #{currentAttempt.rank}</Badge>
+          <strong>{currentAttempt.score} points</strong>
+          <span>Share token {currentAttempt.shareToken}</span>
+        </div>
+      ) : null}
+      <div className="leaderboard-list" aria-label="Daily challenge leaderboard">
+        {attempts.map((attempt) => (
+          <article className="leaderboard-row" data-current={attempt.profileId === currentAttempt?.profileId} key={attempt.shareToken}>
+            <Badge>#{attempt.rank}</Badge>
+            <strong>{attempt.displayTag}</strong>
+            <span>{Math.round(attempt.durationMs / 1000)}s</span>
+            <b>{attempt.score}</b>
+          </article>
         ))}
       </div>
-      <Button onClick={onPlay}>Play a 9x9 battle</Button>
+      <Group className="result-actions" gap="xs">
+        <Button onClick={onStart} loading={loading} disabled={!challenge || challenge.status !== "active"}>Start daily</Button>
+        <Button variant="secondary" onClick={onRetry} loading={loading}>Refresh</Button>
+      </Group>
     </div>
   );
-}
-
-function featureContent(screen: "challenges") {
-  const content = {
-    challenges: {
-      kicker: "Daily quests",
-      title: "Fresh grid rituals.",
-      body: "Daily challenge boards, streak missions, and reward claims will live here without interrupting active matches.",
-      cards: [
-        { badge: "Daily", title: "Sunset run", copy: "One shared 9x9 seed for every player." },
-        { badge: "Streak", title: "Keep heat", copy: "Finish matches to keep your return loop alive." }
-      ]
-    }
-  } satisfies Record<typeof screen, {
-    kicker: string;
-    title: string;
-    body: string;
-    cards: Array<{ badge: string; title: string; copy: string }>;
-  }>;
-
-  return content[screen];
 }
 
 function LeaderboardScreen({

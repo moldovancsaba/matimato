@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { challengeBoard, dailyChallenge } from "../challenges/challenge-model";
 import { applyMove, createInitialGameState, finishGame, maybeApplyAiMove } from "../game/engine";
 import { toMatchSummary } from "../game/match-summary";
 import { toCanonical, toPublicGameDto } from "../game/perspective";
@@ -26,6 +27,29 @@ export async function createGameForMode(input: {
     host,
     secondPlayer: ai
   });
+  const saved = await getGameStore().create(game);
+  return { game: toPublicGameDto(saved, credential.playerId), credential };
+}
+
+export async function createChallengeGame(input: { date: string; displayName: string; profileId?: string }) {
+  const challenge = dailyChallenge(input.date);
+  if (challenge.status !== "active") throw new AppError("CHALLENGE_DISABLED", "This challenge is disabled.", 409);
+  const credential = createCredential();
+  const host = humanPlayer(credential, input.displayName, "north", input.profileId);
+  const ai = aiPlayer();
+  const game = {
+    ...createInitialGameState({
+      id: crypto.randomUUID(),
+      code: await createUniqueCode(),
+      mode: "ai",
+      boardSize: 9,
+      difficulty: "standard",
+      host,
+      secondPlayer: ai
+    }),
+    challengeDate: input.date,
+    board: challengeBoard(input.date)
+  };
   const saved = await getGameStore().create(game);
   return { game: toPublicGameDto(saved, credential.playerId), credential };
 }
