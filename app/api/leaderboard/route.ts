@@ -3,6 +3,7 @@ import { z } from "zod";
 import { buildLeaderboard, leaderboardModeToSummaryMode, weeklyStart } from "@/lib/leaderboard/leaderboard-model";
 import { errorResponse, successResponse } from "@/lib/server/http";
 import { resolveProfile } from "@/lib/server/profile-service";
+import { assertFeatureEnabled } from "@/lib/server/ops";
 import { assertRateLimit } from "@/lib/server/rate-limit";
 import { getGameStore } from "@/lib/server/store";
 
@@ -14,6 +15,7 @@ const querySchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     assertRateLimit(request, { route: "/api/leaderboard", limit: 60, windowMs: 60_000 });
+    assertFeatureEnabled("leaderboards");
     const query = querySchema.parse(Object.fromEntries(request.nextUrl.searchParams));
     const profile = await resolveProfile(request);
     const summaries = await getGameStore().listMatchSummariesForLeaderboard({

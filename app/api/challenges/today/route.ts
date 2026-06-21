@@ -2,12 +2,14 @@ import { NextRequest } from "next/server";
 import { dailyChallenge, rankChallengeAttempts, todayKey } from "@/lib/challenges/challenge-model";
 import { errorResponse, successResponse } from "@/lib/server/http";
 import { resolveProfile } from "@/lib/server/profile-service";
+import { assertFeatureEnabled } from "@/lib/server/ops";
 import { assertRateLimit } from "@/lib/server/rate-limit";
 import { getGameStore } from "@/lib/server/store";
 
 export async function GET(request: NextRequest) {
   try {
     assertRateLimit(request, { route: "/api/challenges/today", limit: 60, windowMs: 60_000 });
+    assertFeatureEnabled("challenges");
     const profile = await resolveProfile(request);
     const challenge = dailyChallenge(todayKey());
     const summaries = await getGameStore().listChallengeSummaries({ date: challenge.date, limit: 100 });

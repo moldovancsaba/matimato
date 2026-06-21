@@ -12,6 +12,8 @@ export async function GET() {
     runtime: "vercel-nextjs",
     configured: Boolean(config.mongodbUri || config.useMemoryStore),
     db: readiness.db,
+    indexes: "indexes" in readiness ? readiness.indexes : config.useMemoryStore ? "memory" : "unknown",
+    features: config.featureFlags,
     checkedAt: new Date().toISOString()
   }, { status: readiness.ok ? 200 : 503 });
   response.headers.set("Cache-Control", "no-store, max-age=0");

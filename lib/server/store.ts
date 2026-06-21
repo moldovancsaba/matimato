@@ -44,6 +44,8 @@ export async function ensureIndexes() {
   await summaries.createIndex({ gameId: 1 }, { unique: true });
   await summaries.createIndex({ completedAt: -1 });
   await summaries.createIndex({ mode: 1, completedAt: -1 });
+  await summaries.createIndex({ "participants.profileId": 1, completedAt: -1 });
+  await summaries.createIndex({ challengeDate: 1, completedAt: -1 });
   const profiles = await getProfileCollection();
   await profiles.createIndex({ id: 1 }, { unique: true });
   await profiles.createIndex({ lastActiveAt: -1 });
@@ -55,7 +57,8 @@ export async function checkDatabaseReady() {
   try {
     const collection = await getGameCollection();
     await collection.db.command({ ping: 1 });
-    return { ok: true, db: "connected" as const };
+    await ensureIndexes();
+    return { ok: true, db: "connected" as const, indexes: "ready" as const };
   } catch (error) {
     console.error(JSON.stringify({
       level: "error",
@@ -63,7 +66,7 @@ export async function checkDatabaseReady() {
       code: "DATABASE_HEALTH_FAILED",
       message: error instanceof Error ? sanitizeServerMessage(error.message) : "Unknown database health failure"
     }));
-    return { ok: false, db: "down" as const };
+    return { ok: false, db: "down" as const, indexes: "unknown" as const };
   }
 }
 

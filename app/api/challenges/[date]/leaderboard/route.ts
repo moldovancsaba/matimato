@@ -3,6 +3,7 @@ import { z } from "zod";
 import { rankChallengeAttempts } from "@/lib/challenges/challenge-model";
 import { errorResponse, successResponse } from "@/lib/server/http";
 import { assertRateLimit } from "@/lib/server/rate-limit";
+import { assertFeatureEnabled } from "@/lib/server/ops";
 import { getGameStore } from "@/lib/server/store";
 
 const paramsSchema = z.object({
@@ -12,6 +13,7 @@ const paramsSchema = z.object({
 export async function GET(request: NextRequest, { params }: { params: Promise<{ date: string }> }) {
   try {
     assertRateLimit(request, { route: "/api/challenges/[date]/leaderboard", limit: 60, windowMs: 60_000 });
+    assertFeatureEnabled("challenges");
     const { date } = paramsSchema.parse(await params);
     const summaries = await getGameStore().listChallengeSummaries({ date, limit: 200 });
     return successResponse({ attempts: rankChallengeAttempts(summaries, date).slice(0, 50) });
