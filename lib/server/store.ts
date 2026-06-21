@@ -2,6 +2,8 @@ import { MongoClient } from "mongodb";
 import { getRuntimeConfig } from "../config";
 import type { MatchSummary } from "../game/match-summary";
 import type { GameState } from "../game/types";
+import { applySummaryToProfile } from "../profile/profile-model";
+import type { Profile } from "../profile/types";
 import { AppError, sanitizeServerMessage } from "./errors";
 
 type GameStore = {
@@ -11,10 +13,15 @@ type GameStore = {
   update(game: GameState, expectedVersion?: number): Promise<GameState>;
   upsertMatchSummary(summary: MatchSummary): Promise<void>;
   getMatchSummary(gameId: string): Promise<MatchSummary | null>;
+  createProfile(profile: Profile): Promise<Profile>;
+  getProfile(id: string): Promise<Profile | null>;
+  updateProfile(profile: Profile): Promise<Profile>;
+  applyMatchSummaryToProfiles(summary: MatchSummary): Promise<void>;
 };
 
 const memoryGames = new Map<string, GameState>();
 const memorySummaries = new Map<string, MatchSummary>();
+const memoryProfiles = new Map<string, Profile>();
 let mongoClient: MongoClient | null = null;
 
 export function getGameStore(): GameStore {
@@ -34,6 +41,9 @@ export async function ensureIndexes() {
   await summaries.createIndex({ gameId: 1 }, { unique: true });
   await summaries.createIndex({ completedAt: -1 });
   await summaries.createIndex({ mode: 1, completedAt: -1 });
+  const profiles = await getProfileCollection();
+  await profiles.createIndex({ id: 1 }, { unique: true });
+  await profiles.createIndex({ lastActiveAt: -1 });
 }
 
 export async function checkDatabaseReady() {
@@ -84,6 +94,25 @@ const memoryStore: GameStore = {
   async getMatchSummary(gameId) {
     const summary = memorySummaries.get(gameId);
     return summary ? structuredClone(summary) : null;
+  },
+  async createProfile(profile) {
+    memoryProfiles.set(profile.id, structuredClone(profile));
+    return structuredClone(profile);
+  },
+  async getProfile(id) {
+    const profile = memoryProfiles.get(id);
+    return profile ? structuredClone(profile) : null;
+  },
+  async updateProfile(profile) {
+    memoryProfiles.set(profile.id, structuredClone(profile));
+    return structuredClone(profile);
+  },
+  async applyMatchSummaryToProfiles(summary) {
+    const profileIds = summary.participants.map((participant) => participant.profileId).filter((value): value is string => Boolean(value));
+    for (const profileId of profileIds) {
+      const current = memoryProfiles.get(profileId);
+      if (current) memoryProfiles.set(profileId, applySummaryToProfile(current, summary));
+    }
   }
 };
 
@@ -118,6 +147,29 @@ const mongoStore: GameStore = {
   },
   async getMatchSummary(gameId) {
     return (await getMatchSummaryCollection()).findOne({ gameId }, { projection: { _id: 0 } }) as Promise<MatchSummary | null>;
+  },
+  async createProfile(profile) {
+    await ensureIndexes();
+    await (await getProfileCollection()).insertOne(profile);
+    return profile;
+  },
+  async getProfile(id) {
+    return (await getProfileCollection()).findOne({ id }, { projection: { _id: 0 } }) as Promise<Profile | null>;
+  },
+  async updateProfile(profile) {
+    const result = await (await getProfileCollection()).findOneAndReplace({ id: profile.id }, profile, {
+      projection: { _id: 0 },
+      returnDocument: "after"
+    });
+    if (!result) throw new AppError("PROFILE_NOT_FOUND", "Profile not found.", 404);
+    return result as Profile;
+  },
+  async applyMatchSummaryToProfiles(summary) {
+    const profileIds = summary.participants.map((participant) => participant.profileId).filter((value): value is string => Boolean(value));
+    for (const profileId of profileIds) {
+      const current = await this.getProfile(profileId);
+      if (current) await this.updateProfile(applySummaryToProfile(current, summary));
+    }
   }
 };
 
@@ -139,4 +191,14 @@ async function getMatchSummaryCollection() {
   }
   await mongoClient.connect();
   return mongoClient.db(config.mongodbDb).collection<MatchSummary>("match_summaries");
+}
+
+async function getProfileCollection() {
+  const config = getRuntimeConfig();
+  if (!config.mongodbUri) throw new AppError("MONGODB_NOT_CONFIGURED", "MongoDB is not configured.", 503, true);
+  if (!mongoClient) {
+    mongoClient = new MongoClient(config.mongodbUri, { serverSelectionTimeoutMS: 3000 });
+  }
+  await mongoClient.connect();
+  return mongoClient.db(config.mongodbDb).collection<Profile>("profiles");
 }

@@ -12,9 +12,10 @@ export async function createGameForMode(input: {
   boardSize: number;
   difficulty: AiDifficulty;
   displayName: string;
+  profileId?: string;
 }) {
   const credential = createCredential();
-  const host = humanPlayer(credential, input.displayName, "north");
+  const host = humanPlayer(credential, input.displayName, "north", input.profileId);
   const ai = input.mode === "ai" ? aiPlayer() : undefined;
   const game = createInitialGameState({
     id: crypto.randomUUID(),
@@ -29,7 +30,7 @@ export async function createGameForMode(input: {
   return { game: toPublicGameDto(saved, credential.playerId), credential };
 }
 
-export async function joinGameByCode(input: { code: string; displayName: string }) {
+export async function joinGameByCode(input: { code: string; displayName: string; profileId?: string }) {
   const store = getGameStore();
   const game = await store.getByCode(input.code.toUpperCase());
   if (!game) throw new AppError("GAME_NOT_FOUND", "No game exists for that code.", 404);
@@ -39,7 +40,7 @@ export async function joinGameByCode(input: { code: string; displayName: string 
   const joined: GameState = {
     ...game,
     status: "active",
-    players: [...game.players, humanPlayer(credential, input.displayName, "south")],
+    players: [...game.players, humanPlayer(credential, input.displayName, "south", input.profileId)],
     scores: { ...game.scores, [credential.playerId]: 0 },
     updatedAt: new Date().toISOString(),
     version: game.version + 1
@@ -96,6 +97,7 @@ async function recordTerminalSummary(game: GameState) {
   if (!summary) return;
   try {
     await getGameStore().upsertMatchSummary(summary);
+    await getGameStore().applyMatchSummaryToProfiles(summary);
   } catch (error) {
     console.error(JSON.stringify({
       level: "error",
@@ -125,9 +127,10 @@ async function requireGame(id: string) {
   return game;
 }
 
-function humanPlayer(credential: PlayerCredential, displayName: string, side: "north" | "south"): PlayerSlot {
+function humanPlayer(credential: PlayerCredential, displayName: string, side: "north" | "south", profileId?: string): PlayerSlot {
   return {
     playerId: credential.playerId,
+    profileId,
     displayName,
     side,
     kind: "human",

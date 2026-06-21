@@ -20,6 +20,7 @@ export type LineConstraint = {
 
 export type PlayerSlot = {
   playerId: string;
+  profileId?: string;
   displayName: string;
   side: PlayerSide;
   kind: "human" | "ai";
@@ -65,6 +66,7 @@ export type GameState = {
 
 export type PublicPlayer = {
   playerId: string;
+  profileId?: string;
   displayName: string;
   side: PlayerSide;
   kind: "human" | "ai";

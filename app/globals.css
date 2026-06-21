@@ -459,6 +459,83 @@ select {
   line-height: 1.25;
 }
 
+.profile-screen {
+  min-height: min(640px, 74dvh);
+  display: grid;
+  align-content: end;
+  gap: 16px;
+  padding: clamp(10px, 3vw, 28px) 0 4px;
+}
+
+.profile-hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: end;
+}
+
+.profile-avatar {
+  width: clamp(64px, 16vw, 96px);
+  aspect-ratio: 1;
+  border-radius: 28px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 30% 20%, color-mix(in srgb, white 24%, transparent), transparent 30%),
+    linear-gradient(135deg, var(--profile-color), var(--gds-vibe-accent));
+  color: var(--gds-vibe-text);
+  font-size: clamp(2rem, 8vw, 3.8rem);
+  font-weight: 950;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 18%, transparent),
+    0 16px 34px color-mix(in srgb, var(--gds-vibe-glow) 42%, transparent);
+}
+
+.profile-screen h1 {
+  margin: 8px 0 0;
+  max-width: 10ch;
+  font-size: clamp(2.4rem, 8vw, 4.7rem);
+  line-height: 0.94;
+  letter-spacing: -0.06em;
+  overflow-wrap: anywhere;
+}
+
+.profile-screen p {
+  margin: 8px 0 0;
+  max-width: 38ch;
+  color: var(--gds-vibe-muted);
+  line-height: 1.35;
+}
+
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stat-tile {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--gds-vibe-primary) 28%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--gds-vibe-surface) 78%, transparent);
+}
+
+.stat-tile span {
+  color: var(--gds-vibe-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stat-tile strong {
+  font-size: clamp(1.35rem, 5vw, 2rem);
+  line-height: 1;
+}
+
 .screen-challenges .game-shell,
 .screen-leaderboard .game-shell,
 .screen-history .game-shell,
@@ -708,6 +785,10 @@ select {
   .feature-screen {
     min-height: min(620px, calc(100dvh - 118px));
   }
+
+  .profile-screen {
+    min-height: min(640px, calc(100dvh - 118px));
+  }
 }
 
 @media (max-width: 420px) {
@@ -744,6 +825,10 @@ select {
 
   .feature-card-grid {
     grid-template-columns: 1fr;
+  }
+
+  .profile-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

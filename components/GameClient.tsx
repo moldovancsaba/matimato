@@ -29,6 +29,7 @@ import { addToast, dismissToast, type GameToast, type GameToastTone } from "@/li
 import { toResultView } from "@/lib/game/result-view";
 import type { PublicGameDto } from "@/lib/game/types";
 import { trackEvent } from "@/lib/client/analytics";
+import type { PublicProfile } from "@/lib/profile/types";
 
 type ApiState = {
   loading: boolean;
@@ -44,6 +45,9 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const [screen, setScreen] = useState<SetupScreen>(initialGameId ? "setup" : "home");
   const [game, setGame] = useState<PublicGameDto | null>(null);
   const [api, setApi] = useState<ApiState>({ loading: false });
+  const [profile, setProfile] = useState<PublicProfile | null>(null);
+  const [profileDraft, setProfileDraft] = useState("");
+  const [profileLoading, setProfileLoading] = useState(false);
   const [syncFailures, setSyncFailures] = useState(0);
   const [toasts, setToasts] = useState<GameToast[]>([]);
   const toastTimers = useRef<number[]>([]);
@@ -189,11 +193,55 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     trackEvent({ action: "navigate", category: "app_shell", label: destination });
   }
 
+  const loadProfile = useCallback(async () => {
+    setProfileLoading(true);
+    try {
+      const response = await fetch("/api/profile", { cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error?.message ?? "Could not load profile.");
+      setProfile(payload.profile);
+      setProfileDraft(payload.profile.displayTag);
+      setProfileLoading(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not load profile.";
+      setProfileLoading(false);
+      pushToast({ tone: "error", title: "Profile unavailable", message });
+    }
+  }, [pushToast]);
+
+  const saveProfile = useCallback(async () => {
+    setProfileLoading(true);
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ displayTag: profileDraft })
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error?.message ?? "Could not save profile.");
+      setProfile(payload.profile);
+      setProfileDraft(payload.profile.displayTag);
+      setProfileLoading(false);
+      pushToast({ tone: "success", title: "Profile saved", message: "Your player card is updated." });
+      trackEvent({ action: "save_profile", category: "profile" });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save profile.";
+      setProfileLoading(false);
+      pushToast({ tone: "error", title: "Save failed", message });
+    }
+  }, [profileDraft, pushToast]);
+
   useEffect(() => {
     if (currentScreen !== "result" || !game || !resultView || trackedResultGameId.current === game.id) return;
     trackedResultGameId.current = game.id;
     trackEvent({ action: "match_finished", category: "game", label: `${game.mode}:${resultView.outcome}`, value: game.boardSize });
   }, [currentScreen, game, resultView]);
+
+  useEffect(() => {
+    if (currentScreen === "profile" && !profile && !profileLoading) {
+      void loadProfile();
+    }
+  }, [currentScreen, profile, profileLoading, loadProfile]);
 
   async function copyInviteLink() {
     if (!inviteUrl) return;
@@ -308,6 +356,17 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
 
             {isFeatureScreen(currentScreen) ? (
               <FeaturePlaceholder screen={currentScreen} onPlay={() => navigate("battle")} />
+            ) : null}
+
+            {currentScreen === "profile" ? (
+              <ProfileScreen
+                profile={profile}
+                draft={profileDraft}
+                loading={profileLoading}
+                onDraftChange={setProfileDraft}
+                onSave={saveProfile}
+                onRefresh={loadProfile}
+              />
             ) : null}
 
             {currentScreen === "battleLobby" && game ? (
@@ -541,11 +600,11 @@ function AppNav({ activeDestination, onNavigate }: { activeDestination: AppDesti
   );
 }
 
-function isFeatureScreen(screen: GameScreen): screen is "challenges" | "leaderboard" | "history" | "profile" {
-  return screen === "challenges" || screen === "leaderboard" || screen === "history" || screen === "profile";
+function isFeatureScreen(screen: GameScreen): screen is "challenges" | "leaderboard" | "history" {
+  return screen === "challenges" || screen === "leaderboard" || screen === "history";
 }
 
-function FeaturePlaceholder({ screen, onPlay }: { screen: "challenges" | "leaderboard" | "history" | "profile"; onPlay: () => void }) {
+function FeaturePlaceholder({ screen, onPlay }: { screen: "challenges" | "leaderboard" | "history"; onPlay: () => void }) {
   const content = featureContent(screen);
 
   return (
@@ -567,7 +626,7 @@ function FeaturePlaceholder({ screen, onPlay }: { screen: "challenges" | "leader
   );
 }
 
-function featureContent(screen: "challenges" | "leaderboard" | "history" | "profile") {
+function featureContent(screen: "challenges" | "leaderboard" | "history") {
   const content = {
     challenges: {
       kicker: "Daily quests",
@@ -595,15 +654,6 @@ function featureContent(screen: "challenges" | "leaderboard" | "history" | "prof
         { badge: "Battle", title: "Rival log", copy: "Privacy-safe records of past battles." },
         { badge: "Solo", title: "Score chase", copy: "Track your strongest AI runs over time." }
       ]
-    },
-    profile: {
-      kicker: "Player card",
-      title: "Build your identity.",
-      body: "Your tag, level, XP, streak, and style rewards get a focused home that can later upgrade into full auth.",
-      cards: [
-        { badge: "XP", title: "Level path", copy: "Progression after every completed match." },
-        { badge: "Form", title: "Recent heat", copy: "Wins, draws, losses, and best scores." }
-      ]
     }
   } satisfies Record<typeof screen, {
     kicker: string;
@@ -613,6 +663,71 @@ function featureContent(screen: "challenges" | "leaderboard" | "history" | "prof
   }>;
 
   return content[screen];
+}
+
+function ProfileScreen({
+  profile,
+  draft,
+  loading,
+  onDraftChange,
+  onSave,
+  onRefresh
+}: {
+  profile: PublicProfile | null;
+  draft: string;
+  loading: boolean;
+  onDraftChange: (value: string) => void;
+  onSave: () => void;
+  onRefresh: () => void;
+}) {
+  return (
+    <div className="profile-screen">
+      <div className="profile-hero">
+        <div className="profile-avatar" aria-hidden="true" style={{ "--profile-color": profile?.avatarColor ?? "#ff6b3d" } as CSSProperties}>
+          {(profile?.displayTag ?? "M").slice(0, 1).toUpperCase()}
+        </div>
+        <div>
+          <div className="hero-kicker">Player card</div>
+          <h1>{profile?.displayTag ?? "Loading profile"}</h1>
+          <p>Track your level, streak, form, and best score across the 9x9 arena.</p>
+        </div>
+      </div>
+
+      <TextInput
+        label="Player tag"
+        placeholder="Your player tag"
+        value={draft}
+        onChange={(event) => onDraftChange(event.currentTarget.value)}
+      />
+
+      <div className="profile-stats" aria-label="Profile stats">
+        <StatTile label="Level" value={profile?.level ?? 1} />
+        <StatTile label="XP" value={profile?.xp ?? 0} />
+        <StatTile label="Matches" value={profile?.stats.matches ?? 0} />
+        <StatTile label="Wins" value={profile?.stats.wins ?? 0} />
+        <StatTile label="Draws" value={profile?.stats.draws ?? 0} />
+        <StatTile label="Best" value={profile?.stats.bestScore ?? 0} />
+      </div>
+
+      <Group className="result-actions" gap="xs">
+        <Button onClick={onSave} loading={loading} disabled={!draft.trim()}>
+          Save profile
+        </Button>
+        <Button variant="secondary" onClick={onRefresh} loading={loading}>
+          Refresh
+        </Button>
+      </Group>
+    </div>
+  );
+}
+
+function StatTile({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="stat-tile">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
 }
 
 function screenAnnouncement(screen: GameScreen, game: PublicGameDto | null) {

@@ -2,18 +2,22 @@ import { NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { getRuntimeConfig } from "../config";
 import { sanitizeServerMessage, toAppError } from "./errors";
+import { encodeProfileCookie, getProfileCookieName, type ProfileCredential } from "./profile-session";
 import type { PlayerCredential } from "./session";
 import { encodeCredentialCookie, getCredentialCookieName } from "./session";
 
 export function successResponse(
   data: unknown,
-  options?: { status?: number; credential?: PlayerCredential; gameId?: string; existingCredentialCookie?: string }
+  options?: { status?: number; credential?: PlayerCredential; gameId?: string; existingCredentialCookie?: string; profileCredential?: ProfileCredential }
 ) {
   const response = NextResponse.json(data, { status: options?.status ?? 200 });
   response.headers.set("Cache-Control", "no-store, max-age=0");
   response.headers.set("X-Content-Type-Options", "nosniff");
   if (options?.credential && options.gameId) {
     setCredentialCookie(response, options.gameId, options.credential, options.existingCredentialCookie);
+  }
+  if (options?.profileCredential) {
+    setProfileCookie(response, options.profileCredential);
   }
   return response;
 }
@@ -47,5 +51,16 @@ function setCredentialCookie(response: NextResponse, gameId: string, credential:
     secure: config.secureCookies,
     path: "/",
     maxAge: 60 * 60 * 24
+  });
+}
+
+function setProfileCookie(response: NextResponse, credential: ProfileCredential) {
+  const config = getRuntimeConfig();
+  response.cookies.set(getProfileCookieName(), encodeProfileCookie(credential), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: config.secureCookies,
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365
   });
 }
