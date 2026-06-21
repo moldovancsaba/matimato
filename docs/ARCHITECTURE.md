@@ -54,7 +54,7 @@ Game state is canonical in server coordinates. Player `north` sees the board dir
 - It intentionally does not register a service worker because game state is realtime and session-bound.
 - `PwaGuard` unregisters old service workers and deletes old Matimato caches when present.
 - The mobile game view is a fixed game canvas: compact title/status HUD at the top, board-first play area, and fixed bottom actions.
-- The visual direction combines Sudoku board readability with compact game-dashboard HUD modules rather than webpage cards.
+- The visual direction is based on the supplied references: soft raised Sudoku-board cells, separated onboarding/setup/game states, playful sage/coral/yellow/dark colors, compact HUD modules, and animated screen transitions.
 - Document scrolling is disabled for the app shell. Overflow belongs inside explicit setup/control regions only.
 
 ## Rollback
