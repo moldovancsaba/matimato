@@ -51,7 +51,7 @@ The app moves through explicit screen states instead of rendering everything abo
 - Copy feedback: show non-layout-shifting toast such as "Battle link copied" for 2 seconds; keep screen-reader live region text.
 - Error states: clipboard blocked, code expired, rival already joined, network retry.
 - Operational behavior: lobby polls game status; when rival joins, transition to Match Screen.
-- Current implementation: lobby is now a standalone screen and never renders the board while waiting.
+- Current implementation: lobby is now a standalone screen and never renders the board while waiting. Copy success/failure feedback uses a non-layout-shifting toast layer.
 
 ### Match Screen
 
@@ -60,7 +60,7 @@ The app moves through explicit screen states instead of rendering everything abo
 - Rules: no invite inputs, no setup fields, no large notices, no history cards on this screen.
 - Feedback: moves animate on the selected tile; invalid/stale move feedback appears as a toast that does not resize the board.
 - Accessibility: turn state uses polite live region; legal cells have descriptive labels; color-only polarity has accessible text in labels.
-- Current implementation: active matches render only HUD, board, and gameplay actions.
+- Current implementation: active matches render only HUD, board, and gameplay actions. Reconnect and stale move feedback appears in the toast layer instead of inline panels.
 
 ### Result Screen
 

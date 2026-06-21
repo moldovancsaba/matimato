@@ -15,8 +15,9 @@ import {
 } from "@doneisbetter/gds/client";
 import { IconPlus, IconRefresh } from "@tabler/icons-react";
 import type { CSSProperties } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { resolveScreen, type GameScreen, type SetupScreen } from "@/lib/game/screen-state";
+import { addToast, dismissToast, type GameToast, type GameToastTone } from "@/lib/game/toasts";
 import type { PublicGameDto } from "@/lib/game/types";
 import { trackEvent } from "@/lib/client/analytics";
 
@@ -35,7 +36,21 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const [game, setGame] = useState<PublicGameDto | null>(null);
   const [api, setApi] = useState<ApiState>({ loading: false });
   const [syncFailures, setSyncFailures] = useState(0);
-  const [notice, setNotice] = useState<string | undefined>();
+  const [toasts, setToasts] = useState<GameToast[]>([]);
+  const toastTimers = useRef<number[]>([]);
+  const lastSyncToastAt = useRef(0);
+
+  const dismiss = useCallback((id: string) => {
+    setToasts((current) => dismissToast(current, id));
+  }, []);
+
+  const pushToast = useCallback((toast: Omit<GameToast, "id" | "ttlMs"> & { ttlMs?: number }) => {
+    const id = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+    const nextToast: GameToast = { ...toast, id, ttlMs: toast.ttlMs ?? 2800 };
+    setToasts((current) => addToast(current, nextToast));
+    const timer = window.setTimeout(() => dismiss(id), nextToast.ttlMs);
+    toastTimers.current.push(timer);
+  }, [dismiss]);
 
   const fetchGame = useCallback(async (id: string, quiet = false) => {
     if (!quiet) setApi({ loading: true });
@@ -48,23 +63,45 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   }, []);
 
   useEffect(() => {
+    const timers = toastTimers.current;
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, []);
+
+  useEffect(() => {
     if (initialGameId) {
-      fetchGame(initialGameId).catch((error) => setApi({ loading: false, error: error.message }));
+      fetchGame(initialGameId).catch((error) => {
+        const message = error instanceof Error ? error.message : "Could not load battle.";
+        setApi({ loading: false, error: message });
+        pushToast({ tone: "error", title: "Battle load failed", message });
+      });
     }
-  }, [fetchGame, initialGameId]);
+  }, [fetchGame, initialGameId, pushToast]);
 
   useEffect(() => {
     if (!game || game.status === "finished" || game.status === "expired") return;
     const interval = window.setInterval(() => {
       if (document.visibilityState !== "visible") return;
-      fetchGame(game.id, true).catch(() => setSyncFailures((value) => value + 1));
+      fetchGame(game.id, true).catch(() => {
+        setSyncFailures((value) => value + 1);
+        const now = Date.now();
+        if (now - lastSyncToastAt.current > 10_000) {
+          lastSyncToastAt.current = now;
+          pushToast({
+            tone: "warning",
+            title: "Reconnecting",
+            message: "Live updates are retrying. Moves pause until sync returns.",
+            ttlMs: 4200
+          });
+        }
+      });
     }, 2200);
     return () => window.clearInterval(interval);
-  }, [fetchGame, game]);
+  }, [fetchGame, game, pushToast]);
 
   async function createGame() {
     setApi({ loading: true });
-    setNotice(undefined);
     try {
       const response = await fetch("/api/games", {
         method: "POST",
@@ -78,13 +115,14 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       window.history.replaceState(null, "", `/play/${payload.game.id}`);
       setApi({ loading: false });
     } catch (error) {
-      setApi({ loading: false, error: error instanceof Error ? error.message : "Could not create game." });
+      const message = error instanceof Error ? error.message : "Could not create game.";
+      setApi({ loading: false, error: message });
+      pushToast({ tone: "error", title: "Match start failed", message });
     }
   }
 
   async function joinGame(code = joinCode) {
     setApi({ loading: true });
-    setNotice(undefined);
     try {
       const response = await fetch("/api/games/join", {
         method: "POST",
@@ -98,14 +136,15 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       window.history.replaceState(null, "", `/play/${payload.game.id}`);
       setApi({ loading: false });
     } catch (error) {
-      setApi({ loading: false, error: error instanceof Error ? error.message : "Could not join game." });
+      const message = error instanceof Error ? error.message : "Could not join game.";
+      setApi({ loading: false, error: message });
+      pushToast({ tone: "error", title: "Join failed", message });
     }
   }
 
   async function submitMove(viewRow: number, viewCol: number) {
     if (!game?.viewer?.canMove) return;
     setApi({ loading: true });
-    setNotice(undefined);
     try {
       const response = await fetch(`/api/games/${game.id}/move`, {
         method: "POST",
@@ -119,7 +158,9 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       setApi({ loading: false });
     } catch (error) {
       await fetchGame(game.id, true).catch(() => undefined);
-      setApi({ loading: false, error: error instanceof Error ? error.message : "Move failed." });
+      const message = error instanceof Error ? error.message : "Move failed.";
+      setApi({ loading: false, error: message });
+      pushToast({ tone: "error", title: "Move rejected", message: "The board was refreshed. Try the highlighted legal tile." });
     }
   }
 
@@ -131,10 +172,10 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     if (!inviteUrl) return;
     try {
       await navigator.clipboard?.writeText(inviteUrl);
-      setNotice("Invite link copied.");
+      pushToast({ tone: "success", title: "Battle link copied", message: "Send it to your rival." });
       trackEvent({ action: "copy_invite_link", category: "sharing", label: game?.mode });
     } catch {
-      setNotice("Copy failed. Select and copy the invite link manually.");
+      pushToast({ tone: "error", title: "Copy blocked", message: "Select the invite link and copy it manually." });
     }
   }
 
@@ -159,22 +200,6 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
             <VisuallyHidden aria-live="polite">
               {screenAnnouncement(currentScreen, game)}
             </VisuallyHidden>
-
-            {api.error ? (
-              <InlineAlert severity="error" title="Action failed" message={api.error} />
-            ) : null}
-
-            {syncFailures > 0 ? (
-              <InlineAlert
-                severity="warning"
-                title="Reconnecting"
-                message="Live updates are retrying. Moves are disabled until the next successful sync."
-              />
-            ) : null}
-
-            {notice ? (
-              <InlineAlert severity="success" title="Notice" message={notice} />
-            ) : null}
 
             {currentScreen === "home" ? (
               <div className="welcome-screen">
@@ -392,6 +417,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
           </section>
         ) : null}
       </div>
+      <GameToastLayer toasts={toasts} onDismiss={dismiss} />
     </main>
   );
 }
@@ -402,6 +428,30 @@ function screenAnnouncement(screen: GameScreen, game: PublicGameDto | null) {
   if (screen === "battleLobby") return "Battle lobby. Waiting for rival.";
   if (screen === "result") return game ? `${resultTitle(game)}. ${resultHeadline(game)}.` : "Result screen.";
   return game ? `${turnTitle(game)}. ${turnMessage(game)}` : "Match screen.";
+}
+
+function GameToastLayer({ toasts, onDismiss }: { toasts: GameToast[]; onDismiss: (id: string) => void }) {
+  const latest = toasts[0];
+
+  return (
+    <div className="game-toast-layer" aria-label="Game notifications">
+      <VisuallyHidden aria-live="polite">
+        {latest ? `${latest.title}${latest.message ? `. ${latest.message}` : ""}` : ""}
+      </VisuallyHidden>
+      {toasts.map((toast) => (
+        <div className="game-toast" data-tone={toast.tone} key={toast.id}>
+          <InlineAlert severity={toastSeverity(toast.tone)} title={toast.title} message={toast.message ?? ""} />
+          <Button variant="subtle" onClick={() => onDismiss(toast.id)} aria-label={`Dismiss ${toast.title}`}>
+            Dismiss
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function toastSeverity(tone: GameToastTone): "success" | "info" | "warning" | "error" {
+  return tone;
 }
 
 function turnTitle(game: PublicGameDto) {
