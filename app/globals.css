@@ -475,6 +475,64 @@ select {
   padding: clamp(10px, 3vw, 28px) 0 4px;
 }
 
+.leaderboard-screen {
+  min-height: min(660px, 76dvh);
+  display: grid;
+  align-content: end;
+  gap: 12px;
+  padding: clamp(10px, 3vw, 28px) 0 4px;
+}
+
+.leaderboard-screen h1 {
+  margin: 0;
+  max-width: 9ch;
+  font-size: clamp(2.45rem, 8vw, 4.8rem);
+  line-height: 0.94;
+  letter-spacing: -0.06em;
+}
+
+.leaderboard-list {
+  display: grid;
+  gap: 8px;
+  max-height: min(340px, 38dvh);
+  overflow: auto;
+}
+
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--gds-vibe-primary) 28%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--gds-vibe-surface) 78%, transparent);
+}
+
+.leaderboard-row[data-current="true"] {
+  border-color: color-mix(in srgb, var(--gds-vibe-accent) 58%, transparent);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--gds-vibe-glow) 36%, transparent);
+}
+
+.leaderboard-row strong,
+.leaderboard-row span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-row span {
+  color: var(--gds-vibe-muted);
+  font-size: 0.86rem;
+}
+
+.leaderboard-row b {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  font-size: 1.35rem;
+}
+
 .history-screen h1 {
   margin: 0;
   max-width: 9ch;
@@ -881,6 +939,10 @@ select {
 
   .history-screen {
     min-height: min(640px, calc(100dvh - 118px));
+  }
+
+  .leaderboard-screen {
+    min-height: min(660px, calc(100dvh - 118px));
   }
 }
 

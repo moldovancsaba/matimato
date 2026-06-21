@@ -185,6 +185,8 @@ Acceptance criteria:
 - Current player is visible even outside the top ranks.
 - Leaderboard write failures are observable and retryable.
 
+Current implementation: `/api/leaderboard` returns weekly/all-time SOLO/BATTLE ranked entries and the current player entry. The Leaderboard tab renders period and mode tabs, empty/retry states, current-player highlighting, and deterministic rank values from immutable match summaries.
+
 ## Phase 5: Gamification
 
 - Add XP for completed matches, win bonuses, comeback bonuses, and daily first-match bonus.

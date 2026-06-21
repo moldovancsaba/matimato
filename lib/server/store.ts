@@ -14,6 +14,7 @@ type GameStore = {
   upsertMatchSummary(summary: MatchSummary): Promise<void>;
   getMatchSummary(gameId: string): Promise<MatchSummary | null>;
   listMatchSummariesByProfile(input: { profileId: string; mode?: "ai" | "pvp"; cursor?: string; limit: number }): Promise<{ summaries: MatchSummary[]; nextCursor: string | null }>;
+  listMatchSummariesForLeaderboard(input: { mode: "ai" | "pvp"; completedAfter?: string; limit: number }): Promise<MatchSummary[]>;
   createProfile(profile: Profile): Promise<Profile>;
   getProfile(id: string): Promise<Profile | null>;
   updateProfile(profile: Profile): Promise<Profile>;
@@ -106,6 +107,14 @@ const memoryStore: GameStore = {
     const nextOffset = offset + summaries.length;
     return { summaries, nextCursor: nextOffset < filtered.length ? encodeOffset(nextOffset) : null };
   },
+  async listMatchSummariesForLeaderboard(input) {
+    return [...memorySummaries.values()]
+      .filter((summary) => summary.mode === input.mode)
+      .filter((summary) => !input.completedAfter || summary.completedAt >= input.completedAfter)
+      .sort((a, b) => b.completedAt.localeCompare(a.completedAt))
+      .slice(0, input.limit)
+      .map((summary) => structuredClone(summary));
+  },
   async createProfile(profile) {
     memoryProfiles.set(profile.id, structuredClone(profile));
     return structuredClone(profile);
@@ -173,6 +182,17 @@ const mongoStore: GameStore = {
       .toArray();
     const page = summaries.slice(0, input.limit);
     return { summaries: page, nextCursor: summaries.length > input.limit ? encodeOffset(offset + page.length) : null };
+  },
+  async listMatchSummariesForLeaderboard(input) {
+    const query = {
+      mode: input.mode,
+      ...(input.completedAfter ? { completedAt: { $gte: input.completedAfter } } : {})
+    };
+    return (await getMatchSummaryCollection())
+      .find(query, { projection: { _id: 0 } })
+      .sort({ completedAt: -1 })
+      .limit(input.limit)
+      .toArray();
   },
   async createProfile(profile) {
     await ensureIndexes();

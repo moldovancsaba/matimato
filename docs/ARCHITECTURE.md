@@ -36,6 +36,8 @@ Anonymous profiles are stored separately from game credentials. The `matimato_pr
 
 Game history is a public projection of `match_summaries` for the current anonymous profile. `GET /api/history` filters by current profile ID, optional SOLO/BATTLE mode, cursor, and limit, then returns result cards without opponent private profile metadata or session credentials.
 
+Leaderboards are deterministic projections over completed `match_summaries`. Weekly boards use UTC Monday rollover. BATTLE ranking uses `wins * 100 + draws * 25 - losses * 20`; SOLO ranking uses best score with faster duration as tie-breaker. Only summaries with at least one move are counted.
+
 ## Operational Behavior
 
 - `GET /api/health` reports runtime readiness without exposing secrets.
