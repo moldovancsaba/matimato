@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { errorResponse, successResponse } from "@/lib/server/http";
 import { resolveProfile, updateCurrentProfile } from "@/lib/server/profile-service";
+import { assertFeatureEnabled } from "@/lib/server/ops";
 import { assertRateLimit } from "@/lib/server/rate-limit";
 
 const updateSchema = z.object({
@@ -12,6 +13,7 @@ const updateSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     assertRateLimit(request, { route: "/api/profile", limit: 60, windowMs: 60_000 });
+    assertFeatureEnabled("profiles");
     const result = await resolveProfile(request);
     return successResponse({ profile: result.profile }, { profileCredential: result.credential });
   } catch (error) {
@@ -22,6 +24,7 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     assertRateLimit(request, { route: "/api/profile", limit: 20, windowMs: 60_000 });
+    assertFeatureEnabled("profiles");
     const result = await updateCurrentProfile(request, updateSchema.parse(await request.json()));
     return successResponse({ profile: result.profile }, { profileCredential: result.credential });
   } catch (error) {

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createChallengeGame } from "@/lib/server/game-service";
 import { errorResponse, successResponse } from "@/lib/server/http";
 import { resolveProfile } from "@/lib/server/profile-service";
+import { assertFeatureEnabled } from "@/lib/server/ops";
 import { assertRateLimit } from "@/lib/server/rate-limit";
 import { getCredentialCookieName } from "@/lib/server/session";
 
@@ -13,6 +14,7 @@ const paramsSchema = z.object({
 export async function POST(request: NextRequest, { params }: { params: Promise<{ date: string }> }) {
   try {
     assertRateLimit(request, { route: "/api/challenges/[date]/start", limit: 20, windowMs: 60_000 });
+    assertFeatureEnabled("challenges");
     const { date } = paramsSchema.parse(await params);
     const profile = await resolveProfile(request);
     const result = await createChallengeGame({ date, displayName: profile.profile.displayTag, profileId: profile.profileId });

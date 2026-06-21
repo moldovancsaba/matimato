@@ -42,6 +42,18 @@ Progression is deterministic and idempotent through the same profile summary led
 
 Daily challenges use a UTC date key and SHA-256-derived deterministic seed to generate the same 9x9 signed board for every player. Challenge games are normal SOLO games with `challengeDate` attached; terminal summaries become challenge attempts and are ranked by score descending, duration ascending, then completion time.
 
+## Feature Flags And Operations
+
+Major journey systems can be disabled independently with environment flags:
+
+- `MATIMATO_FEATURE_PROFILES=0`
+- `MATIMATO_FEATURE_HISTORY=0`
+- `MATIMATO_FEATURE_LEADERBOARDS=0`
+- `MATIMATO_FEATURE_GAMIFICATION=0`
+- `MATIMATO_FEATURE_CHALLENGES=0`
+
+`GET /api/health` reports database status, index readiness, and enabled feature flags without exposing secrets. Mongo indexes cover game codes, expiry, summaries by game, summaries by profile/date, summaries by mode/date, challenge summaries by date, and profile last-active lookups.
+
 ## Operational Behavior
 
 - `GET /api/health` reports runtime readiness without exposing secrets.
@@ -84,4 +96,4 @@ Daily challenges use a UTC date key and SHA-256-derived deterministic seed to ge
 
 ## Rollback
 
-Use Vercel deployment rollback to restore a previous production deployment. MongoDB changes are additive game documents and indexes; no destructive migration is required for the current MVP.
+Use feature flags first to disable a failing journey subsystem, then use Vercel deployment rollback if code rollback is required. MongoDB changes are additive documents and indexes; no destructive migration is required for the current MVP. Summary, profile, progression, leaderboard, and challenge records can remain unused while a subsystem is disabled.

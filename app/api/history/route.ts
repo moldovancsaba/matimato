@@ -3,6 +3,7 @@ import { z } from "zod";
 import { modeFilterToSummaryMode, toHistoryItemForProfile } from "@/lib/history/history-model";
 import { errorResponse, successResponse } from "@/lib/server/http";
 import { resolveProfile } from "@/lib/server/profile-service";
+import { assertFeatureEnabled } from "@/lib/server/ops";
 import { assertRateLimit } from "@/lib/server/rate-limit";
 import { getGameStore } from "@/lib/server/store";
 
@@ -15,6 +16,7 @@ const querySchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     assertRateLimit(request, { route: "/api/history", limit: 60, windowMs: 60_000 });
+    assertFeatureEnabled("history");
     const query = querySchema.parse(Object.fromEntries(request.nextUrl.searchParams));
     const profile = await resolveProfile(request);
     const result = await getGameStore().listMatchSummariesByProfile({

@@ -232,6 +232,8 @@ Current implementation: `/api/challenges/today`, `/api/challenges/:date/start`, 
 - Add indexes for profile, match summary, leaderboard windows, and challenge seeds.
 - Add health checks for MongoDB collections and leaderboard freshness.
 - Add data-retention policy for abandoned live games.
+
+Current implementation: health checks now include index readiness and feature flag state. Journey systems have independent disable flags, Mongo indexes cover new query paths, and retry helpers provide explicit timeout and bounded exponential backoff behavior for operational write paths.
 - Add rollback plan for each schema addition using additive collections and feature flags.
 - Add automated tests for profile writes, result recording, leaderboard ranking, and challenge seed reproducibility.
 
