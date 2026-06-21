@@ -28,6 +28,8 @@ Browser
 
 Game state is canonical in server coordinates. Player `north` sees the board directly. Player `south` receives a 180-degree rotated board and submits view coordinates, which the server converts back to canonical coordinates before validation.
 
+Matimato is productized as a fixed 9x9 game. The client no longer exposes board-size selection, and the create-game API only accepts or defaults to `boardSize: 9`.
+
 ## Operational Behavior
 
 - `GET /api/health` reports runtime readiness without exposing secrets.

@@ -7,7 +7,7 @@ import { getCredentialCookieName } from "@/lib/server/session";
 
 const createSchema = z.object({
   mode: z.enum(["ai", "pvp"]),
-  boardSize: z.number().int().min(2).max(9).default(5),
+  boardSize: z.literal(9).default(9),
   difficulty: z.enum(["basic", "standard", "hard"]).default("standard"),
   displayName: z.string().trim().min(1).max(40).default("Player 1")
 });

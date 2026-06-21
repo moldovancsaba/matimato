@@ -2,7 +2,7 @@
 
 # Matimato
 
-Matimato is a signed-number strategy board game rebuilt for Vercel, MongoDB, and player-to-player multiplayer.
+Matimato is a 9x9 signed-number strategy board game rebuilt for Vercel, MongoDB, solo play, and player-to-player battle mode.
 
 ## Features
 
@@ -11,6 +11,7 @@ Matimato is a signed-number strategy board game rebuilt for Vercel, MongoDB, and
 - MongoDB-backed canonical game state with in-memory local fallback.
 - Installable PWA metadata with stale service-worker/cache cleanup.
 - Player-to-player games with invite codes.
+- Fixed 9x9 game board; mode selection is BATTLE or SOLO only.
 - Player-relative board perspective: each side sees the board from their own table side.
 - Positive and negative random board values.
 - Server-side move validation, score calculation, turn constraints, and terminal-state detection.
@@ -62,4 +63,4 @@ npm run verify
 
 ## Architecture
 
-See `docs/ARCHITECTURE.md`.
+See `docs/ARCHITECTURE.md` and `docs/PRODUCT_JOURNEY_PLAN.md`.
