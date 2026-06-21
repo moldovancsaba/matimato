@@ -53,12 +53,12 @@ select {
 }
 
 .game-shell {
-  width: min(1180px, 100%);
+  width: min(1040px, 100%);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(260px, 360px) minmax(300px, 1fr);
+  grid-template-columns: minmax(238px, 320px) minmax(300px, 1fr);
   grid-template-areas: "controls board";
-  gap: clamp(10px, 1.8vw, 18px);
+  gap: clamp(8px, 1.5vw, 14px);
   align-items: stretch;
   min-height: calc(100svh - max(20px, env(safe-area-inset-top)) - max(20px, env(safe-area-inset-bottom)));
   max-height: calc(100svh - max(20px, env(safe-area-inset-top)) - max(20px, env(safe-area-inset-bottom)));
@@ -66,18 +66,18 @@ select {
 
 .game-panel,
 .board-panel {
-  background: var(--matimato-panel);
+  background: rgba(255, 255, 255, 0.78);
   border: 1px solid var(--matimato-line);
-  border-radius: 8px;
-  box-shadow: 0 18px 50px rgba(23, 37, 33, 0.12);
-  backdrop-filter: blur(16px);
+  border-radius: 14px;
+  box-shadow: 0 12px 36px rgba(23, 37, 33, 0.1);
+  backdrop-filter: blur(14px);
   min-width: 0;
   min-height: 0;
 }
 
 .game-panel {
   grid-area: controls;
-  padding: clamp(10px, 1.6vw, 16px);
+  padding: clamp(8px, 1.4vw, 14px);
   overflow: auto;
   scrollbar-width: thin;
 }
@@ -88,16 +88,16 @@ select {
 
 .board-panel {
   grid-area: board;
-  padding: clamp(8px, 1.5vw, 18px);
+  padding: clamp(8px, 1.2vw, 14px);
   display: grid;
   align-content: center;
   overflow: hidden;
 }
 
 .brand-mark {
-  width: clamp(34px, 6vw, 44px);
-  height: clamp(34px, 6vw, 44px);
-  border-radius: 8px;
+  width: clamp(30px, 5vw, 38px);
+  height: clamp(30px, 5vw, 38px);
+  border-radius: 10px;
   display: grid;
   place-items: center;
   background: var(--matimato-ink);
@@ -113,31 +113,36 @@ select {
 
 .board-grid {
   display: grid;
-  gap: clamp(6px, 1vw, 10px);
-  width: min(72svh, 100%);
+  gap: 0;
+  width: min(76svh, 100%);
   max-width: 100%;
   margin: 0 auto;
   aspect-ratio: 1;
+  background: var(--matimato-ink);
+  border: 3px solid var(--matimato-ink);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 16px 36px rgba(21, 33, 31, 0.14);
 }
 
 .cell-button {
   width: 100%;
   min-width: 0;
   aspect-ratio: 1;
-  border: 2px solid transparent;
-  border-radius: 8px;
+  border: 1px solid rgba(21, 33, 31, 0.22);
+  border-radius: 0;
   display: grid;
   place-items: center;
   font-size: clamp(0.9rem, 4.2vw, 2.25rem);
   font-weight: 850;
   color: var(--matimato-ink);
-  background: var(--matimato-board);
+  background: #fbfaf5;
   cursor: pointer;
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+  transition: background 120ms ease, color 120ms ease, box-shadow 120ms ease;
 }
 
 .cell-button:focus-visible {
@@ -146,8 +151,8 @@ select {
 }
 
 .cell-button[data-legal="true"] {
-  border-color: var(--matimato-accent);
-  box-shadow: inset 0 0 0 2px rgba(21, 33, 31, 0.14);
+  background: #fff3c9;
+  box-shadow: inset 0 0 0 2px rgba(21, 33, 31, 0.2);
 }
 
 .cell-button[data-sign="positive"] {
@@ -159,37 +164,84 @@ select {
 }
 
 .cell-button[data-claimed="true"] {
-  background: #d8ddd7;
+  background: #e5e9e4;
   color: var(--matimato-claimed);
   cursor: not-allowed;
 }
 
 .cell-button[data-last="true"] {
-  outline: 4px solid rgba(255, 209, 102, 0.72);
+  outline: 3px solid rgba(255, 209, 102, 0.9);
+  outline-offset: -3px;
 }
 
 .cell-button:not(:disabled):hover {
-  transform: translateY(-2px);
+  background: #ffe69a;
 }
 
 .score-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 6px;
 }
 
 .score-card {
   border: 1px solid var(--matimato-line);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: 10px;
+  padding: 8px;
   background: rgba(255, 255, 255, 0.72);
   min-width: 0;
 }
 
+.score-card p {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.score-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
 .score-value {
-  font-size: 1.75rem;
+  font-size: 1.25rem;
   font-weight: 850;
   line-height: 1;
+}
+
+.turn-strip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--matimato-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 7px 10px;
+  font-size: 0.9rem;
+}
+
+.turn-strip strong,
+.turn-strip span {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.turn-strip[data-active="true"] {
+  background: #e4f5eb;
+  border-color: rgba(20, 125, 82, 0.28);
+}
+
+.action-dock {
+  width: 100%;
+}
+
+.action-dock button {
+  min-width: 0;
 }
 
 .visually-spaced {
@@ -208,7 +260,7 @@ select {
     padding:
       max(6px, env(safe-area-inset-top))
       max(6px, env(safe-area-inset-right))
-      max(6px, env(safe-area-inset-bottom))
+      calc(max(6px, env(safe-area-inset-bottom)) + 62px)
       max(6px, env(safe-area-inset-left));
     overflow: auto;
   }
@@ -220,48 +272,65 @@ select {
       "board";
     min-height: auto;
     max-height: none;
-    gap: 8px;
+    gap: 6px;
   }
 
   .game-shell.is-playing {
     grid-template-areas:
-      "board"
-      "controls";
+      "controls"
+      "board";
   }
 
   .game-shell.is-playing .game-panel {
-    max-height: 38svh;
-    overflow: auto;
+    max-height: none;
+    overflow: visible;
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
-  .game-shell.is-playing .brand-mark {
-    display: none;
+  .game-header {
+    position: sticky;
+    top: max(6px, env(safe-area-inset-top));
+    z-index: 3;
+    border: 1px solid var(--matimato-line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 6px 8px;
+    box-shadow: 0 8px 22px rgba(23, 37, 33, 0.08);
   }
 
   .game-panel,
   .board-panel {
-    border-radius: 6px;
+    border-radius: 12px;
   }
 
   .game-panel {
-    padding: 10px;
+    padding: 0;
     overflow: visible;
   }
 
   .board-panel {
-    padding: 8px;
-    min-height: min(98vw, 60svh);
+    padding: 6px;
+    min-height: auto;
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   .board-grid {
-    width: min(100%, 94vw, 58svh);
-    gap: clamp(4px, 1.2vw, 8px);
+    width: min(100%, 96vw, 70svh);
+    gap: 0;
+    border-width: 2px;
+    border-radius: 8px;
   }
 
   .cell-button {
     border-width: 1px;
-    border-radius: 6px;
-    font-size: clamp(0.9rem, 8vw, 1.9rem);
+    border-radius: 0;
+    font-size: clamp(0.82rem, 7.2vw, 1.75rem);
     min-height: 0;
   }
 
@@ -271,11 +340,54 @@ select {
   }
 
   .score-card {
-    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 999px;
   }
 
   .score-value {
-    font-size: 1.35rem;
+    font-size: 1rem;
+  }
+
+  .turn-strip {
+    grid-template-columns: 1fr;
+    gap: 1px;
+    border-radius: 12px;
+    padding: 6px 8px;
+    font-size: 0.82rem;
+  }
+
+  .turn-strip strong,
+  .turn-strip span {
+    max-width: 100%;
+  }
+
+  .game-shell.is-playing .action-dock {
+    position: fixed;
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    z-index: 10;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--matimato-line);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 14px 38px rgba(23, 37, 33, 0.18);
+    backdrop-filter: blur(16px);
+  }
+
+  .game-shell.is-playing .action-dock button {
+    width: 100%;
+  }
+
+  .dock-label {
+    margin-left: 4px;
   }
 }
 
@@ -286,10 +398,18 @@ select {
 
   .game-shell.is-playing .game-panel {
     font-size: 0.95rem;
-    max-height: 34svh;
   }
 
   .board-grid {
-    width: min(100%, 96vw, 54svh);
+    width: min(100%, 97vw, 66svh);
+  }
+
+  .score-card p,
+  .turn-strip {
+    font-size: 0.78rem;
+  }
+
+  .dock-label {
+    display: none;
   }
 }
