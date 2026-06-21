@@ -7,6 +7,24 @@ export type ProfileStats = {
   currentStreak: number;
 };
 
+export type MissionProgress = {
+  profileId: string;
+  missionId: string;
+  period: string;
+  title: string;
+  progress: number;
+  target: number;
+  completedAt?: string;
+  claimedAt?: string;
+};
+
+export type BadgeAward = {
+  profileId: string;
+  badgeId: string;
+  sourceId: string;
+  awardedAt: string;
+};
+
 export type Profile = {
   id: string;
   tokenHash: string;
@@ -17,6 +35,8 @@ export type Profile = {
   stats: ProfileStats;
   xp: number;
   level: number;
+  missions: MissionProgress[];
+  badges: BadgeAward[];
   appliedSummaryIds: string[];
 };
 
@@ -31,6 +51,8 @@ export function toPublicProfile(profile: Profile): PublicProfile {
     lastActiveAt: profile.lastActiveAt,
     stats: profile.stats,
     xp: profile.xp,
-    level: profile.level
+    level: profile.level,
+    missions: profile.missions,
+    badges: profile.badges
   };
 }

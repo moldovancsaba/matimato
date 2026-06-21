@@ -38,6 +38,8 @@ Game history is a public projection of `match_summaries` for the current anonymo
 
 Leaderboards are deterministic projections over completed `match_summaries`. Weekly boards use UTC Monday rollover. BATTLE ranking uses `wins * 100 + draws * 25 - losses * 20`; SOLO ranking uses best score with faster duration as tie-breaker. Only summaries with at least one move are counted.
 
+Progression is deterministic and idempotent through the same profile summary ledger. XP uses `25 completed + 50 win + 10 draw + min(50, abs(scoreDelta) * 2) + dailyBonus`; level uses `floor(sqrt(totalXP / 100)) + 1`. Daily missions reset by UTC date. Badges are stored once by `badgeId`.
+
 ## Operational Behavior
 
 - `GET /api/health` reports runtime readiness without exposing secrets.

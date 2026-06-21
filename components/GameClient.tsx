@@ -571,6 +571,13 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                     </div>
                   ))}
                 </div>
+                {game.viewer ? (
+                  <div className="reward-summary" aria-label="Reward summary">
+                    <Badge>XP</Badge>
+                    <strong>Progress saved</strong>
+                    <span>Profile XP, streaks, missions, and badges update from this completed match.</span>
+                  </div>
+                ) : null}
                 <Group className="result-actions" gap="xs">
                   <Button
                     onClick={() => {
@@ -911,6 +918,23 @@ function ProfileScreen({
         <StatTile label="Wins" value={profile?.stats.wins ?? 0} />
         <StatTile label="Draws" value={profile?.stats.draws ?? 0} />
         <StatTile label="Best" value={profile?.stats.bestScore ?? 0} />
+      </div>
+
+      <div className="mission-list" aria-label="Daily missions">
+        {(profile?.missions.slice(-3) ?? []).map((mission) => (
+          <div className="mission-card" key={`${mission.missionId}-${mission.period}`}>
+            <Badge>{mission.completedAt ? "Done" : "Daily"}</Badge>
+            <strong>{mission.title}</strong>
+            <span>{Math.min(mission.progress, mission.target)} / {mission.target}</span>
+          </div>
+        ))}
+        {profile && profile.missions.length === 0 ? (
+          <div className="mission-card">
+            <Badge>Daily</Badge>
+            <strong>Finish one match</strong>
+            <span>0 / 1</span>
+          </div>
+        ) : null}
       </div>
 
       <Group className="result-actions" gap="xs">

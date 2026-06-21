@@ -49,8 +49,8 @@ describe("profile model", () => {
     const duplicate = applySummaryToProfile(updated, summary());
     expect(duplicate).toMatchObject({
       stats: { matches: 1, wins: 1, losses: 0, draws: 0, bestScore: 18, currentStreak: 1 },
-      xp: 50,
-      level: 1,
+      xp: 116,
+      level: 2,
       appliedSummaryIds: ["profile-match"]
     });
   });

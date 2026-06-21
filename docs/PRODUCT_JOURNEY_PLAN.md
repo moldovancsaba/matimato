@@ -205,6 +205,8 @@ Acceptance criteria:
 - Reduced-motion users receive static reward states.
 - Mission progress updates after match completion, not during every move.
 
+Current implementation: completed summaries now update deterministic XP, level, streak, daily missions, and badge awards through the idempotent profile ledger. `/api/progression` exposes the current progression state, the Profile screen shows mission progress, and the Result screen includes a static accessible reward-saved summary.
+
 ## Phase 6: Challenges
 
 - Add daily challenge boards with deterministic seeds.
