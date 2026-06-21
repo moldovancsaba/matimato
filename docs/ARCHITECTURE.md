@@ -55,6 +55,7 @@ Game state is canonical in server coordinates. Player `north` sees the board dir
 - `PwaGuard` unregisters old service workers and deletes old Matimato caches when present.
 - The mobile game view is a fixed game canvas: compact title/status HUD at the top, board-first play area, and fixed bottom actions.
 - The visual direction is based on the supplied references and the GDS `sunset` dark preset: soft raised Sudoku-board cells, separated onboarding/setup/game states, sunset-pulse dark surfaces, compact HUD modules, and animated screen transitions.
+- Board cells render unsigned digits for visual clarity; positive and negative values are communicated through the GDS sunset color roles and accessible cell labels.
 - Document scrolling is disabled for the app shell. Overflow belongs inside explicit setup/control regions only.
 
 ## Rollback
