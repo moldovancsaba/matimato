@@ -179,6 +179,32 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     }
   }
 
+  async function leaveLobby() {
+    if (!game) return;
+    if (!game.viewer) {
+      setGame(null);
+      setScreen("home");
+      window.history.replaceState(null, "", "/");
+      return;
+    }
+
+    setApi({ loading: true });
+    try {
+      const response = await fetch(`/api/games/${game.id}/forfeit`, { method: "POST" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error?.message ?? "Could not leave lobby.");
+      setGame(null);
+      setScreen("home");
+      window.history.replaceState(null, "", "/");
+      setApi({ loading: false });
+      pushToast({ tone: "info", title: "Lobby closed", message: "The battle invite is no longer active." });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not leave lobby.";
+      setApi({ loading: false, error: message });
+      pushToast({ tone: "error", title: "Leave failed", message });
+    }
+  }
+
   return (
     <main className={`app-stage screen-${currentScreen}`}>
       <div className={`game-shell ${game ? "is-playing" : "is-setup"}`}>
@@ -244,6 +270,13 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                   <p>{game.viewer ? "Share the code and wait for your rival." : "Enter your tag and step into the arena."}</p>
                 </div>
 
+                <div className="lobby-pulse" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                </div>
+
                 {!game.viewer ? (
                   <>
                     <TextInput
@@ -270,11 +303,8 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
 
                 <Button
                   variant="subtle"
-                  onClick={() => {
-                    setGame(null);
-                    setScreen("home");
-                    window.history.replaceState(null, "", "/");
-                  }}
+                  onClick={leaveLobby}
+                  disabled={api.loading}
                 >
                   Leave lobby
                 </Button>
@@ -477,12 +507,16 @@ function cellLabel(value: number | null, row: number, col: number, legal: boolea
 }
 
 function resultTitle(game: PublicGameDto) {
+  if (game.status === "abandoned") return "Lobby closed";
+  if (game.status === "expired") return "Battle expired";
   if (game.terminal?.draw) return "Draw";
   if (!game.viewer) return "Match over";
   return game.winnerPlayerId === game.viewer.playerId ? "Victory" : "Defeat";
 }
 
 function resultHeadline(game: PublicGameDto) {
+  if (game.status === "abandoned") return "This invite is no longer active.";
+  if (game.status === "expired") return "Start a fresh battle.";
   if (game.terminal?.draw) return "Both sides held the grid.";
   if (!game.viewer) return "The board is closed.";
   return game.winnerPlayerId === game.viewer.playerId ? "You owned the grid." : "Your rival took the grid.";

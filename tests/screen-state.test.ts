@@ -19,5 +19,6 @@ describe("screen state resolver", () => {
   it("routes terminal games to the result screen", () => {
     expect(resolveScreen({ mode: "pvp", status: "finished" }, "home")).toBe("result");
     expect(resolveScreen({ mode: "pvp", status: "expired" }, "home")).toBe("result");
+    expect(resolveScreen({ mode: "pvp", status: "abandoned" }, "home")).toBe("result");
   });
 });

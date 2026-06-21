@@ -74,6 +74,15 @@ export async function forfeitGame(id: string, credential?: PlayerCredential) {
   const store = getGameStore();
   const game = await requireGame(id);
   const player = requirePlayer(game, credential);
+  if (game.status === "waiting" && game.mode === "pvp") {
+    const saved = await store.update({
+      ...game,
+      status: "abandoned",
+      updatedAt: new Date().toISOString(),
+      version: game.version + 1
+    }, game.version);
+    return { game: toPublicGameDto(saved, player.playerId) };
+  }
   const saved = await store.update(finishGame(game, "forfeit", player.playerId), game.version);
   return { game: toPublicGameDto(saved, player.playerId) };
 }
