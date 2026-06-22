@@ -178,6 +178,13 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     setSyncFailures(0);
   }, [commitGame]);
 
+  const commitGameFrames = useCallback(async (frames: PublicGameDto[] | undefined, fallback: PublicGameDto) => {
+    const sequence = frames && frames.length > 0 ? frames : [fallback];
+    for (const frame of sequence) {
+      await commitGame(frame);
+    }
+  }, [commitGame]);
+
   useEffect(() => {
     currentGameRef.current = game;
   }, [game]);
@@ -274,7 +281,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "Move failed.");
-      await commitGame(payload.game);
+      await commitGameFrames(payload.animationGames, payload.game);
       trackEvent({ action: "submit_move", category: "game", label: game.mode, value: game.boardSize });
       setApi({ loading: false });
     } catch (error) {
