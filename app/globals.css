@@ -218,10 +218,11 @@ select {
 }
 
 .cell-button[data-legal="true"] {
-  background: color-mix(in srgb, var(--matimato-board-cell-raised) 74%, #fde68a);
+  background: rgba(255, 250, 240, 0.76);
   box-shadow:
-    inset 0 0 0 2px rgba(251, 146, 60, 0.72),
-    0 0 24px rgba(255, 237, 213, 0.84);
+    inset 1px 1px 1px rgba(255, 255, 255, 0.8),
+    inset -2px -2px 7px rgba(137, 94, 61, 0.1),
+    0 7px 14px rgba(70, 36, 18, 0.1);
 }
 
 .cell-button[data-sign="positive"] {
@@ -1321,8 +1322,11 @@ select {
 }
 
 .board-grid {
-  padding: clamp(7px, 1.4vw, 13px);
-  gap: clamp(4px, 0.8vw, 8px);
+  --board-pad: clamp(7px, 1.4vw, 13px);
+  --board-gap: clamp(4px, 0.8vw, 8px);
+  --board-cell-size: calc((100% - var(--board-pad) - var(--board-pad) - var(--board-gap) - var(--board-gap) - var(--board-gap) - var(--board-gap) - var(--board-gap) - var(--board-gap) - var(--board-gap) - var(--board-gap)) / 9);
+  padding: var(--board-pad);
+  gap: var(--board-gap);
   border: 0;
   border-radius: 24px;
   background: linear-gradient(145deg, #fffdf7, #f6eadb 58%, #ead7c3);
@@ -1337,14 +1341,15 @@ select {
 
 .selection-ribbon {
   position: absolute;
-  inset: 3px;
   z-index: 1;
-  border: 2px solid rgba(249, 115, 22, 0.7);
+  border: 0;
   border-radius: 16px;
-  background: rgba(251, 146, 60, 0.16);
+  background:
+    linear-gradient(135deg, rgba(249, 115, 22, 0.28), rgba(236, 72, 153, 0.16)),
+    rgba(251, 146, 60, 0.18);
   box-shadow:
-    0 0 0 2px rgba(255, 247, 237, 0.72),
-    0 12px 26px rgba(249, 115, 22, 0.24);
+    inset 0 1px 0 rgba(255, 255, 255, 0.46),
+    0 12px 26px rgba(249, 115, 22, 0.2);
   pointer-events: none;
   animation: ribbon-row-grow 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   transform-origin: center;
@@ -1355,7 +1360,7 @@ select {
 }
 
 .cell-button {
-  border: 1px solid var(--matimato-board-line);
+  border: 0;
   border-radius: 13px;
   background: var(--matimato-board-cell);
   color: var(--matimato-board-ink);
@@ -1373,12 +1378,11 @@ select {
 }
 
 .cell-button[data-legal="true"] {
-  background: linear-gradient(135deg, #ffffff, #ffedd5);
+  background: rgba(255, 250, 240, 0.76);
   box-shadow:
-    inset 1px 1px 1px rgba(255, 255, 255, 0.92),
-    inset -2px -2px 6px rgba(180, 83, 9, 0.12),
-    0 0 0 2px rgba(249, 115, 22, 0.68),
-    0 8px 18px rgba(255, 237, 213, 0.36);
+    inset 1px 1px 1px rgba(255, 255, 255, 0.8),
+    inset -2px -2px 7px rgba(137, 94, 61, 0.1),
+    0 7px 14px rgba(70, 36, 18, 0.1);
 }
 
 .cell-button[data-claimed="true"] {
