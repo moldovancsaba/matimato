@@ -91,11 +91,14 @@ export async function applyViewerMove(
     throw new AppError("VERSION_CONFLICT", "Game changed. Refresh and try again.", 409, true);
   }
   const canonical = toCanonical(player.side, game.boardSize, input);
-  let next = applyMove(game, { playerId: player.playerId, row: canonical.row, col: canonical.col });
-  next = maybeApplyAiMove(next);
+  const afterViewerMove = applyMove(game, { playerId: player.playerId, row: canonical.row, col: canonical.col });
+  const next = maybeApplyAiMove(afterViewerMove);
   const saved = await store.update(next, game.version);
   await recordTerminalSummary(saved);
-  return { game: toPublicGameDto(saved, player.playerId) };
+  const animationGames = afterViewerMove.version === saved.version
+    ? [toPublicGameDto(saved, player.playerId)]
+    : [toPublicGameDto(afterViewerMove, player.playerId), toPublicGameDto(saved, player.playerId)];
+  return { game: toPublicGameDto(saved, player.playerId), animationGames };
 }
 
 export async function forfeitGame(id: string, credential?: PlayerCredential) {
