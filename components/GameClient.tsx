@@ -40,6 +40,7 @@ type ApiState = {
 
 const BOARD_SIZE = 9;
 const BLOB_SETTLE_MS = 760;
+const BLOB_COLUMN_SETTLE_MS = 1120;
 const PREVIEW_BOARD = [
   [8, -2, 4, -7, 1, 9, -6, 3, 5],
   [3, 5, -9, 6, -1, 8, 4, -7, 2],
@@ -217,6 +218,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const gameVersion = game?.version;
   const constraintAxis = game?.constraintView?.axis;
   const constraintIndex = game?.constraintView?.index;
+  const blobSettleMs = constraintAxis === "column" ? BLOB_COLUMN_SETTLE_MS : BLOB_SETTLE_MS;
   const resultView = game ? toResultView(game) : null;
 
   function navigate(destination: AppDestination) {
@@ -390,9 +392,9 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     if (currentScreen !== "match" || !constraintAxis || constraintIndex === undefined || gameVersion === undefined || lastAnimatedVersion.current === gameVersion) return;
     lastAnimatedVersion.current = gameVersion;
     setRibbonSettling(true);
-    const timer = window.setTimeout(() => setRibbonSettling(false), BLOB_SETTLE_MS);
+    const timer = window.setTimeout(() => setRibbonSettling(false), blobSettleMs);
     return () => window.clearTimeout(timer);
-  }, [currentScreen, gameVersion, constraintAxis, constraintIndex]);
+  }, [currentScreen, gameVersion, constraintAxis, constraintIndex, blobSettleMs]);
 
   async function copyInviteLink() {
     if (!inviteUrl) return;
@@ -720,7 +722,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 style={{
                   "--board-size": game.boardSize,
                   "--constraint-index": game.constraintView?.index ?? 0,
-                  "--blob-duration": `${BLOB_SETTLE_MS}ms`,
+                  "--blob-duration": `${blobSettleMs}ms`,
                   gridTemplateColumns: `repeat(${game.boardSize}, minmax(0, 1fr))`
                 } as CSSProperties}
                 role="grid"
