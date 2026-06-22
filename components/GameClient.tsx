@@ -40,6 +40,7 @@ type ApiState = {
 };
 
 const BOARD_SIZE = 9;
+const BLOB_SETTLE_MS = 760;
 const PREVIEW_BOARD = [
   [8, -2, 4, -7, 1, 9, -6, 3, 5],
   [3, 5, -9, 6, -1, 8, 4, -7, 2],
@@ -214,6 +215,9 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const currentScreen = resolveScreen(game, screen);
   const activeDestination = screenToDestination(currentScreen);
   const showAppNav = shouldShowAppNav(currentScreen);
+  const gameVersion = game?.version;
+  const constraintAxis = game?.constraintView?.axis;
+  const constraintIndex = game?.constraintView?.index;
   const resultView = game ? toResultView(game) : null;
 
   function navigate(destination: AppDestination) {
@@ -384,13 +388,12 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   }, [currentScreen, dailyChallenge, challengeLoading, loadChallenge]);
 
   useEffect(() => {
-    if (currentScreen !== "match" || !game?.constraintView) return;
-    if (lastAnimatedVersion.current === game.version) return;
-    lastAnimatedVersion.current = game.version;
+    if (currentScreen !== "match" || !constraintAxis || constraintIndex === undefined || gameVersion === undefined || lastAnimatedVersion.current === gameVersion) return;
+    lastAnimatedVersion.current = gameVersion;
     setRibbonSettling(true);
-    const timer = window.setTimeout(() => setRibbonSettling(false), 760);
+    const timer = window.setTimeout(() => setRibbonSettling(false), BLOB_SETTLE_MS);
     return () => window.clearTimeout(timer);
-  }, [currentScreen, game?.version, game?.constraintView]);
+  }, [currentScreen, gameVersion, constraintAxis, constraintIndex]);
 
   async function copyInviteLink() {
     if (!inviteUrl) return;
@@ -710,6 +713,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 style={{
                   "--board-size": game.boardSize,
                   "--constraint-index": game.constraintView?.index ?? 0,
+                  "--blob-duration": `${BLOB_SETTLE_MS}ms`,
                   gridTemplateColumns: `repeat(${game.boardSize}, minmax(0, 1fr))`
                 } as CSSProperties}
                 role="grid"
@@ -729,6 +733,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                   row.map((value, colIndex) => {
                     const key = `${rowIndex}:${colIndex}`;
                     const legal = legalKey.has(key);
+                    const constrainedLegal = Boolean(game.constraintView) && legal;
                     const last = game.lastMoveView?.viewRow === rowIndex && game.lastMoveView?.viewCol === colIndex;
                     const claimed = value === null;
                     return (
@@ -737,7 +742,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                         className="cell-button"
                         role="gridcell"
                         type="button"
-                        data-legal={legal}
+                        data-legal={constrainedLegal}
                         data-claimed={claimed}
                         data-last={last}
                         data-sign={value === null ? "claimed" : value > 0 ? "positive" : "negative"}

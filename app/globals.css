@@ -26,6 +26,7 @@
   --matimato-board-cell: #fffaf0;
   --matimato-board-cell-raised: #ffffff;
   --matimato-board-line: rgba(148, 115, 83, 0.22);
+  --matimato-blob-ease: cubic-bezier(0.22, 0.9, 0.2, 1);
   --matimato-accent: var(--gds-vibe-accent);
   --matimato-dark: var(--gds-vibe-canvas);
   --matimato-coral: var(--gds-vibe-primary);
@@ -1362,7 +1363,7 @@ select {
 }
 
 .selection-blob[data-phase="morph"] {
-  animation: blob-morph 760ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: blob-morph var(--blob-duration, 760ms) var(--matimato-blob-ease) both;
 }
 
 .cell-button {
