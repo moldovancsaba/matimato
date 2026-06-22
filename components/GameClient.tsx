@@ -98,6 +98,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const toastTimers = useRef<number[]>([]);
   const boardGridRef = useRef<HTMLDivElement | null>(null);
   const selectionBlobRef = useRef<HTMLDivElement | null>(null);
+  const blobAnimationRef = useRef<BlobAnimationState | null>(null);
   const blobActionRun = useRef(0);
   const lastSyncToastAt = useRef(0);
   const trackedResultGameId = useRef<string | null>(null);
@@ -115,9 +116,25 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     toastTimers.current.push(timer);
   }, [dismiss]);
 
+  const updateBlobAnimation = useCallback((next: BlobAnimationState | null) => {
+    blobAnimationRef.current = next;
+    setBlobAnimation(next);
+  }, []);
+
   const commitGame = useCallback(async (nextGame: PublicGameDto) => {
     const previousGame = currentGameRef.current;
     const previousConstraint = previousGame?.constraintView;
+
+    if (previousGame?.id === nextGame.id && previousGame.version === nextGame.version) {
+      if (!blobAnimationRef.current && nextGame.constraintView) {
+        updateBlobAnimation({
+          geometry: measuredTrackGeometry(boardGridRef.current, nextGame.constraintView.axis, nextGame.constraintView.index),
+          phase: "ready",
+          axis: nextGame.constraintView.axis
+        });
+      }
+      return;
+    }
 
     if (
       !previousGame ||
@@ -129,7 +146,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       currentGameRef.current = nextGame;
       setGame(nextGame);
       if (nextGame.status !== "active") {
-        setBlobAnimation(null);
+        updateBlobAnimation(null);
         setRibbonSettling(false);
       }
       return;
@@ -145,7 +162,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     const growMs = blobDurationForAxis(nextGame.constraintView.axis);
 
     setRibbonSettling(true);
-    setBlobAnimation({ geometry: from, phase: "collapse", axis: previousConstraint?.axis ?? "cell" });
+    updateBlobAnimation({ geometry: from, phase: "collapse", axis: previousConstraint?.axis ?? "cell" });
     await nextAnimationFrame();
     if (blobActionRun.current !== run) return;
 
@@ -154,19 +171,19 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     }
     if (blobActionRun.current !== run) return;
 
-    setBlobAnimation({ geometry: cell, phase: "collapse", axis: "cell" });
+    updateBlobAnimation({ geometry: cell, phase: "collapse", axis: "cell" });
     currentGameRef.current = nextGame;
     setGame(nextGame);
     await nextAnimationFrame();
     if (blobActionRun.current !== run) return;
 
-    setBlobAnimation({ geometry: to, phase: "grow", axis: nextGame.constraintView.axis });
+    updateBlobAnimation({ geometry: to, phase: "grow", axis: nextGame.constraintView.axis });
     await animateBlob(selectionBlobRef.current, cell, to, growMs);
     if (blobActionRun.current !== run) return;
 
-    setBlobAnimation({ geometry: to, phase: "ready", axis: nextGame.constraintView.axis });
+    updateBlobAnimation({ geometry: to, phase: "ready", axis: nextGame.constraintView.axis });
     setRibbonSettling(false);
-  }, []);
+  }, [updateBlobAnimation]);
 
   const fetchGame = useCallback(async (id: string, quiet = false) => {
     if (!quiet) setApi({ loading: true });
@@ -479,19 +496,19 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   useEffect(() => {
     if (currentScreen !== "match" || !constraintAxis || constraintIndex === undefined || gameVersion === undefined) {
       blobActionRun.current += 1;
-      setBlobAnimation(null);
+      updateBlobAnimation(null);
       setRibbonSettling(false);
       return;
     }
 
-    if (!blobAnimation && game?.constraintView) {
-      setBlobAnimation({
+    if (!blobAnimationRef.current && game?.constraintView) {
+      updateBlobAnimation({
         geometry: trackGeometry(game.constraintView.axis, game.constraintView.index),
         phase: "ready",
         axis: game.constraintView.axis
       });
     }
-  }, [currentScreen, gameVersion, constraintAxis, constraintIndex, game, blobAnimation]);
+  }, [currentScreen, gameVersion, constraintAxis, constraintIndex, game, updateBlobAnimation]);
 
   async function copyInviteLink() {
     if (!inviteUrl) return;
