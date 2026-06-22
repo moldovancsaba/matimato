@@ -48,6 +48,7 @@ type BlobGeometry = {
 type BlobAnimationState = {
   geometry: BlobGeometry;
   phase: "ready" | "collapse" | "grow";
+  axis: "row" | "column" | "cell";
 };
 
 const BOARD_SIZE = 9;
@@ -144,7 +145,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     const growMs = blobDurationForAxis(nextGame.constraintView.axis);
 
     setRibbonSettling(true);
-    setBlobAnimation({ geometry: from, phase: "collapse" });
+    setBlobAnimation({ geometry: from, phase: "collapse", axis: previousConstraint?.axis ?? "cell" });
     await nextAnimationFrame();
     if (blobActionRun.current !== run) return;
 
@@ -153,17 +154,17 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     }
     if (blobActionRun.current !== run) return;
 
-    setBlobAnimation({ geometry: cell, phase: "collapse" });
+    setBlobAnimation({ geometry: cell, phase: "collapse", axis: "cell" });
     currentGameRef.current = nextGame;
     setGame(nextGame);
     await nextAnimationFrame();
     if (blobActionRun.current !== run) return;
 
-    setBlobAnimation({ geometry: to, phase: "grow" });
+    setBlobAnimation({ geometry: to, phase: "grow", axis: nextGame.constraintView.axis });
     await animateBlob(selectionBlobRef.current, cell, to, growMs);
     if (blobActionRun.current !== run) return;
 
-    setBlobAnimation({ geometry: to, phase: "ready" });
+    setBlobAnimation({ geometry: to, phase: "ready", axis: nextGame.constraintView.axis });
     setRibbonSettling(false);
   }, []);
 
@@ -296,7 +297,8 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const currentBlob = game?.constraintView
     ? blobAnimation ?? {
         geometry: trackGeometry(game.constraintView.axis, game.constraintView.index),
-        phase: "ready" as const
+        phase: "ready" as const,
+        axis: game.constraintView.axis
       }
     : null;
 
@@ -478,7 +480,8 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     if (!blobAnimation && game?.constraintView) {
       setBlobAnimation({
         geometry: trackGeometry(game.constraintView.axis, game.constraintView.index),
-        phase: "ready"
+        phase: "ready",
+        axis: game.constraintView.axis
       });
     }
   }, [currentScreen, gameVersion, constraintAxis, constraintIndex, game, blobAnimation]);
@@ -833,6 +836,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                     ref={selectionBlobRef}
                     key="selection-blob"
                     data-phase={currentBlob.phase}
+                    data-axis={currentBlob.axis}
                     style={selectionBlobStyle(currentBlob)}
                   />
                 ) : null}
