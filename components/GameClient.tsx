@@ -388,7 +388,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     if (lastAnimatedVersion.current === game.version) return;
     lastAnimatedVersion.current = game.version;
     setRibbonSettling(true);
-    const timer = window.setTimeout(() => setRibbonSettling(false), 520);
+    const timer = window.setTimeout(() => setRibbonSettling(false), 760);
     return () => window.clearTimeout(timer);
   }, [currentScreen, game?.version, game?.constraintView]);
 
@@ -716,13 +716,26 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 aria-label={`Matimato ${game.boardSize} by ${game.boardSize} board`}
               >
                 {game.constraintView ? (
-                  <div
-                    aria-hidden="true"
-                    className="selection-ribbon"
-                    key={`${game.constraintView.axis}-${game.constraintView.index}-${game.version}`}
-                    data-axis={game.constraintView.axis}
-                    style={selectionRibbonStyle(game.constraintView.axis, game.constraintView.index, game.lastMoveView)}
-                  />
+                  <>
+                    {game.lastMoveView ? (
+                      <div
+                        aria-hidden="true"
+                        className="selection-ribbon"
+                        key={`exit-${game.version}`}
+                        data-axis={previousRibbonAxis(game.constraintView.axis)}
+                        data-phase="exit"
+                        style={previousRibbonStyle(game.constraintView.axis, game.lastMoveView)}
+                      />
+                    ) : null}
+                    <div
+                      aria-hidden="true"
+                      className="selection-ribbon"
+                      key={`enter-${game.constraintView.axis}-${game.constraintView.index}-${game.version}`}
+                      data-axis={game.constraintView.axis}
+                      data-phase="enter"
+                      style={selectionRibbonStyle(game.constraintView.axis, game.constraintView.index, game.lastMoveView)}
+                    />
+                  </>
                 ) : null}
                 {game.boardView.map((row, rowIndex) =>
                   row.map((value, colIndex) => {
@@ -1158,4 +1171,14 @@ function trackStart(index: number) {
   return index === 0
     ? "var(--board-pad)"
     : `calc(var(--board-pad) + (${index} * (var(--board-cell-size) + var(--board-gap))))`;
+}
+
+function previousRibbonAxis(axis: "row" | "column") {
+  return axis === "row" ? "column" : "row";
+}
+
+function previousRibbonStyle(axis: "row" | "column", lastMove: NonNullable<PublicGameDto["lastMoveView"]>): CSSProperties {
+  const previousAxis = previousRibbonAxis(axis);
+  const previousIndex = previousAxis === "row" ? lastMove.viewRow : lastMove.viewCol;
+  return selectionRibbonStyle(previousAxis, previousIndex, lastMove);
 }

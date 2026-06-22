@@ -1362,6 +1362,23 @@ select {
   animation-name: ribbon-column-grow;
 }
 
+.selection-ribbon[data-phase="exit"] {
+  z-index: 3;
+  animation-duration: 260ms;
+}
+
+.selection-ribbon[data-phase="exit"][data-axis="row"] {
+  animation-name: ribbon-row-collapse;
+}
+
+.selection-ribbon[data-phase="exit"][data-axis="column"] {
+  animation-name: ribbon-column-collapse;
+}
+
+.selection-ribbon[data-phase="enter"] {
+  animation-delay: 240ms;
+}
+
 .cell-button {
   border: 0;
   border-radius: 13px;
@@ -1473,6 +1490,30 @@ select {
   to {
     opacity: 1;
     transform: scaleX(1) scaleY(1);
+  }
+}
+
+@keyframes ribbon-row-collapse {
+  from {
+    opacity: 1;
+    transform: scaleX(1) scaleY(1);
+  }
+
+  to {
+    opacity: 0.9;
+    transform: scaleX(0.12) scaleY(0.88);
+  }
+}
+
+@keyframes ribbon-column-collapse {
+  from {
+    opacity: 1;
+    transform: scaleX(1) scaleY(1);
+  }
+
+  to {
+    opacity: 0.9;
+    transform: scaleX(0.88) scaleY(0.12);
   }
 }
 
