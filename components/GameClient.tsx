@@ -39,8 +39,9 @@ type ApiState = {
 };
 
 const BOARD_SIZE = 9;
-const BLOB_SETTLE_MS = 760;
-const BLOB_COLUMN_SETTLE_MS = 1120;
+const BLOB_ROW_TRAVEL_MS = 760;
+const BLOB_COLUMN_TRAVEL_MS = 1120;
+const BLOB_REMOVE_HOLD_MS = 140;
 const PREVIEW_BOARD = [
   [8, -2, 4, -7, 1, 9, -6, 3, 5],
   [3, 5, -9, 6, -1, 8, 4, -7, 2],
@@ -80,9 +81,10 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const [challengeLoading, setChallengeLoading] = useState(false);
   const [syncFailures, setSyncFailures] = useState(0);
   const [ribbonSettling, setRibbonSettling] = useState(false);
+  const [blobPhase, setBlobPhase] = useState<"ready" | "collapse" | "hold" | "grow">("ready");
   const [toasts, setToasts] = useState<GameToast[]>([]);
   const toastTimers = useRef<number[]>([]);
-  const blobUnlockTimer = useRef<number | null>(null);
+  const blobTimers = useRef<number[]>([]);
   const lastSyncToastAt = useRef(0);
   const trackedResultGameId = useRef<string | null>(null);
   const lastAnimatedVersion = useRef<number | null>(null);
@@ -113,7 +115,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     const timers = toastTimers.current;
     return () => {
       timers.forEach((timer) => window.clearTimeout(timer));
-      if (blobUnlockTimer.current !== null) window.clearTimeout(blobUnlockTimer.current);
+      blobTimers.current.forEach((timer) => window.clearTimeout(timer));
     };
   }, []);
 
@@ -220,7 +222,8 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const gameVersion = game?.version;
   const constraintAxis = game?.constraintView?.axis;
   const constraintIndex = game?.constraintView?.index;
-  const blobSettleMs = constraintAxis === "column" ? BLOB_COLUMN_SETTLE_MS : BLOB_SETTLE_MS;
+  const blobTravelMs = constraintAxis === "column" ? BLOB_COLUMN_TRAVEL_MS : BLOB_ROW_TRAVEL_MS;
+  const blobSettleMs = blobTravelMs * 2 + BLOB_REMOVE_HOLD_MS;
   const resultView = game ? toResultView(game) : null;
 
   function navigate(destination: AppDestination) {
@@ -392,10 +395,9 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
 
   useEffect(() => {
     if (currentScreen !== "match" || !constraintAxis || constraintIndex === undefined || gameVersion === undefined) {
-      if (blobUnlockTimer.current !== null) {
-        window.clearTimeout(blobUnlockTimer.current);
-        blobUnlockTimer.current = null;
-      }
+      blobTimers.current.forEach((timer) => window.clearTimeout(timer));
+      blobTimers.current = [];
+      setBlobPhase("ready");
       setRibbonSettling(false);
       return;
     }
@@ -403,13 +405,21 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     if (lastAnimatedVersion.current === gameVersion) return;
 
     lastAnimatedVersion.current = gameVersion;
-    if (blobUnlockTimer.current !== null) window.clearTimeout(blobUnlockTimer.current);
+    blobTimers.current.forEach((timer) => window.clearTimeout(timer));
+    blobTimers.current = [];
+
     setRibbonSettling(true);
-    blobUnlockTimer.current = window.setTimeout(() => {
-      blobUnlockTimer.current = null;
+    setBlobPhase("collapse");
+
+    const holdTimer = window.setTimeout(() => setBlobPhase("hold"), blobTravelMs);
+    const growTimer = window.setTimeout(() => setBlobPhase("grow"), blobTravelMs + BLOB_REMOVE_HOLD_MS);
+    const unlockTimer = window.setTimeout(() => {
+      blobTimers.current = [];
+      setBlobPhase("ready");
       setRibbonSettling(false);
     }, blobSettleMs);
-  }, [currentScreen, gameVersion, constraintAxis, constraintIndex, blobSettleMs]);
+    blobTimers.current = [holdTimer, growTimer, unlockTimer];
+  }, [currentScreen, gameVersion, constraintAxis, constraintIndex, blobTravelMs, blobSettleMs]);
 
   async function copyInviteLink() {
     if (!inviteUrl) return;
@@ -744,10 +754,11 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
               <div
                 className="board-grid"
                 data-constraint-axis={game.constraintView?.axis ?? "free"}
+                data-blob-phase={blobPhase}
                 style={{
                   "--board-size": game.boardSize,
                   "--constraint-index": game.constraintView?.index ?? 0,
-                  "--blob-duration": `${blobSettleMs}ms`,
+                  "--blob-travel-duration": `${blobTravelMs}ms`,
                   gridTemplateColumns: `repeat(${game.boardSize}, minmax(0, 1fr))`
                 } as CSSProperties}
                 role="grid"
@@ -757,9 +768,9 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                   <div
                     aria-hidden="true"
                     className="selection-blob"
-                    key={`blob-${game.constraintView.axis}-${game.constraintView.index}-${game.version}`}
+                    key="selection-blob"
                     data-axis={game.constraintView.axis}
-                    data-phase={game.lastMoveView ? "morph" : "ready"}
+                    data-phase={game.lastMoveView ? blobPhase : "ready"}
                     style={selectionBlobStyle(game.constraintView.axis, game.constraintView.index, game.lastMoveView)}
                   />
                 ) : null}
@@ -771,6 +782,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                       const constrainedLegal = hasActiveTrack && legal;
                       const last = hasActiveTrack && game.lastMoveView?.viewRow === rowIndex && game.lastMoveView?.viewCol === colIndex;
                       const claimed = value === null;
+                      const displayValue = value ?? (last ? game.lastMoveView?.value ?? null : null);
                     return (
                       <button
                         key={key}
@@ -780,13 +792,14 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                         data-legal={constrainedLegal}
                         data-claimed={claimed}
                         data-last={last ? "true" : undefined}
-                        data-sign={value === null ? "claimed" : value > 0 ? "positive" : "negative"}
-                        style={{ "--reveal-order": value === null ? 18 : value + 9 } as CSSProperties}
+                        data-remove-phase={last && claimed ? blobPhase : undefined}
+                        data-sign={displayValue === null ? "claimed" : displayValue > 0 ? "positive" : "negative"}
+                        style={{ "--reveal-order": displayValue === null ? 18 : displayValue + 9 } as CSSProperties}
                         disabled={!game.viewer?.canMove || !legal || claimed || api.loading || syncFailures > 0 || ribbonSettling}
                         aria-label={cellLabel(value, rowIndex, colIndex, legal, last)}
                         onClick={() => submitMove(rowIndex, colIndex)}
                       >
-                        {value === null ? "" : Math.abs(value)}
+                        {displayValue === null ? "" : Math.abs(displayValue)}
                       </button>
                     );
                   })
