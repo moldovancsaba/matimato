@@ -40,6 +40,17 @@ type ApiState = {
 };
 
 const BOARD_SIZE = 9;
+const PREVIEW_BOARD = [
+  [8, -2, 4, -7, 1, 9, -6, 3, 5],
+  [3, 5, -9, 6, -1, 8, 4, -7, 2],
+  [7, 6, 1, -5, 2, 4, -9, 8, 3],
+  [-2, 8, 5, 1, -6, 7, 3, 9, -4],
+  [6, -4, 3, 9, 8, -2, 5, 1, 7],
+  [1, 9, -7, 4, 3, 5, 8, -2, 6],
+  [4, 1, 8, -3, 5, 6, 2, 7, -9],
+  [-9, 7, 2, 8, 4, 1, 6, -5, 3],
+  [5, 3, 6, 2, -7, 9, 1, 4, 8]
+];
 
 export default function GameClient({ initialGameId }: { initialGameId?: string }) {
   const [mode, setMode] = useState<"pvp" | "ai">("pvp");
@@ -670,13 +681,27 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
               </VisuallyHidden>
               <div
                 className="board-grid"
+                data-constraint-axis={game.constraintView?.axis ?? "free"}
                 style={{
                   "--board-size": game.boardSize,
+                  "--constraint-index": game.constraintView?.index ?? 0,
                   gridTemplateColumns: `repeat(${game.boardSize}, minmax(0, 1fr))`
                 } as CSSProperties}
                 role="grid"
                 aria-label={`Matimato ${game.boardSize} by ${game.boardSize} board`}
               >
+                {game.constraintView ? (
+                  <div
+                    aria-hidden="true"
+                    className="selection-ribbon"
+                    key={`${game.constraintView.axis}-${game.constraintView.index}-${game.version}`}
+                    data-axis={game.constraintView.axis}
+                    style={{
+                      gridColumn: game.constraintView.axis === "column" ? `${game.constraintView.index + 1}` : "1 / -1",
+                      gridRow: game.constraintView.axis === "row" ? `${game.constraintView.index + 1}` : "1 / -1"
+                    }}
+                  />
+                ) : null}
                 {game.boardView.map((row, rowIndex) =>
                   row.map((value, colIndex) => {
                     const key = `${rowIndex}:${colIndex}`;
@@ -693,11 +718,12 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                         data-claimed={claimed}
                         data-last={last}
                         data-sign={value === null ? "claimed" : value > 0 ? "positive" : "negative"}
+                        style={{ "--reveal-order": value === null ? 18 : value + 9 } as CSSProperties}
                         disabled={!game.viewer?.canMove || !legal || claimed || api.loading || syncFailures > 0}
                         aria-label={cellLabel(value, rowIndex, colIndex, legal, last)}
                         onClick={() => submitMove(rowIndex, colIndex)}
                       >
-                        {value === null ? "x" : Math.abs(value)}
+                        {value === null ? "" : Math.abs(value)}
                       </button>
                     );
                   })
@@ -706,8 +732,14 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
             </>
             ) : (
               <div className="preview-board" aria-hidden="true">
-              {[8, -2, 4, -7, 1, 3, -5, 9, 6, -1, 7, 2, -8, 5, 4, -3, 8, 1, -6, 9, 2, -4, 7, 3, -9].map((value, index) => (
-                <span key={index} data-sign={value > 0 ? "positive" : "negative"}>{Math.abs(value)}</span>
+              {PREVIEW_BOARD.flat().map((value, index) => (
+                <span
+                  key={index}
+                  data-sign={value > 0 ? "positive" : "negative"}
+                  style={{ "--reveal-order": value + 9 } as CSSProperties}
+                >
+                  {Math.abs(value)}
+                </span>
               ))}
               </div>
             )}
