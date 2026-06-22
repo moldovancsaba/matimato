@@ -786,8 +786,8 @@ select {
       "board";
     grid-template-rows: auto minmax(0, 1fr);
     row-gap: 10px;
-    height: calc(100dvh - max(12px, env(safe-area-inset-top)) - max(12px, env(safe-area-inset-bottom)));
-    max-height: calc(100dvh - max(12px, env(safe-area-inset-top)) - max(12px, env(safe-area-inset-bottom)));
+    height: calc(100dvh - max(12px, env(safe-area-inset-top)) - max(12px, env(safe-area-inset-bottom)) - 82px);
+    max-height: calc(100dvh - max(12px, env(safe-area-inset-top)) - max(12px, env(safe-area-inset-bottom)) - 82px);
     overflow: hidden;
   }
 
@@ -796,6 +796,11 @@ select {
       "controls"
       "board";
     grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .screen-match .game-shell {
+    height: calc(100dvh - max(12px, env(safe-area-inset-top)) - max(12px, env(safe-area-inset-bottom)));
+    max-height: calc(100dvh - max(12px, env(safe-area-inset-top)) - max(12px, env(safe-area-inset-bottom)));
   }
 
   .game-shell.is-playing .game-panel {
