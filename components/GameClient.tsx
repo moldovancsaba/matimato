@@ -1119,24 +1119,14 @@ function cellLabel(value: number | null, row: number, col: number, legal: boolea
 }
 
 function selectionRibbonStyle(axis: "row" | "column", index: number): CSSProperties {
-  const offset = ribbonOffset(index);
   if (axis === "row") {
     return {
-      top: offset,
-      left: "var(--board-pad)",
-      width: "calc(100% - var(--board-pad) - var(--board-pad))",
-      height: "var(--board-cell-size)"
+      gridColumn: "1 / -1",
+      gridRow: `${index + 1}`
     };
   }
   return {
-    top: "var(--board-pad)",
-    left: offset,
-    width: "var(--board-cell-size)",
-    height: "calc(100% - var(--board-pad) - var(--board-pad))"
+    gridColumn: `${index + 1}`,
+    gridRow: "1 / -1"
   };
-}
-
-function ribbonOffset(index: number) {
-  if (index <= 0) return "var(--board-pad)";
-  return `calc(var(--board-pad) + ${Array.from({ length: index }, () => "var(--board-cell-size) + var(--board-gap)").join(" + ")})`;
 }
