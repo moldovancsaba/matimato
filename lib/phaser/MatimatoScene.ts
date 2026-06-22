@@ -14,9 +14,10 @@ export class MatimatoScene extends Phaser.Scene {
   private network = new NetworkBridge();
   private machine!: ActionMachine;
   private title!: Phaser.GameObjects.Text;
-  private prompt!: Phaser.GameObjects.Text;
-  private north!: Phaser.GameObjects.Text;
-  private south!: Phaser.GameObjects.Text;
+  private northTag!: Phaser.GameObjects.Text;
+  private northScore!: Phaser.GameObjects.Text;
+  private southTag!: Phaser.GameObjects.Text;
+  private southScore!: Phaser.GameObjects.Text;
   private resultLayer?: Phaser.GameObjects.Container;
   private syncInFlight = false;
 
@@ -59,9 +60,17 @@ export class MatimatoScene extends Phaser.Scene {
     header.strokeRoundedRect(30, 54, 840, 92, 28);
     this.add.text(72, 76, 'M', { fontFamily: 'Arial', fontSize: '28px', fontStyle: '900', color: '#ffffff', backgroundColor: '#ff4f64', padding: { x: 12, y: 8 } }).setDepth(20);
     this.title = this.add.text(140, 74, 'Matimato', { fontFamily: 'Arial', fontSize: '58px', fontStyle: '900', color: '#fff8ec' }).setDepth(20);
-    this.prompt = this.add.text(50, 188, '', { fontFamily: 'Arial', fontSize: '25px', color: '#fff8ec', wordWrap: { width: 800 } }).setDepth(20);
-    this.north = this.add.text(50, 250, '', { fontFamily: 'Arial', fontSize: '25px', color: '#fff8ec' }).setDepth(20);
-    this.south = this.add.text(510, 250, '', { fontFamily: 'Arial', fontSize: '25px', color: '#fff8ec' }).setDepth(20);
+    const scorePanel = this.add.graphics().setDepth(19);
+    scorePanel.fillStyle(0x260c1d, 0.72);
+    scorePanel.fillRoundedRect(50, 178, 370, 116, 24);
+    scorePanel.fillRoundedRect(480, 178, 370, 116, 24);
+    scorePanel.lineStyle(2, 0x7b3324, 0.75);
+    scorePanel.strokeRoundedRect(50, 178, 370, 116, 24);
+    scorePanel.strokeRoundedRect(480, 178, 370, 116, 24);
+    this.northTag = this.add.text(78, 198, '', { fontFamily: 'Arial', fontSize: '22px', color: '#ffcfb5' }).setDepth(20);
+    this.northScore = this.add.text(78, 224, '', { fontFamily: 'Arial', fontSize: '54px', fontStyle: '900', color: '#fff8ec' }).setDepth(20);
+    this.southTag = this.add.text(508, 198, '', { fontFamily: 'Arial', fontSize: '22px', color: '#ffcfb5' }).setDepth(20);
+    this.southScore = this.add.text(508, 224, '', { fontFamily: 'Arial', fontSize: '54px', fontStyle: '900', color: '#fff8ec' }).setDepth(20);
     this.add.text(730, 86, 'ACTIVE', { fontFamily: 'Arial', fontSize: '18px', fontStyle: '900', color: '#ffb06f' }).setDepth(20);
     const dock = this.add.graphics().setDepth(28);
     dock.fillStyle(0x260c1d, 0.9);
@@ -108,34 +117,10 @@ export class MatimatoScene extends Phaser.Scene {
     this.snapshot = snapshot;
     this.machine?.update(snapshot);
     this.board?.setLegalTarget(snapshot.legalTarget);
-    this.prompt?.setText(this.promptFor(snapshot.legalTarget, snapshot.currentTurn));
-    this.north?.setText(`${snapshot.players.north?.tag ?? 'North'}   ${snapshot.players.north?.score ?? 0}   NORTH`);
-    this.south?.setText(`${snapshot.players.south?.tag ?? 'Waiting'}   ${snapshot.players.south?.score ?? 0}   SOUTH`);
-  }
-
-  private promptFor(target: LegalTarget, turn: PlayerSide) {
-    const side = this.sideForPlayer(this.snapshot);
-    const prefix = turn === side ? 'Your move' : 'Rival move';
-    if (target.axis === 'any') return `${prefix}   Claim any open tile.`;
-    return `${prefix}   Claim ${target.axis} ${target.index + 1}.`;
-  }
-
-  private maybeSyncAutomatedTurn() {
-    if (this.syncInFlight || this.snapshot.status !== 'active' || this.snapshot.mode === 'battle') return;
-    if (this.snapshot.currentTurn === this.sideForPlayer(this.snapshot)) return;
-    this.syncInFlight = true;
-    this.time.delayedCall(220, async () => {
-      try {
-        const response = await this.network.sync(this.snapshot.id, this.payload.playerId);
-        for (const frame of 'frames' in response ? response.frames : []) await this.playFrame(frame);
-        this.commit(response.snapshot);
-        if (response.snapshot.outcome) this.showResult(response.snapshot);
-      } catch (error) {
-        this.payload.onEvent({ type: 'announce', message: error instanceof Error ? error.message : 'Sync failed.' });
-      } finally {
-        this.syncInFlight = false;
-      }
-    });
+    this.northTag?.setText(snapshot.players.north?.tag ?? 'Player');
+    this.northScore?.setText(String(snapshot.players.north?.score ?? 0));
+    this.southTag?.setText(snapshot.players.south?.tag ?? 'Rival');
+    this.southScore?.setText(String(snapshot.players.south?.score ?? 0));
   }
 
   private showResult(snapshot: GameSnapshot) {
