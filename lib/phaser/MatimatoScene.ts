@@ -123,6 +123,25 @@ export class MatimatoScene extends Phaser.Scene {
     this.southScore?.setText(String(snapshot.players.south?.score ?? 0));
   }
 
+
+  private maybeSyncAutomatedTurn() {
+    if (this.syncInFlight || this.snapshot.status !== 'active' || this.snapshot.mode === 'battle') return;
+    if (this.snapshot.currentTurn === this.sideForPlayer(this.snapshot)) return;
+    this.syncInFlight = true;
+    this.time.delayedCall(220, async () => {
+      try {
+        const response = await this.network.sync(this.snapshot.id, this.payload.playerId);
+        for (const frame of 'frames' in response ? response.frames : []) await this.playFrame(frame);
+        this.commit(response.snapshot);
+        if (response.snapshot.outcome) this.showResult(response.snapshot);
+      } catch (error) {
+        this.payload.onEvent({ type: 'announce', message: error instanceof Error ? error.message : 'Sync failed.' });
+      } finally {
+        this.syncInFlight = false;
+      }
+    });
+  }
+
   private showResult(snapshot: GameSnapshot) {
     const side = this.sideForPlayer(snapshot);
     const winner = snapshot.outcome?.winner;
