@@ -93,7 +93,7 @@ Major journey systems can be disabled independently with environment flags:
 - Runtime feedback uses a capped local toast layer with a polite live region. Toasts are mounted outside the game shell and auto-dismiss so feedback never changes board dimensions.
 - The visual direction is based on the supplied references and the GDS `sunset` dark preset: separated onboarding/setup/game states, sunset-pulse dark app chrome, compact HUD modules, and animated screen transitions.
 - Board cells render as a light raised Sudoku-style table inside the dark game chrome so the board pops forward during play. Cells render unsigned digits for visual clarity; positive values use green, negative values use red, and accessible labels retain the exact positive/negative state.
-- Board animation uses CSS-only progressive reveal groups from `-9` through `+9`, a row/column selection ribbon that grows in the next legal axis, and a selected-cell compression fade. Claimed cells are blank, never marked with `x`.
+- Board animation uses CSS-only progressive reveal groups from `-9` through `+9`, a filled row/column selection ribbon exactly behind the playable track, and a selected-cell compression fade. Claimed cells are blank, never marked with `x`; playable state is indicated by the ribbon, not button strokes.
 - Document scrolling is disabled for the app shell. Overflow belongs inside explicit setup/control regions only.
 
 ## Rollback

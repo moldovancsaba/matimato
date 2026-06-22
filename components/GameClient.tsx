@@ -696,10 +696,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                     className="selection-ribbon"
                     key={`${game.constraintView.axis}-${game.constraintView.index}-${game.version}`}
                     data-axis={game.constraintView.axis}
-                    style={{
-                      gridColumn: game.constraintView.axis === "column" ? `${game.constraintView.index + 1}` : "1 / -1",
-                      gridRow: game.constraintView.axis === "row" ? `${game.constraintView.index + 1}` : "1 / -1"
-                    }}
+                    style={selectionRibbonStyle(game.constraintView.axis, game.constraintView.index)}
                   />
                 ) : null}
                 {game.boardView.map((row, rowIndex) =>
@@ -1105,4 +1102,27 @@ function turnMessage(game: PublicGameDto) {
 function cellLabel(value: number | null, row: number, col: number, legal: boolean, last: boolean) {
   const state = value === null ? "claimed" : `${value > 0 ? "positive" : "negative"} ${Math.abs(value)}`;
   return `Row ${row + 1}, column ${col + 1}, ${state}${legal ? ", legal move" : ""}${last ? ", last move" : ""}`;
+}
+
+function selectionRibbonStyle(axis: "row" | "column", index: number): CSSProperties {
+  const offset = ribbonOffset(index);
+  if (axis === "row") {
+    return {
+      top: offset,
+      left: "var(--board-pad)",
+      width: "calc(100% - var(--board-pad) - var(--board-pad))",
+      height: "var(--board-cell-size)"
+    };
+  }
+  return {
+    top: "var(--board-pad)",
+    left: offset,
+    width: "var(--board-cell-size)",
+    height: "calc(100% - var(--board-pad) - var(--board-pad))"
+  };
+}
+
+function ribbonOffset(index: number) {
+  if (index <= 0) return "var(--board-pad)";
+  return `calc(var(--board-pad) + ${Array.from({ length: index }, () => "var(--board-cell-size) + var(--board-gap)").join(" + ")})`;
 }
