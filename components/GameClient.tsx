@@ -1287,7 +1287,14 @@ function nextAnimationFrame() {
 }
 
 async function animateBlob(element: HTMLElement | null, from: BlobGeometry, to: BlobGeometry, durationMs: number) {
-  if (!element || durationMs <= 0 || typeof element.animate !== "function") return;
+  if (
+    !element ||
+    durationMs <= 0 ||
+    typeof element.animate !== "function" ||
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  ) {
+    return;
+  }
   const animation = element.animate(
     [
       { left: from.left, top: from.top, width: from.width, height: from.height, transform: "scale(1)" },
@@ -1300,7 +1307,7 @@ async function animateBlob(element: HTMLElement | null, from: BlobGeometry, to: 
     }
   );
   await animation.finished.catch(() => undefined);
-  animation.commitStyles();
+  (animation as Animation & { commitStyles?: () => void }).commitStyles?.();
   animation.cancel();
 }
 
@@ -1311,33 +1318,57 @@ function blobDurationForAxis(axis: "row" | "column") {
 function measuredTrackGeometry(board: HTMLElement | null, axis: "row" | "column", index: number): BlobGeometry {
   const metrics = boardMetrics(board);
   if (!metrics) return trackGeometry(axis, index);
-  const start = metrics.pad + index * (metrics.cell + metrics.gap);
   if (axis === "row") {
-    return pxGeometry(metrics.pad, start, metrics.inner, metrics.cell);
+    const top = metrics.padTop + index * (metrics.cellHeight + metrics.rowGap);
+    return pxGeometry(metrics.padLeft, top, metrics.innerWidth, metrics.cellHeight);
   }
-  return pxGeometry(start, metrics.pad, metrics.cell, metrics.inner);
+  const left = metrics.padLeft + index * (metrics.cellWidth + metrics.columnGap);
+  return pxGeometry(left, metrics.padTop, metrics.cellWidth, metrics.innerHeight);
 }
 
 function measuredCellGeometry(board: HTMLElement | null, row: number, col: number): BlobGeometry {
   const metrics = boardMetrics(board);
   if (!metrics) return cellGeometry(row, col);
   return pxGeometry(
-    metrics.pad + col * (metrics.cell + metrics.gap),
-    metrics.pad + row * (metrics.cell + metrics.gap),
-    metrics.cell,
-    metrics.cell
+    metrics.padLeft + col * (metrics.cellWidth + metrics.columnGap),
+    metrics.padTop + row * (metrics.cellHeight + metrics.rowGap),
+    metrics.cellWidth,
+    metrics.cellHeight
   );
 }
 
 function boardMetrics(board: HTMLElement | null) {
   if (!board) return null;
   const styles = window.getComputedStyle(board);
-  const pad = Number.parseFloat(styles.paddingLeft) || 0;
-  const gap = Number.parseFloat(styles.columnGap || styles.gap) || 0;
-  const inner = board.clientWidth - pad * 2;
-  const cell = (inner - gap * (BOARD_SIZE - 1)) / BOARD_SIZE;
-  if (!Number.isFinite(cell) || cell <= 0) return null;
-  return { pad, gap, inner, cell };
+  const padLeft = finiteCssNumber(styles.paddingLeft);
+  const padRight = finiteCssNumber(styles.paddingRight);
+  const padTop = finiteCssNumber(styles.paddingTop);
+  const padBottom = finiteCssNumber(styles.paddingBottom);
+  const columnGap = finiteCssNumber(styles.columnGap, styles.gap);
+  const rowGap = finiteCssNumber(styles.rowGap, styles.gap);
+  const innerWidth = board.clientWidth - padLeft - padRight;
+  const innerHeight = board.clientHeight - padTop - padBottom;
+  const cellWidth = (innerWidth - columnGap * (BOARD_SIZE - 1)) / BOARD_SIZE;
+  const cellHeight = (innerHeight - rowGap * (BOARD_SIZE - 1)) / BOARD_SIZE;
+  if (
+    !Number.isFinite(cellWidth) ||
+    !Number.isFinite(cellHeight) ||
+    cellWidth <= 0 ||
+    cellHeight <= 0 ||
+    innerWidth <= 0 ||
+    innerHeight <= 0
+  ) {
+    return null;
+  }
+  return { padLeft, padTop, columnGap, rowGap, innerWidth, innerHeight, cellWidth, cellHeight };
+}
+
+function finiteCssNumber(...values: string[]) {
+  for (const value of values) {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
 }
 
 function pxGeometry(left: number, top: number, width: number, height: number): BlobGeometry {

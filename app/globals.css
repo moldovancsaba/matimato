@@ -1938,3 +1938,46 @@ select {
   animation: none !important;
   outline: 0 !important;
 }
+
+/*
+ * Authoritative board-controller layer.
+ * The signature blob is driven by measured WAAPI rectangles in GameClient,
+ * not by CSS track variables or implicit transitions. Keep this block last so
+ * old row/column/cell styling cannot reintroduce flashing, empty-card reveals,
+ * or browser-dependent ribbon timing.
+ */
+.board-grid .selection-blob {
+  animation: none !important;
+  transition: none !important;
+  left: var(--blob-left, auto);
+  top: var(--blob-top, auto);
+  width: var(--blob-width, auto);
+  height: var(--blob-height, auto);
+  z-index: 1;
+  pointer-events: none;
+  contain: layout paint style;
+  will-change: left, top, width, height;
+}
+
+.board-grid .cell-button {
+  position: relative;
+  z-index: 2;
+}
+
+.board-grid .cell-button[data-claimed="true"],
+.board-grid .cell-button[data-claimed="true"][data-last="true"] {
+  animation: none !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: transparent !important;
+  opacity: 0 !important;
+  outline: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+.board-grid[data-blob-phase="collapse"] .cell-button,
+.board-grid[data-blob-phase="grow"] .cell-button {
+  transition: none !important;
+}
