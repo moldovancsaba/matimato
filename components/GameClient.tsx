@@ -673,7 +673,17 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
             ) : null}
 
             {currentScreen === "result" && game && resultView ? (
-              <div className="result-screen">
+              <div className="result-screen" data-outcome={resultView.outcome}>
+                <div className="result-animation" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                </div>
                 <div className="hero-kicker">{resultView.title}</div>
                 <h1>{resultView.headline}</h1>
                 <div className="score-grid" aria-label="Final score">
