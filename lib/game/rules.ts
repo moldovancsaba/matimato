@@ -104,7 +104,7 @@ export function chooseAiMove(snapshot: GameSnapshot): { row: number; col: number
   return { row: best.row, col: best.col };
 }
 
-function computeOutcome(board: BoardCell[], target: LegalTarget, scores: Record<PlayerSide, number>): GameOutcome | undefined {
+export function computeOutcome(board: BoardCell[], target: LegalTarget, scores: Record<PlayerSide, number>): GameOutcome | undefined {
   if (board.every((cell) => cell.removed)) return winner(scores, 'board-complete');
   if (!hasLegalCells(target, board)) return winner(scores, 'no-legal-cells');
   return undefined;
