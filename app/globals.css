@@ -1859,3 +1859,8 @@ select {
   visibility: hidden;
   opacity: 0;
 }
+
+.selection-blob {
+  transition: none !important;
+  will-change: left, top, width, height, transform;
+}
