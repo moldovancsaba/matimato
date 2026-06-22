@@ -78,10 +78,12 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const [challengeCurrent, setChallengeCurrent] = useState<ChallengeAttempt | null>(null);
   const [challengeLoading, setChallengeLoading] = useState(false);
   const [syncFailures, setSyncFailures] = useState(0);
+  const [ribbonSettling, setRibbonSettling] = useState(false);
   const [toasts, setToasts] = useState<GameToast[]>([]);
   const toastTimers = useRef<number[]>([]);
   const lastSyncToastAt = useRef(0);
   const trackedResultGameId = useRef<string | null>(null);
+  const lastAnimatedVersion = useRef<number | null>(null);
 
   const dismiss = useCallback((id: string) => {
     setToasts((current) => dismissToast(current, id));
@@ -380,6 +382,15 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       void loadChallenge();
     }
   }, [currentScreen, dailyChallenge, challengeLoading, loadChallenge]);
+
+  useEffect(() => {
+    if (currentScreen !== "match" || !game?.constraintView) return;
+    if (lastAnimatedVersion.current === game.version) return;
+    lastAnimatedVersion.current = game.version;
+    setRibbonSettling(true);
+    const timer = window.setTimeout(() => setRibbonSettling(false), 520);
+    return () => window.clearTimeout(timer);
+  }, [currentScreen, game?.version, game?.constraintView]);
 
   async function copyInviteLink() {
     if (!inviteUrl) return;
@@ -710,7 +721,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                     className="selection-ribbon"
                     key={`${game.constraintView.axis}-${game.constraintView.index}-${game.version}`}
                     data-axis={game.constraintView.axis}
-                    style={selectionRibbonStyle(game.constraintView.axis, game.constraintView.index)}
+                    style={selectionRibbonStyle(game.constraintView.axis, game.constraintView.index, game.lastMoveView)}
                   />
                 ) : null}
                 {game.boardView.map((row, rowIndex) =>
@@ -730,7 +741,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                         data-last={last}
                         data-sign={value === null ? "claimed" : value > 0 ? "positive" : "negative"}
                         style={{ "--reveal-order": value === null ? 18 : value + 9 } as CSSProperties}
-                        disabled={!game.viewer?.canMove || !legal || claimed || api.loading || syncFailures > 0}
+                        disabled={!game.viewer?.canMove || !legal || claimed || api.loading || syncFailures > 0 || ribbonSettling}
                         aria-label={cellLabel(value, rowIndex, colIndex, legal, last)}
                         onClick={() => submitMove(rowIndex, colIndex)}
                       >
@@ -1118,15 +1129,33 @@ function cellLabel(value: number | null, row: number, col: number, legal: boolea
   return `Row ${row + 1}, column ${col + 1}, ${state}${legal ? ", legal move" : ""}${last ? ", last move" : ""}`;
 }
 
-function selectionRibbonStyle(axis: "row" | "column", index: number): CSSProperties {
+function selectionRibbonStyle(
+  axis: "row" | "column",
+  index: number,
+  lastMove?: NonNullable<PublicGameDto["lastMoveView"]>
+): CSSProperties {
+  const originX = lastMove ? `${((lastMove.viewCol + 0.5) / BOARD_SIZE) * 100}%` : "50%";
+  const originY = lastMove ? `${((lastMove.viewRow + 0.5) / BOARD_SIZE) * 100}%` : "50%";
   if (axis === "row") {
     return {
-      gridColumn: "1 / -1",
-      gridRow: `${index + 1}`
+      top: trackStart(index),
+      left: "var(--board-pad)",
+      width: "calc(100% - var(--board-pad) - var(--board-pad))",
+      height: "var(--board-cell-size)",
+      transformOrigin: `${originX} 50%`
     };
   }
   return {
-    gridColumn: `${index + 1}`,
-    gridRow: "1 / -1"
+    top: "var(--board-pad)",
+    left: trackStart(index),
+    width: "var(--board-cell-size)",
+    height: "calc(100% - var(--board-pad) - var(--board-pad))",
+    transformOrigin: `50% ${originY}`
   };
+}
+
+function trackStart(index: number) {
+  return index === 0
+    ? "var(--board-pad)"
+    : `calc(var(--board-pad) + (${index} * (var(--board-cell-size) + var(--board-gap))))`;
 }
