@@ -91,8 +91,8 @@ Major journey systems can be disabled independently with environment flags:
 - On mobile, non-match screens subtract the fixed bottom navigation height from the shell viewport calculation. Match screens opt back into the full gameplay viewport because their bottom dock is part of the gameplay layout.
 - Invite, copied-link feedback, reconnect warnings, stale move errors, profile, history, leaderboard, and challenge flows must be separate screens or non-layout-shifting overlays; they must not stack above the active board.
 - Runtime feedback uses a capped local toast layer with a polite live region. Toasts are mounted outside the game shell and auto-dismiss so feedback never changes board dimensions.
-- The visual direction is based on the supplied references and the GDS `sunset` dark preset: soft raised Sudoku-board cells, separated onboarding/setup/game states, sunset-pulse dark surfaces, compact HUD modules, and animated screen transitions.
-- Board cells render unsigned digits for visual clarity; positive and negative values are communicated through the GDS sunset color roles and accessible cell labels.
+- The visual direction is based on the supplied references and the GDS `sunset` dark preset: separated onboarding/setup/game states, sunset-pulse dark app chrome, compact HUD modules, and animated screen transitions.
+- Board cells render as a light raised Sudoku-style table inside the dark game chrome so the board pops forward during play. Cells render unsigned digits for visual clarity; positive values use green, negative values use red, and accessible labels retain the exact positive/negative state.
 - Document scrolling is disabled for the app shell. Overflow belongs inside explicit setup/control regions only.
 
 ## Rollback
