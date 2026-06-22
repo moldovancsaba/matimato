@@ -234,10 +234,13 @@ select {
 }
 
 .cell-button[data-claimed="true"] {
-  background: #d8d0c7;
-  color: var(--matimato-claimed);
+  background: transparent;
+  color: transparent;
   cursor: not-allowed;
-  opacity: 0.42;
+  opacity: 0;
+  box-shadow: none;
+  pointer-events: none;
+  visibility: hidden;
 }
 
 .cell-button[data-last="true"] {
@@ -1386,10 +1389,22 @@ select {
 }
 
 .cell-button[data-claimed="true"] {
-  background: #d8d0c7;
-  color: rgba(71, 85, 105, 0.54);
+  background: transparent;
+  color: transparent;
   text-shadow: none;
-  opacity: 0.4;
+  opacity: 0;
+  box-shadow: none;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.cell-button[data-claimed="true"][data-last="true"] {
+  background: var(--matimato-board-cell);
+  box-shadow:
+    inset 1px 1px 1px rgba(255, 255, 255, 0.82),
+    inset -2px -2px 7px rgba(137, 94, 61, 0.13),
+    0 7px 14px rgba(70, 36, 18, 0.12);
+  visibility: visible;
 }
 
 .cell-button:active {
@@ -1432,8 +1447,8 @@ select {
   }
 
   100% {
-    opacity: 0.4;
-    transform: scale(1);
+    opacity: 0;
+    transform: scale(0.72);
   }
 }
 

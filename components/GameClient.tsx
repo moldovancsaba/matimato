@@ -66,11 +66,13 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const [historyMode, setHistoryMode] = useState<HistoryModeFilter>("all");
   const [historyCursor, setHistoryCursor] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const [leaderboardEntries, setLeaderboardEntries] = useState<LeaderboardEntry[]>([]);
   const [leaderboardCurrent, setLeaderboardCurrent] = useState<LeaderboardEntry | null>(null);
   const [leaderboardMode, setLeaderboardMode] = useState<LeaderboardMode>("battle");
   const [leaderboardPeriod, setLeaderboardPeriod] = useState<LeaderboardPeriod>("weekly");
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardLoaded, setLeaderboardLoaded] = useState(false);
   const [dailyChallenge, setDailyChallenge] = useState<DailyChallenge | null>(null);
   const [challengeAttempts, setChallengeAttempts] = useState<ChallengeAttempt[]>([]);
   const [challengeCurrent, setChallengeCurrent] = useState<ChallengeAttempt | null>(null);
@@ -268,9 +270,11 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       if (!response.ok) throw new Error(payload.error?.message ?? "Could not load history.");
       setHistoryItems((current) => cursor ? [...current, ...payload.items] : payload.items);
       setHistoryCursor(payload.nextCursor);
+      if (!cursor) setHistoryLoaded(true);
       setHistoryLoading(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not load history.";
+      if (!cursor) setHistoryLoaded(true);
       setHistoryLoading(false);
       pushToast({ tone: "error", title: "History unavailable", message });
     }
@@ -280,6 +284,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     setHistoryMode(mode);
     setHistoryItems([]);
     setHistoryCursor(null);
+    setHistoryLoaded(false);
     void loadHistory(mode);
   }
 
@@ -292,9 +297,11 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       if (!response.ok) throw new Error(payload.error?.message ?? "Could not load leaderboard.");
       setLeaderboardEntries(payload.entries);
       setLeaderboardCurrent(payload.currentEntry);
+      setLeaderboardLoaded(true);
       setLeaderboardLoading(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not load leaderboard.";
+      setLeaderboardLoaded(true);
       setLeaderboardLoading(false);
       pushToast({ tone: "error", title: "Ranks unavailable", message });
     }
@@ -305,6 +312,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     const nextMode = input.mode ?? leaderboardMode;
     setLeaderboardPeriod(nextPeriod);
     setLeaderboardMode(nextMode);
+    setLeaderboardLoaded(false);
     void loadLeaderboard(nextPeriod, nextMode);
   }
 
@@ -356,16 +364,16 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   }, [currentScreen, profile, profileLoading, loadProfile]);
 
   useEffect(() => {
-    if (currentScreen === "history" && historyItems.length === 0 && !historyLoading) {
+    if (currentScreen === "history" && !historyLoaded && !historyLoading) {
       void loadHistory(historyMode);
     }
-  }, [currentScreen, historyItems.length, historyLoading, historyMode, loadHistory]);
+  }, [currentScreen, historyLoaded, historyLoading, historyMode, loadHistory]);
 
   useEffect(() => {
-    if (currentScreen === "leaderboard" && leaderboardEntries.length === 0 && !leaderboardLoading) {
+    if (currentScreen === "leaderboard" && !leaderboardLoaded && !leaderboardLoading) {
       void loadLeaderboard(leaderboardPeriod, leaderboardMode);
     }
-  }, [currentScreen, leaderboardEntries.length, leaderboardLoading, leaderboardPeriod, leaderboardMode, loadLeaderboard]);
+  }, [currentScreen, leaderboardLoaded, leaderboardLoading, leaderboardPeriod, leaderboardMode, loadLeaderboard]);
 
   useEffect(() => {
     if (currentScreen === "challenges" && !dailyChallenge && !challengeLoading) {
@@ -503,7 +511,10 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 loading={historyLoading}
                 onModeChange={changeHistoryMode}
                 onLoadMore={() => loadHistory(historyMode, historyCursor)}
-                onRetry={() => loadHistory(historyMode)}
+                onRetry={() => {
+                  setHistoryLoaded(false);
+                  void loadHistory(historyMode);
+                }}
               />
             ) : null}
 
@@ -515,7 +526,10 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 mode={leaderboardMode}
                 loading={leaderboardLoading}
                 onChange={changeLeaderboard}
-                onRetry={() => loadLeaderboard(leaderboardPeriod, leaderboardMode)}
+                onRetry={() => {
+                  setLeaderboardLoaded(false);
+                  void loadLeaderboard(leaderboardPeriod, leaderboardMode);
+                }}
               />
             ) : null}
 
