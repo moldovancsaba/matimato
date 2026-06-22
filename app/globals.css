@@ -144,24 +144,90 @@ select {
 .mode-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 10px;
 }
 
-.mode-grid button {
-  min-height: 58px;
-  border-radius: 14px;
-  font-weight: 900;
-  letter-spacing: 0.04em;
+.mode-card {
+  width: 100%;
+  min-width: 0;
+  min-height: 118px;
+  display: grid;
+  align-content: space-between;
+  gap: 9px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--gds-vibe-primary) 34%, transparent);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 12% 10%, color-mix(in srgb, var(--gds-vibe-primary) 22%, transparent), transparent 36%),
+    color-mix(in srgb, var(--gds-vibe-surface) 76%, transparent);
+  color: var(--gds-vibe-text);
+  text-align: left;
+  cursor: pointer;
   box-shadow:
     inset 1px 1px 1px color-mix(in srgb, white 16%, transparent),
     inset -2px -2px 8px color-mix(in srgb, black 22%, transparent),
-    0 10px 22px color-mix(in srgb, var(--gds-vibe-glow) 26%, transparent);
+    0 14px 28px color-mix(in srgb, black 22%, transparent);
 }
 
-.mode-grid button[aria-pressed="true"],
-.mode-grid button[data-active="true"] {
-  background: linear-gradient(135deg, var(--gds-vibe-primary), var(--gds-vibe-accent));
+.mode-card[data-active="true"] {
+  border-color: color-mix(in srgb, var(--gds-vibe-accent) 74%, transparent);
+  background:
+    radial-gradient(circle at 18% 10%, color-mix(in srgb, white 22%, transparent), transparent 32%),
+    linear-gradient(135deg, var(--gds-vibe-primary), var(--gds-vibe-accent));
   color: var(--gds-vibe-text);
+  box-shadow:
+    inset 1px 1px 1px color-mix(in srgb, white 28%, transparent),
+    0 18px 42px color-mix(in srgb, var(--gds-vibe-glow) 42%, transparent);
+}
+
+.mode-card:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--gds-vibe-focus) 72%, transparent);
+  outline-offset: 3px;
+}
+
+.mode-card-kicker {
+  width: fit-content;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gds-vibe-shell) 58%, transparent);
+  color: color-mix(in srgb, var(--gds-vibe-accent) 82%, white);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+}
+
+.mode-card strong {
+  display: block;
+  font-size: clamp(1.05rem, 4.4vw, 1.42rem);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.mode-card span:last-child {
+  display: block;
+  color: color-mix(in srgb, var(--gds-vibe-text) 76%, transparent);
+  font-size: clamp(0.78rem, 2.9vw, 0.9rem);
+  line-height: 1.2;
+}
+
+@media (max-width: 420px) {
+  .mode-grid {
+    gap: 8px;
+  }
+
+  .mode-card {
+    min-height: 104px;
+    padding: 12px;
+    border-radius: 21px;
+  }
+
+  .mode-card strong {
+    font-size: clamp(0.98rem, 4.8vw, 1.2rem);
+  }
+
+  .mode-card span:last-child {
+    font-size: 0.76rem;
+  }
 }
 
 .board-grid {
