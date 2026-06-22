@@ -17,6 +17,8 @@ type BlobState = {
   axis: "row" | "column" | "cell";
 };
 
+type CellKey = `${number}:${number}`;
+
 export type MatimatoBoardHandle = {
   playMoveTransition: (previousGame: PublicGameDto, nextGame: PublicGameDto, commitNextGame: () => void) => Promise<void>;
   resetBoardAnimation: () => void;
@@ -45,6 +47,7 @@ export const MatimatoBoard = forwardRef<MatimatoBoardHandle, MatimatoBoardProps>
   const animationRun = useRef(0);
   const animating = useRef(false);
   const [blob, setBlob] = useState<BlobState | null>(null);
+  const [hiddenCell, setHiddenCell] = useState<CellKey | null>(null);
   const legalKey = useMemo(() => new Set(game.legalCellsView.map((cell) => `${cell.viewRow}:${cell.viewCol}`)), [game.legalCellsView]);
   const constraintAxis = game.constraintView?.axis;
   const constraintIndex = game.constraintView?.index;
@@ -64,6 +67,7 @@ export const MatimatoBoard = forwardRef<MatimatoBoardHandle, MatimatoBoardProps>
         return;
       }
 
+      const selectedKey = cellKey(selectedCell.viewRow, selectedCell.viewCol);
       const selectedRect = cellRect(selectedCell.viewRow, selectedCell.viewCol);
       const fromRect = previousConstraint ? trackRect(previousConstraint.axis, previousConstraint.index) : selectedRect;
       const targetRect = trackRect(nextConstraint.axis, nextConstraint.index);
@@ -81,7 +85,7 @@ export const MatimatoBoard = forwardRef<MatimatoBoardHandle, MatimatoBoardProps>
       if (animationRun.current !== run) return;
 
       setBlob({ rect: selectedRect, phase: "collapse", axis: "cell" });
-      commitNextGame();
+      setHiddenCell(selectedKey);
       await nextFrame();
       if (animationRun.current !== run) return;
 
@@ -93,6 +97,8 @@ export const MatimatoBoard = forwardRef<MatimatoBoardHandle, MatimatoBoardProps>
       if (animationRun.current !== run) return;
 
       setBlob({ rect: targetRect, phase: "idle", axis: nextConstraint.axis });
+      commitNextGame();
+      setHiddenCell(null);
       animating.current = false;
     },
     resetBoardAnimation() {
@@ -114,6 +120,7 @@ export const MatimatoBoard = forwardRef<MatimatoBoardHandle, MatimatoBoardProps>
     animationRun.current += 1;
     animating.current = false;
     setBlob(null);
+    setHiddenCell(null);
   }
 
   return (
@@ -146,7 +153,7 @@ export const MatimatoBoard = forwardRef<MatimatoBoardHandle, MatimatoBoardProps>
           row.map((value, colIndex) => {
             const key = `${rowIndex}:${colIndex}`;
             const legal = legalKey.has(key);
-            const claimed = value === null;
+            const claimed = value === null || hiddenCell === key;
             const rect = cellRect(rowIndex, colIndex);
             const canSelect = Boolean(game.viewer?.canMove && legal && !claimed && !disabled);
             return (
@@ -197,6 +204,10 @@ function cellRect(row: number, col: number): BoardRect {
     width: TILE_SIZE,
     height: TILE_SIZE
   };
+}
+
+function cellKey(row: number, col: number): CellKey {
+  return `${row}:${col}`;
 }
 
 function trackRect(axis: "row" | "column", index: number): BoardRect {
