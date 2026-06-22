@@ -101,15 +101,22 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     toastTimers.current.push(timer);
   }, [dismiss]);
 
+  const primeBlobTransition = useCallback((nextGame: PublicGameDto) => {
+    if (nextGame.status !== "active" || !nextGame.constraintView || !nextGame.lastMoveView || lastAnimatedVersion.current === nextGame.version) return;
+    setRibbonSettling(true);
+    setBlobPhase("collapse");
+  }, []);
+
   const fetchGame = useCallback(async (id: string, quiet = false) => {
     if (!quiet) setApi({ loading: true });
     const response = await fetch(`/api/games/${id}`, { cache: "no-store" });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.error?.message ?? "Could not load game.");
+    primeBlobTransition(payload.game);
     setGame(payload.game);
     setApi({ loading: false });
     setSyncFailures(0);
-  }, []);
+  }, [primeBlobTransition]);
 
   useEffect(() => {
     const timers = toastTimers.current;
@@ -160,6 +167,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "Could not create game.");
+      primeBlobTransition(payload.game);
       setGame(payload.game);
       trackEvent({ action: "create_game", category: "game", label: mode, value: BOARD_SIZE });
       window.history.replaceState(null, "", `/play/${payload.game.id}`);
@@ -181,6 +189,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "Could not join game.");
+      primeBlobTransition(payload.game);
       setGame(payload.game);
       trackEvent({ action: "join_game", category: "game", label: "pvp" });
       window.history.replaceState(null, "", `/play/${payload.game.id}`);
@@ -203,6 +212,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "Move failed.");
+      primeBlobTransition(payload.game);
       setGame(payload.game);
       trackEvent({ action: "submit_move", category: "game", label: game.mode, value: game.boardSize });
       setApi({ loading: false });
@@ -782,7 +792,6 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                       const constrainedLegal = hasActiveTrack && legal;
                       const last = hasActiveTrack && game.lastMoveView?.viewRow === rowIndex && game.lastMoveView?.viewCol === colIndex;
                       const claimed = value === null;
-                      const displayValue = value ?? (last ? game.lastMoveView?.value ?? null : null);
                     return (
                       <button
                         key={key}
@@ -792,14 +801,13 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                         data-legal={constrainedLegal}
                         data-claimed={claimed}
                         data-last={last ? "true" : undefined}
-                        data-remove-phase={last && claimed ? blobPhase : undefined}
-                        data-sign={displayValue === null ? "claimed" : displayValue > 0 ? "positive" : "negative"}
-                        style={{ "--reveal-order": displayValue === null ? 18 : displayValue + 9 } as CSSProperties}
+                        data-sign={value === null ? "claimed" : value > 0 ? "positive" : "negative"}
+                        style={{ "--reveal-order": value === null ? 18 : value + 9 } as CSSProperties}
                         disabled={!game.viewer?.canMove || !legal || claimed || api.loading || syncFailures > 0 || ribbonSettling}
                         aria-label={cellLabel(value, rowIndex, colIndex, legal, last)}
                         onClick={() => submitMove(rowIndex, colIndex)}
                       >
-                        {displayValue === null ? "" : Math.abs(displayValue)}
+                        {value === null ? "" : Math.abs(value)}
                       </button>
                     );
                   })
