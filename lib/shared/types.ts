@@ -38,7 +38,6 @@ export type GameOutcome = {
 export type GameSnapshot = {
   id: string;
   inviteCode: string;
-  code: string;
   mode: GameMode;
   status: GameStatus;
   version: number;
