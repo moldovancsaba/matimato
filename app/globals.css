@@ -487,19 +487,22 @@ select {
 }
 
 .feature-screen {
-  min-height: min(620px, 72dvh);
   display: grid;
-  align-content: end;
-  gap: 16px;
-  padding: clamp(10px, 3vw, 28px) 0 4px;
+  align-content: start;
+  gap: 14px;
+  padding: 4px 0 4px;
 }
 
-.feature-screen h1 {
+.feature-screen h1,
+.leaderboard-screen h1,
+.history-screen h1,
+.profile-screen h1 {
   margin: 0;
-  max-width: 9ch;
-  font-size: clamp(2.55rem, 8.4vw, 5rem);
+  max-width: 10ch;
+  font-size: clamp(2.35rem, 7.6vw, 4.75rem);
   line-height: 0.94;
   letter-spacing: -0.06em;
+  overflow-wrap: anywhere;
 }
 
 .feature-screen p {
@@ -539,35 +542,24 @@ select {
 }
 
 .profile-screen {
-  min-height: min(640px, 74dvh);
   display: grid;
-  align-content: end;
-  gap: 16px;
-  padding: clamp(10px, 3vw, 28px) 0 4px;
+  align-content: start;
+  gap: 14px;
+  padding: 4px 0 4px;
 }
 
 .history-screen {
-  min-height: min(640px, 74dvh);
   display: grid;
-  align-content: end;
+  align-content: start;
   gap: 14px;
-  padding: clamp(10px, 3vw, 28px) 0 4px;
+  padding: 4px 0 4px;
 }
 
 .leaderboard-screen {
-  min-height: min(660px, 76dvh);
   display: grid;
-  align-content: end;
-  gap: 12px;
-  padding: clamp(10px, 3vw, 28px) 0 4px;
-}
-
-.leaderboard-screen h1 {
-  margin: 0;
-  max-width: 9ch;
-  font-size: clamp(2.45rem, 8vw, 4.8rem);
-  line-height: 0.94;
-  letter-spacing: -0.06em;
+  align-content: start;
+  gap: 14px;
+  padding: 4px 0 4px;
 }
 
 .leaderboard-list {
@@ -610,14 +602,6 @@ select {
   grid-column: 3;
   grid-row: 1 / span 2;
   font-size: 1.35rem;
-}
-
-.history-screen h1 {
-  margin: 0;
-  max-width: 9ch;
-  font-size: clamp(2.45rem, 8vw, 4.8rem);
-  line-height: 0.94;
-  letter-spacing: -0.06em;
 }
 
 .history-tabs {
@@ -715,15 +699,6 @@ select {
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, white 18%, transparent),
     0 16px 34px color-mix(in srgb, var(--gds-vibe-glow) 42%, transparent);
-}
-
-.profile-screen h1 {
-  margin: 8px 0 0;
-  max-width: 10ch;
-  font-size: clamp(2.4rem, 8vw, 4.7rem);
-  line-height: 0.94;
-  letter-spacing: -0.06em;
-  overflow-wrap: anywhere;
 }
 
 .profile-screen p {
@@ -1047,7 +1022,7 @@ select {
   .screen-profile .game-shell {
     grid-template-columns: 1fr;
     grid-template-areas: "controls";
-    align-content: end;
+    align-content: start;
   }
 
   .screen-challenges .game-panel,
@@ -1060,19 +1035,19 @@ select {
   }
 
   .feature-screen {
-    min-height: min(620px, calc(100dvh - 118px));
+    min-height: 0;
   }
 
   .profile-screen {
-    min-height: min(640px, calc(100dvh - 118px));
+    min-height: 0;
   }
 
   .history-screen {
-    min-height: min(640px, calc(100dvh - 118px));
+    min-height: 0;
   }
 
   .leaderboard-screen {
-    min-height: min(660px, calc(100dvh - 118px));
+    min-height: 0;
   }
 }
 
