@@ -1929,3 +1929,12 @@ select {
   visibility: hidden !important;
   opacity: 0 !important;
 }
+
+.selection-blob[data-phase="morph"] {
+  animation: none !important;
+}
+
+.cell-button[data-last="true"] {
+  animation: none !important;
+  outline: 0 !important;
+}
