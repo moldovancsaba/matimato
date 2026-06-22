@@ -1639,3 +1639,45 @@ select {
     width: min(100%, 96vw, calc(100dvh - 156px));
   }
 }
+
+.selection-blob[data-phase="morph"] {
+  animation-name: blob-morph-sequenced;
+}
+
+@keyframes blob-morph-sequenced {
+  0% {
+    left: var(--blob-from-left);
+    top: var(--blob-from-top);
+    width: var(--blob-from-width);
+    height: var(--blob-from-height);
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  43% {
+    left: var(--blob-cell-left);
+    top: var(--blob-cell-top);
+    width: var(--blob-cell-width);
+    height: var(--blob-cell-height);
+    opacity: 1;
+    transform: scale(0.96);
+  }
+
+  57% {
+    left: var(--blob-cell-left);
+    top: var(--blob-cell-top);
+    width: var(--blob-cell-width);
+    height: var(--blob-cell-height);
+    opacity: 0.92;
+    transform: scale(0.9);
+  }
+
+  100% {
+    left: var(--blob-to-left);
+    top: var(--blob-to-top);
+    width: var(--blob-to-width);
+    height: var(--blob-to-height);
+    opacity: 1;
+    transform: scale(1);
+  }
+}
