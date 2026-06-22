@@ -80,7 +80,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
   }
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell theme-${screen}`}>
       <Header status={screen === 'home' ? 'Ready' : screen} />
       {notice ? <div className="notice" role="status">{notice}</div> : null}
       {screen === 'home' ? <Home tag={tag} setTag={setTag} start={start} goBattle={() => setScreen('battle')} /> : null}

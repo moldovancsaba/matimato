@@ -61,8 +61,21 @@ export class MatimatoScene extends Phaser.Scene {
     this.north = this.add.text(50, 250, '', { fontFamily: 'Arial', fontSize: '25px', color: '#fff8ec' }).setDepth(20);
     this.south = this.add.text(510, 250, '', { fontFamily: 'Arial', fontSize: '25px', color: '#fff8ec' }).setDepth(20);
     this.add.text(730, 86, 'ACTIVE', { fontFamily: 'Arial', fontSize: '18px', fontStyle: '900', color: '#ffb06f' }).setDepth(20);
-    const exit = this.add.text(60, 1250, 'Exit', { fontFamily: 'Arial', fontSize: '26px', fontStyle: '900', color: '#ffffff', backgroundColor: '#ff3f93', padding: { x: 30, y: 18 } }).setInteractive({ useHandCursor: true }).setDepth(30);
-    exit.on('pointerdown', () => this.payload.onEvent({ type: 'exit' }));
+    const dock = this.add.graphics().setDepth(28);
+    dock.fillStyle(0x260c1d, 0.9);
+    dock.fillRoundedRect(50, 1218, 800, 96, 30);
+    dock.lineStyle(2, 0x7b3324, 0.75);
+    dock.strokeRoundedRect(50, 1218, 800, 96, 30);
+    const homeButton = this.add.graphics().setDepth(29);
+    homeButton.fillStyle(0xff3f93, 1);
+    homeButton.fillRoundedRect(72, 1236, 218, 60, 22);
+    homeButton.fillStyle(0xff6a2a, 0.95);
+    homeButton.fillRoundedRect(72, 1236, 78, 60, 22);
+    const homeLabel = this.add.text(181, 1266, 'Home', { fontFamily: 'Arial', fontSize: '24px', fontStyle: '900', color: '#ffffff' }).setOrigin(0.5).setDepth(30);
+    const homeHit = this.add.zone(72, 1236, 218, 60).setOrigin(0).setInteractive({ useHandCursor: true }).setDepth(31);
+    homeHit.on('pointerdown', () => this.payload.onEvent({ type: 'exit' }));
+    this.add.text(320, 1252, '9x9 chase · Phaser board', { fontFamily: 'Arial', fontSize: '22px', color: '#ffcfb5' }).setDepth(30);
+    void homeLabel;
   }
 
   private canSelect(cell: BoardCell, snapshot: GameSnapshot) {
@@ -81,6 +94,7 @@ export class MatimatoScene extends Phaser.Scene {
     const tileRect = geometry.cellRect(frame.selected.row, frame.selected.col);
     const from = frame.fromTarget.axis === 'column' ? geometry.colRect(frame.fromTarget.index) : geometry.rowRect(frame.selected.row);
     const to = frame.toTarget.axis === 'column' ? geometry.colRect(frame.toTarget.index) : frame.toTarget.axis === 'row' ? geometry.rowRect(frame.toTarget.index) : tileRect;
+    await this.board.showSelected(frame.selected.row, frame.selected.col, frame.side);
     if (!this.blob.isVisible()) this.blob.show(from);
     await this.blob.morph(tileRect);
     await this.board.remove(frame.selected.row, frame.selected.col);
