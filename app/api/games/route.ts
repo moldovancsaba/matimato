@@ -12,13 +12,34 @@ const schema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('sync'), matchId: z.string().min(1), playerId: z.string().optional() })
 ]);
 
+
+function resolveAutomatedTurns(snapshot: import('@/lib/shared/types').GameSnapshot, actionSeed = 'auto-sync') {
+  const frames: MoveFrame[] = [];
+  let next = snapshot;
+  let guard = 0;
+  while (!next.outcome && next.status === 'active' && next.mode !== 'battle' && next.currentTurn === 'south' && guard < 8) {
+    const ai = chooseAiMove(next);
+    if (!ai) break;
+    const result = applyMove(next, 'south', ai.row, ai.col, `${actionSeed}:ai:${guard}`);
+    frames.push(result.frame);
+    next = result.snapshot;
+    guard += 1;
+  }
+  return { snapshot: next, frames };
+}
+
 export async function GET(request: Request) {
   try {
     const id = new URL(request.url).searchParams.get('id');
     if (!id) throw new Error('Missing game id.');
     const snapshot = await findGame(id);
     if (!snapshot) throw new Error('Game not found.');
-    return ok({ snapshot, frames: [] } satisfies GameApiResponse);
+    const resolved = resolveAutomatedTurns(snapshot, 'fetch');
+    if (resolved.frames.length) {
+      await saveGame(resolved.snapshot);
+      if (resolved.snapshot.outcome) await completeGame(resolved.snapshot);
+    }
+    return ok({ snapshot: resolved.snapshot, frames: resolved.frames } satisfies GameApiResponse);
   } catch (error) {
     return fail(error, 404);
   }
@@ -42,7 +63,12 @@ export async function POST(request: Request) {
     if (input.type === 'sync') {
       const snapshot = await findGame(input.matchId);
       if (!snapshot) throw new Error('Game not found.');
-      return ok({ snapshot, frames: [] } satisfies GameApiResponse);
+      const resolved = resolveAutomatedTurns(snapshot, 'sync');
+      if (resolved.frames.length) {
+        await saveGame(resolved.snapshot);
+        if (resolved.snapshot.outcome) await completeGame(resolved.snapshot);
+      }
+      return ok({ snapshot: resolved.snapshot, frames: resolved.frames } satisfies GameApiResponse);
     }
     const snapshot = await findGame(input.matchId);
     if (!snapshot) throw new Error('Game not found.');
@@ -53,14 +79,9 @@ export async function POST(request: Request) {
     let result = applyMove(snapshot, side, input.row, input.col, input.actionId);
     frames.push(result.frame);
     let next = result.snapshot;
-    if (!next.outcome && next.mode !== 'battle' && next.currentTurn === 'south') {
-      const ai = chooseAiMove(next);
-      if (ai) {
-        result = applyMove(next, 'south', ai.row, ai.col, `${input.actionId}:ai`);
-        frames.push(result.frame);
-        next = result.snapshot;
-      }
-    }
+    const automated = resolveAutomatedTurns(next, input.actionId);
+    frames.push(...automated.frames);
+    next = automated.snapshot;
     await saveGame(next);
     if (next.outcome) await completeGame(next);
     return ok({ snapshot: next, frames } satisfies GameApiResponse);

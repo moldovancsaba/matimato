@@ -18,6 +18,7 @@ export class MatimatoScene extends Phaser.Scene {
   private north!: Phaser.GameObjects.Text;
   private south!: Phaser.GameObjects.Text;
   private resultLayer?: Phaser.GameObjects.Container;
+  private syncInFlight = false;
 
   constructor() { super('matimato'); }
 
@@ -43,6 +44,7 @@ export class MatimatoScene extends Phaser.Scene {
     });
     this.commit(this.snapshot);
     this.payload.onEvent({ type: 'announce', message: 'Game ready. Claim any open tile.' });
+    this.maybeSyncAutomatedTurn();
   }
 
   private drawShell() {
@@ -116,6 +118,24 @@ export class MatimatoScene extends Phaser.Scene {
     const prefix = turn === side ? 'Your move' : 'Rival move';
     if (target.axis === 'any') return `${prefix}   Claim any open tile.`;
     return `${prefix}   Claim ${target.axis} ${target.index + 1}.`;
+  }
+
+  private maybeSyncAutomatedTurn() {
+    if (this.syncInFlight || this.snapshot.status !== 'active' || this.snapshot.mode === 'battle') return;
+    if (this.snapshot.currentTurn === this.sideForPlayer(this.snapshot)) return;
+    this.syncInFlight = true;
+    this.time.delayedCall(220, async () => {
+      try {
+        const response = await this.network.sync(this.snapshot.id, this.payload.playerId);
+        for (const frame of 'frames' in response ? response.frames : []) await this.playFrame(frame);
+        this.commit(response.snapshot);
+        if (response.snapshot.outcome) this.showResult(response.snapshot);
+      } catch (error) {
+        this.payload.onEvent({ type: 'announce', message: error instanceof Error ? error.message : 'Sync failed.' });
+      } finally {
+        this.syncInFlight = false;
+      }
+    });
   }
 
   private showResult(snapshot: GameSnapshot) {
