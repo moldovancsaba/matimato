@@ -14,8 +14,7 @@ import {
 } from "@doneisbetter/gds/client";
 import { IconBolt, IconCrown, IconHistory, IconHome, IconPlus, IconRefresh, IconSwords, IconUserCircle } from "@tabler/icons-react";
 import type { CSSProperties } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { animate as motionAnimate } from "motion";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   destinationToScreen,
   resolveScreen,
@@ -33,28 +32,14 @@ import type { PublicProfile } from "@/lib/profile/types";
 import type { HistoryItem, HistoryModeFilter } from "@/lib/history/history-model";
 import type { LeaderboardEntry, LeaderboardMode, LeaderboardPeriod } from "@/lib/leaderboard/leaderboard-model";
 import type { ChallengeAttempt, DailyChallenge } from "@/lib/challenges/challenge-model";
+import { MatimatoBoard, type MatimatoBoardHandle } from "@/components/MatimatoBoard";
 
 type ApiState = {
   loading: boolean;
   error?: string;
 };
 
-type BlobGeometry = {
-  left: string;
-  top: string;
-  width: string;
-  height: string;
-};
-
-type BlobAnimationState = {
-  geometry: BlobGeometry;
-  phase: "ready" | "collapse" | "grow";
-  axis: "row" | "column" | "cell";
-};
-
 const BOARD_SIZE = 9;
-const BLOB_ROW_TRAVEL_MS = 760;
-const BLOB_COLUMN_TRAVEL_MS = 1120;
 const PREVIEW_BOARD = [
   [8, -2, 4, -7, 1, 9, -6, 3, 5],
   [3, 5, -9, 6, -1, 8, 4, -7, 2],
@@ -94,14 +79,10 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const [challengeLoading, setChallengeLoading] = useState(false);
   const [syncFailures, setSyncFailures] = useState(0);
   const [ribbonSettling, setRibbonSettling] = useState(false);
-  const [blobAnimation, setBlobAnimation] = useState<BlobAnimationState | null>(null);
   const [toasts, setToasts] = useState<GameToast[]>([]);
   const toastTimers = useRef<number[]>([]);
-  const boardGridRef = useRef<HTMLDivElement | null>(null);
-  const selectionBlobRef = useRef<HTMLDivElement | null>(null);
-  const cellRefs = useRef(new Map<string, HTMLButtonElement>());
-  const blobAnimationRef = useRef<BlobAnimationState | null>(null);
   const blobActionRun = useRef(0);
+  const boardControllerRef = useRef<MatimatoBoardHandle | null>(null);
   const lastSyncToastAt = useRef(0);
   const trackedResultGameId = useRef<string | null>(null);
   const currentGameRef = useRef<PublicGameDto | null>(null);
@@ -118,14 +99,8 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     toastTimers.current.push(timer);
   }, [dismiss]);
 
-  const updateBlobAnimation = useCallback((next: BlobAnimationState | null) => {
-    blobAnimationRef.current = next;
-    setBlobAnimation(next);
-  }, []);
-
   const commitGame = useCallback(async (nextGame: PublicGameDto) => {
     const previousGame = currentGameRef.current;
-    const previousConstraint = previousGame?.constraintView;
 
     if (previousGame?.id === nextGame.id && previousGame.version === nextGame.version) {
       return;
@@ -141,7 +116,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       currentGameRef.current = nextGame;
       setGame(nextGame);
       if (nextGame.status !== "active") {
-        updateBlobAnimation(null);
+        boardControllerRef.current?.resetBoardAnimation();
         setRibbonSettling(false);
       }
       return;
@@ -149,42 +124,15 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
 
     const run = blobActionRun.current + 1;
     blobActionRun.current = run;
-    const boardElement = boardGridRef.current;
-    const cell = boardElement
-      ? measuredCellGeometry(boardElement, cellRefs.current, nextGame.lastMoveView.viewRow, nextGame.lastMoveView.viewCol)
-      : cellGeometry(nextGame.lastMoveView.viewRow, nextGame.lastMoveView.viewCol);
-    const from = previousConstraint && boardElement
-      ? measuredTrackGeometry(boardElement, cellRefs.current, previousConstraint.axis, previousConstraint.index)
-      : cell;
-    const to = boardElement
-      ? measuredTrackGeometry(boardElement, cellRefs.current, nextGame.constraintView.axis, nextGame.constraintView.index)
-      : trackGeometry(nextGame.constraintView.axis, nextGame.constraintView.index);
-    const collapseMs = previousConstraint ? blobDurationForAxis(previousConstraint.axis) : 0;
-    const growMs = blobDurationForAxis(nextGame.constraintView.axis);
-
     setRibbonSettling(true);
-    updateBlobAnimation({ geometry: from, phase: "collapse", axis: previousConstraint?.axis ?? "cell" });
-    await nextAnimationFrame();
-    if (blobActionRun.current !== run) return;
-
-    if (collapseMs > 0) {
-      await animateBlob(selectionBlobRef.current, from, cell, collapseMs);
+    await boardControllerRef.current?.playMoveTransition(previousGame, nextGame, () => {
+      currentGameRef.current = nextGame;
+      setGame(nextGame);
+    });
+    if (blobActionRun.current === run) {
+      setRibbonSettling(false);
     }
-    if (blobActionRun.current !== run) return;
-
-    updateBlobAnimation({ geometry: cell, phase: "collapse", axis: "cell" });
-    currentGameRef.current = nextGame;
-    setGame(nextGame);
-    await nextAnimationFrame();
-    if (blobActionRun.current !== run) return;
-
-    updateBlobAnimation({ geometry: to, phase: "grow", axis: nextGame.constraintView.axis });
-    await animateBlob(selectionBlobRef.current, cell, to, growMs);
-    if (blobActionRun.current !== run) return;
-
-    updateBlobAnimation(null);
-    setRibbonSettling(false);
-  }, [updateBlobAnimation]);
+  }, []);
 
   const fetchGame = useCallback(async (id: string, quiet = false) => {
     if (!quiet) setApi({ loading: true });
@@ -310,24 +258,11 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     }
   }
 
-  const legalKey = useMemo(() => new Set(game?.legalCellsView.map((cell) => `${cell.viewRow}:${cell.viewCol}`) ?? []), [game]);
   const inviteUrl = game && typeof window !== "undefined" ? `${window.location.origin}/play/${game.id}` : "";
   const currentScreen = resolveScreen(game, screen);
   const activeDestination = screenToDestination(currentScreen);
   const showAppNav = shouldShowAppNav(currentScreen);
-  const gameVersion = game?.version;
-  const constraintAxis = game?.constraintView?.axis;
-  const constraintIndex = game?.constraintView?.index;
   const resultView = game ? toResultView(game) : null;
-  const currentBlob = blobAnimation && blobAnimation.phase !== "ready" ? blobAnimation : (
-    game?.constraintView
-      ? {
-        geometry: trackGeometry(game.constraintView.axis, game.constraintView.index),
-        phase: "ready" as const,
-        axis: game.constraintView.axis
-      }
-      : null
-  );
 
   function navigate(destination: AppDestination) {
     if (currentScreen === "match") return;
@@ -495,19 +430,6 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       void loadChallenge();
     }
   }, [currentScreen, dailyChallenge, challengeLoading, loadChallenge]);
-
-  useEffect(() => {
-    if (currentScreen !== "match" || !constraintAxis || constraintIndex === undefined || gameVersion === undefined) {
-      blobActionRun.current += 1;
-      updateBlobAnimation(null);
-      setRibbonSettling(false);
-      return;
-    }
-
-    if (blobAnimationRef.current?.phase === "ready") {
-      updateBlobAnimation(null);
-    }
-  }, [currentScreen, gameVersion, constraintAxis, constraintIndex, game, updateBlobAnimation]);
 
   async function copyInviteLink() {
     if (!inviteUrl) return;
@@ -835,68 +757,13 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
         {currentScreen === "match" || currentScreen === "home" || currentScreen === "setup" ? (
           <section className="board-panel" aria-label="Matimato board">
             {currentScreen === "match" && game ? (
-            <>
-              <VisuallyHidden aria-live="polite">
-                {turnTitle(game)}. {turnMessage(game)}
-              </VisuallyHidden>
-              <div
-                className="board-grid"
-                ref={boardGridRef}
-                data-constraint-axis={game.constraintView?.axis ?? "free"}
-                data-blob-phase={currentBlob?.phase ?? "ready"}
-                style={{
-                  "--board-size": game.boardSize,
-                  "--constraint-index": game.constraintView?.index ?? 0,
-                  gridTemplateColumns: `repeat(${game.boardSize}, minmax(0, 1fr))`
-                } as CSSProperties}
-                role="grid"
-                aria-label={`Matimato ${game.boardSize} by ${game.boardSize} board`}
-              >
-                {currentBlob ? (
-                  <div
-                    aria-hidden="true"
-                    className="selection-blob"
-                    ref={selectionBlobRef}
-                    key="selection-blob"
-                    data-phase={currentBlob.phase}
-                    data-axis={currentBlob.axis}
-                    style={selectionBlobStyle(currentBlob)}
-                  />
-                ) : null}
-                  {game.boardView.map((row, rowIndex) =>
-                    row.map((value, colIndex) => {
-                      const key = `${rowIndex}:${colIndex}`;
-                      const legal = legalKey.has(key);
-                      const hasActiveTrack = Boolean(game.constraintView);
-                      const constrainedLegal = hasActiveTrack && legal;
-                      const last = hasActiveTrack && game.lastMoveView?.viewRow === rowIndex && game.lastMoveView?.viewCol === colIndex;
-                      const claimed = value === null;
-                    return (
-                      <button
-                        key={key}
-                        ref={(element) => {
-                          if (element) cellRefs.current.set(key, element);
-                          else cellRefs.current.delete(key);
-                        }}
-                        className="cell-button"
-                        role="gridcell"
-                        type="button"
-                        data-legal={constrainedLegal}
-                        data-claimed={claimed}
-                        data-last={last ? "true" : undefined}
-                        data-sign={value === null ? "claimed" : value > 0 ? "positive" : "negative"}
-                        style={{ "--reveal-order": value === null ? 18 : value + 9 } as CSSProperties}
-                        disabled={!game.viewer?.canMove || !legal || claimed || api.loading || syncFailures > 0 || ribbonSettling}
-                        aria-label={cellLabel(value, rowIndex, colIndex, legal, last)}
-                        onClick={() => submitMove(rowIndex, colIndex)}
-                      >
-                        {value === null ? "" : Math.abs(value)}
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-            </>
+              <MatimatoBoard
+                ref={boardControllerRef}
+                game={game}
+                disabled={api.loading || syncFailures > 0 || ribbonSettling}
+                onSelect={submitMove}
+                turnAnnouncement={`${turnTitle(game)}. ${turnMessage(game)}`}
+              />
             ) : (
               <div className="preview-board" aria-hidden="true">
               {PREVIEW_BOARD.flat().map((value, index) => (
@@ -1267,170 +1134,4 @@ function turnMessage(game: PublicGameDto) {
   if (game.status === "finished") return "Run it back when you are ready.";
   if (!game.constraintView) return "Claim any open tile.";
   return `Claim ${game.constraintView.axis} ${game.constraintView.index + 1}.`;
-}
-
-function cellLabel(value: number | null, row: number, col: number, legal: boolean, last: boolean) {
-  const state = value === null ? "claimed" : `${value > 0 ? "positive" : "negative"} ${Math.abs(value)}`;
-  return `Row ${row + 1}, column ${col + 1}, ${state}${legal ? ", legal move" : ""}${last ? ", last move" : ""}`;
-}
-
-function selectionBlobStyle(blob: BlobAnimationState): CSSProperties {
-  return {
-    left: blob.geometry.left,
-    top: blob.geometry.top,
-    width: blob.geometry.width,
-    height: blob.geometry.height
-  } as CSSProperties;
-}
-
-function nextAnimationFrame() {
-  return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-}
-
-async function animateBlob(element: HTMLElement | null, from: BlobGeometry, to: BlobGeometry, durationMs: number) {
-  if (
-    !element ||
-    durationMs <= 0 ||
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  ) {
-    return;
-  }
-  const controls = motionAnimate(
-    element,
-    {
-      left: [from.left, to.left],
-      top: [from.top, to.top],
-      width: [from.width, to.width],
-      height: [from.height, to.height],
-      transform: ["scale(1)", "scale(1)"]
-    },
-    {
-      duration: durationMs / 1000,
-      ease: "linear"
-    }
-  );
-  await controls.finished.catch(() => undefined);
-  controls.cancel();
-}
-
-function blobDurationForAxis(axis: "row" | "column") {
-  return axis === "column" ? BLOB_COLUMN_TRAVEL_MS : BLOB_ROW_TRAVEL_MS;
-}
-
-function measuredTrackGeometry(
-  board: HTMLElement,
-  refs: Map<string, HTMLButtonElement>,
-  axis: "row" | "column",
-  index: number
-): BlobGeometry {
-  const metrics = boardMetrics(board);
-  if (!metrics) return trackGeometry(axis, index);
-  const first = measuredCellGeometry(board, refs, axis === "row" ? index : 0, axis === "row" ? 0 : index);
-  if (axis === "row") {
-    return pxGeometry(metrics.padLeft, pxValue(first.top), metrics.innerWidth, pxValue(first.height));
-  }
-  return pxGeometry(pxValue(first.left), metrics.padTop, pxValue(first.width), metrics.innerHeight);
-}
-
-function measuredCellGeometry(board: HTMLElement, refs: Map<string, HTMLButtonElement>, row: number, col: number): BlobGeometry {
-  const element = refs.get(`${row}:${col}`);
-  if (element) {
-    const boardRect = board.getBoundingClientRect();
-    const cellRect = element.getBoundingClientRect();
-    return pxGeometry(
-      cellRect.left - boardRect.left,
-      cellRect.top - boardRect.top,
-      cellRect.width,
-      cellRect.height
-    );
-  }
-
-  const metrics = boardMetrics(board);
-  if (!metrics) return cellGeometry(row, col);
-  return pxGeometry(
-    metrics.padLeft + col * (metrics.cellWidth + metrics.columnGap),
-    metrics.padTop + row * (metrics.cellHeight + metrics.rowGap),
-    metrics.cellWidth,
-    metrics.cellHeight
-  );
-}
-
-function pxValue(value: string) {
-  const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function boardMetrics(board: HTMLElement | null) {
-  if (!board) return null;
-  const styles = window.getComputedStyle(board);
-  const padLeft = finiteCssNumber(styles.paddingLeft);
-  const padRight = finiteCssNumber(styles.paddingRight);
-  const padTop = finiteCssNumber(styles.paddingTop);
-  const padBottom = finiteCssNumber(styles.paddingBottom);
-  const columnGap = finiteCssNumber(styles.columnGap, styles.gap);
-  const rowGap = finiteCssNumber(styles.rowGap, styles.gap);
-  const innerWidth = board.clientWidth - padLeft - padRight;
-  const innerHeight = board.clientHeight - padTop - padBottom;
-  const cellWidth = (innerWidth - columnGap * (BOARD_SIZE - 1)) / BOARD_SIZE;
-  const cellHeight = (innerHeight - rowGap * (BOARD_SIZE - 1)) / BOARD_SIZE;
-  if (
-    !Number.isFinite(cellWidth) ||
-    !Number.isFinite(cellHeight) ||
-    cellWidth <= 0 ||
-    cellHeight <= 0 ||
-    innerWidth <= 0 ||
-    innerHeight <= 0
-  ) {
-    return null;
-  }
-  return { padLeft, padTop, columnGap, rowGap, innerWidth, innerHeight, cellWidth, cellHeight };
-}
-
-function finiteCssNumber(...values: string[]) {
-  for (const value of values) {
-    const parsed = Number.parseFloat(value);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return 0;
-}
-
-function pxGeometry(left: number, top: number, width: number, height: number): BlobGeometry {
-  return {
-    left: `${left}px`,
-    top: `${top}px`,
-    width: `${width}px`,
-    height: `${height}px`
-  };
-}
-
-function trackGeometry(axis: "row" | "column", index: number): BlobGeometry {
-  if (axis === "row") {
-    return {
-      top: trackStart(index),
-      left: "var(--board-pad)",
-      width: "calc(100% - var(--board-pad) - var(--board-pad))",
-      height: "var(--board-cell-size)"
-    };
-  }
-  return {
-    top: "var(--board-pad)",
-    left: trackStart(index),
-    width: "var(--board-cell-size)",
-    height: "calc(100% - var(--board-pad) - var(--board-pad))"
-  };
-}
-
-function trackStart(index: number) {
-  return index === 0
-    ? "var(--board-pad)"
-    : `calc(var(--board-pad) + ${Array.from({ length: index }, () => "var(--board-cell-size) + var(--board-gap)").join(" + ")})`;
-}
-
-function cellGeometry(row: number, col: number): BlobGeometry {
-  return {
-    top: trackStart(row),
-    left: trackStart(col),
-    width: "var(--board-cell-size)",
-    height: "var(--board-cell-size)"
-  };
 }
