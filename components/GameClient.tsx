@@ -318,13 +318,15 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const constraintAxis = game?.constraintView?.axis;
   const constraintIndex = game?.constraintView?.index;
   const resultView = game ? toResultView(game) : null;
-  const currentBlob = game?.constraintView
-    ? blobAnimation ?? {
+  const currentBlob = blobAnimation ?? (
+    game?.constraintView
+      ? {
         geometry: trackGeometry(game.constraintView.axis, game.constraintView.index),
         phase: "ready" as const,
         axis: game.constraintView.axis
       }
-    : null;
+      : null
+  );
 
   function navigate(destination: AppDestination) {
     if (currentScreen === "match") return;
