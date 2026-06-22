@@ -9,15 +9,14 @@ export function createPlayer(id: string, tag: string, side: PlayerSide): PlayerS
 
 export function createBoard(seedText: string): BoardCell[] {
   const rand = seededRandom(seedText);
-  const signs = Array.from({ length: SIZE * SIZE }, (_, index) => (index % 3 === 0 ? -1 : 1)) as (1 | -1)[];
-  shuffle(signs, rand);
   const rows = shuffle([...Array(SIZE).keys()], rand);
   const cols = shuffle([...Array(SIZE).keys()], rand);
+  const signs = createRandomSigns(rand);
   const board: BoardCell[] = [];
   for (let r = 0; r < SIZE; r += 1) {
     for (let c = 0; c < SIZE; c += 1) {
       const magnitude = ((rows[r] * 3 + Math.floor(rows[r] / 3) + cols[c]) % SIZE) + 1;
-      const sign = signs[r * SIZE + c];
+      const sign = signs[r][c];
       board.push({ row: r, col: c, magnitude, sign, value: magnitude * sign, removed: false });
     }
   }
@@ -118,6 +117,34 @@ function winner(scores: Record<PlayerSide, number>, reason: GameOutcome['reason'
 
 function makeInviteCode(id: string): string {
   return id.replace(/[^a-z0-9]/gi, '').slice(0, 6).toUpperCase().padEnd(5, 'M');
+}
+
+
+function createRandomSigns(rand: () => number): (1 | -1)[][] {
+  const signs: (1 | -1)[][] = [];
+  const rowNegatives = Array.from({ length: SIZE }, () => 0);
+  const colNegatives = Array.from({ length: SIZE }, () => 0);
+  for (let row = 0; row < SIZE; row += 1) {
+    signs[row] = [];
+    for (let col = 0; col < SIZE; col += 1) {
+      const rowNeed = rowNegatives[row] < 2;
+      const colNeed = colNegatives[col] < 2 && row >= SIZE - 3;
+      const rowFull = rowNegatives[row] >= 5;
+      const colFull = colNegatives[col] >= 5;
+      const previousHorizontal = col >= 2 && signs[row][col - 1] === -1 && signs[row][col - 2] === -1;
+      const previousVertical = row >= 2 && signs[row - 1][col] === -1 && signs[row - 2][col] === -1;
+      let negative = rand() < 0.38;
+      if (rowNeed && col >= SIZE - 3) negative = true;
+      if (colNeed) negative = true;
+      if (rowFull || colFull || previousHorizontal || previousVertical) negative = false;
+      signs[row][col] = negative ? -1 : 1;
+      if (negative) {
+        rowNegatives[row] += 1;
+        colNegatives[col] += 1;
+      }
+    }
+  }
+  return signs;
 }
 
 function seededRandom(seedText: string): () => number {
