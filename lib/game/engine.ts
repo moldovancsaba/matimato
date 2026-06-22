@@ -7,12 +7,38 @@ export class GameRuleError extends Error {
 }
 
 export function generateSignedBoard(size: number, maxAbs = 9, positiveProbability = 0.6, rng = Math.random) {
+  if (size === 9 && maxAbs === 9) return generateSignedSudokuBoard(positiveProbability, rng);
   return Array.from({ length: size }, () =>
     Array.from({ length: size }, () => {
       const magnitude = Math.floor(rng() * maxAbs) + 1;
       return rng() < positiveProbability ? magnitude : -magnitude;
     })
   );
+}
+
+export function generateSignedSudokuBoard(positiveProbability = 0.6, rng = Math.random) {
+  const digits = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9], rng);
+  const rows = shuffleBands(rng);
+  const cols = shuffleBands(rng);
+  return rows.map((row) =>
+    cols.map((col) => {
+      const magnitude = digits[(row * 3 + Math.floor(row / 3) + col) % 9];
+      return rng() < positiveProbability ? magnitude : -magnitude;
+    })
+  );
+}
+
+function shuffleBands(rng: () => number) {
+  return shuffle([0, 1, 2], rng).flatMap((band) => shuffle([0, 1, 2], rng).map((offset) => band * 3 + offset));
+}
+
+function shuffle<T>(values: T[], rng: () => number) {
+  const next = [...values];
+  for (let index = next.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(rng() * (index + 1));
+    [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
+  }
+  return next;
 }
 
 export function createInitialGameState(input: {

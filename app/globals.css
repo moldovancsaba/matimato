@@ -207,7 +207,9 @@ select {
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: background 120ms ease, color 120ms ease, box-shadow 120ms ease;
+  animation: number-reveal 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--reveal-order, 18) * 36ms);
+  transition: background 120ms ease, color 120ms ease, box-shadow 120ms ease, opacity 180ms ease, transform 180ms ease;
 }
 
 .cell-button:focus-visible {
@@ -234,11 +236,13 @@ select {
   background: #d8d0c7;
   color: var(--matimato-claimed);
   cursor: not-allowed;
+  opacity: 0.42;
 }
 
 .cell-button[data-last="true"] {
-  outline: 3px solid var(--gds-vibe-accent);
-  outline-offset: -3px;
+  outline: 0;
+  animation: cell-claim 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: 0ms;
 }
 
 .cell-button:not(:disabled):hover {
@@ -758,8 +762,11 @@ select {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cell-button {
+  .cell-button,
+  .preview-board span,
+  .selection-ribbon {
     transition: none;
+    animation: none;
   }
 
   .lobby-pulse span {
@@ -1261,7 +1268,7 @@ select {
 
 .preview-board {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(9, minmax(0, 1fr));
   width: min(100%, 520px, 72dvh);
   aspect-ratio: 1;
   padding: clamp(10px, 2vw, 18px);
@@ -1291,6 +1298,8 @@ select {
   color: var(--matimato-board-ink);
   font-weight: 900;
   font-size: clamp(1rem, 4vw, 2.3rem);
+  animation: number-reveal 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--reveal-order, 18) * 36ms);
 }
 
 .preview-board span[data-sign="negative"] {
@@ -1323,6 +1332,26 @@ select {
     0 0 0 1px rgba(255, 247, 237, 0.64),
     0 28px 70px rgba(255, 237, 213, 0.24),
     0 22px 54px rgba(0, 0, 0, 0.28);
+  position: relative;
+}
+
+.selection-ribbon {
+  position: absolute;
+  inset: 3px;
+  z-index: 1;
+  border: 2px solid rgba(249, 115, 22, 0.7);
+  border-radius: 16px;
+  background: rgba(251, 146, 60, 0.16);
+  box-shadow:
+    0 0 0 2px rgba(255, 247, 237, 0.72),
+    0 12px 26px rgba(249, 115, 22, 0.24);
+  pointer-events: none;
+  animation: ribbon-row-grow 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transform-origin: center;
+}
+
+.selection-ribbon[data-axis="column"] {
+  animation-name: ribbon-column-grow;
 }
 
 .cell-button {
@@ -1331,6 +1360,8 @@ select {
   background: var(--matimato-board-cell);
   color: var(--matimato-board-ink);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  position: relative;
+  z-index: 2;
 }
 
 .cell-button[data-sign="positive"] {
@@ -1354,6 +1385,7 @@ select {
   background: #d8d0c7;
   color: rgba(71, 85, 105, 0.54);
   text-shadow: none;
+  opacity: 0.4;
 }
 
 .cell-button:active {
@@ -1369,6 +1401,59 @@ select {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes number-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.82);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cell-claim {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.72;
+    transform: scale(0.76);
+  }
+
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+}
+
+@keyframes ribbon-row-grow {
+  from {
+    opacity: 0;
+    transform: scaleX(0.12) scaleY(0.72);
+  }
+
+  to {
+    opacity: 1;
+    transform: scaleX(1) scaleY(1);
+  }
+}
+
+@keyframes ribbon-column-grow {
+  from {
+    opacity: 0;
+    transform: scaleX(0.72) scaleY(0.12);
+  }
+
+  to {
+    opacity: 1;
+    transform: scaleX(1) scaleY(1);
   }
 }
 

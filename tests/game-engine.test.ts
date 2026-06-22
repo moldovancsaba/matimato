@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyMove, generateSignedBoard, getLegalCells } from "@/lib/game/engine";
+import { applyMove, generateSignedBoard, generateSignedSudokuBoard, getLegalCells } from "@/lib/game/engine";
 import { toCanonical, toPublicGameDto, toView } from "@/lib/game/perspective";
 import type { GameState } from "@/lib/game/types";
 
@@ -39,6 +39,28 @@ describe("game engine", () => {
     expect(board.flat()).toContain(1);
     expect(board.flat()).toContain(-9);
     expect(board.flat()).not.toContain(0);
+  });
+
+  it("generates valid signed 9x9 sudoku boards for gameplay", () => {
+    const board = generateSignedSudokuBoard(0.5, () => 0.42);
+    const expected = "1,2,3,4,5,6,7,8,9";
+    for (const row of board) {
+      expect(row.map(Math.abs).sort().join(",")).toBe(expected);
+    }
+    for (let col = 0; col < 9; col += 1) {
+      expect(board.map((row) => Math.abs(row[col])).sort().join(",")).toBe(expected);
+    }
+    for (let boxRow = 0; boxRow < 3; boxRow += 1) {
+      for (let boxCol = 0; boxCol < 3; boxCol += 1) {
+        const values = board
+          .slice(boxRow * 3, boxRow * 3 + 3)
+          .flatMap((row) => row.slice(boxCol * 3, boxCol * 3 + 3))
+          .map(Math.abs)
+          .sort()
+          .join(",");
+        expect(values).toBe(expected);
+      }
+    }
   });
 
   it("applies signed score and constrains the next player to the selected column", () => {

@@ -28,7 +28,7 @@ Browser
 
 Game state is canonical in server coordinates. Player `north` sees the board directly. Player `south` receives a 180-degree rotated board and submits view coordinates, which the server converts back to canonical coordinates before validation.
 
-Matimato is productized as a fixed 9x9 game. The client no longer exposes board-size selection, and the create-game API only accepts or defaults to `boardSize: 9`.
+Matimato is productized as a fixed 9x9 game. The client no longer exposes board-size selection, and the create-game API only accepts or defaults to `boardSize: 9`. New gameplay boards use valid solved Sudoku layouts for the absolute values 1-9, then randomly assign positive or negative signs per cell for Matimato scoring.
 
 Completed games write an immutable `match_summaries` record keyed by `gameId`. Summaries store mode, fixed board size, public participants, final scores, winner/draw state, terminal reason, move count, duration, completion timestamp, and a SHA-256 board/move hash. Summary records intentionally exclude cookies, session tokens, raw credentials, and private transport details.
 
@@ -93,6 +93,7 @@ Major journey systems can be disabled independently with environment flags:
 - Runtime feedback uses a capped local toast layer with a polite live region. Toasts are mounted outside the game shell and auto-dismiss so feedback never changes board dimensions.
 - The visual direction is based on the supplied references and the GDS `sunset` dark preset: separated onboarding/setup/game states, sunset-pulse dark app chrome, compact HUD modules, and animated screen transitions.
 - Board cells render as a light raised Sudoku-style table inside the dark game chrome so the board pops forward during play. Cells render unsigned digits for visual clarity; positive values use green, negative values use red, and accessible labels retain the exact positive/negative state.
+- Board animation uses CSS-only progressive reveal groups from `-9` through `+9`, a row/column selection ribbon that grows in the next legal axis, and a selected-cell compression fade. Claimed cells are blank, never marked with `x`.
 - Document scrolling is disabled for the app shell. Overflow belongs inside explicit setup/control regions only.
 
 ## Rollback
