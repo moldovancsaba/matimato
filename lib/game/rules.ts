@@ -30,6 +30,7 @@ export function newGame(id: string, mode: GameMode, playerId: string, tag: strin
   return {
     id,
     inviteCode: makeInviteCode(id),
+    code: makeInviteCode(id),
     mode,
     status: mode === 'battle' ? 'waiting' : 'active',
     version: 0,

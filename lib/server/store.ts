@@ -7,7 +7,7 @@ const PROFILES = 'profiles';
 
 export async function saveGame(snapshot: GameSnapshot): Promise<void> {
   const db = await getDb();
-  await db.collection<GameSnapshot>(GAMES).updateOne({ id: snapshot.id }, { $set: snapshot }, { upsert: true });
+  await db.collection<GameSnapshot>(GAMES).updateOne({ id: snapshot.id }, { $set: { ...snapshot, code: snapshot.inviteCode } }, { upsert: true });
 }
 
 export async function findGame(id: string): Promise<GameSnapshot | null> {
@@ -17,7 +17,7 @@ export async function findGame(id: string): Promise<GameSnapshot | null> {
 
 export async function findGameByInvite(inviteCode: string): Promise<GameSnapshot | null> {
   const db = await getDb();
-  return db.collection<GameSnapshot>(GAMES).findOne({ inviteCode: inviteCode.toUpperCase() }, { projection: { _id: 0 } });
+  return db.collection<GameSnapshot>(GAMES).findOne({ $or: [{ inviteCode: inviteCode.toUpperCase() }, { code: inviteCode.toUpperCase() }] }, { projection: { _id: 0 } });
 }
 
 export async function completeGame(snapshot: GameSnapshot): Promise<void> {
