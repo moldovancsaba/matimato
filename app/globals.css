@@ -1820,3 +1820,86 @@ select {
     opacity: 0.28;
   }
 }
+
+.selection-blob {
+  transition-property: left, top, width, height, opacity, transform;
+  transition-duration: var(--blob-travel-duration, 760ms);
+  transition-timing-function: linear;
+  transition-delay: 0ms;
+}
+
+.selection-blob[data-phase="collapse"],
+.selection-blob[data-phase="hold"] {
+  left: var(--blob-cell-left, var(--blob-to-left));
+  top: var(--blob-cell-top, var(--blob-to-top));
+  width: var(--blob-cell-width, var(--blob-to-width));
+  height: var(--blob-cell-height, var(--blob-to-height));
+  opacity: 1;
+  transform: scale(0.96);
+  animation: none;
+}
+
+.selection-blob[data-phase="hold"] {
+  transition-duration: 0ms;
+  transform: scale(0.9);
+}
+
+.selection-blob[data-phase="grow"],
+.selection-blob[data-phase="ready"] {
+  left: var(--blob-to-left, auto);
+  top: var(--blob-to-top, auto);
+  width: var(--blob-to-width, auto);
+  height: var(--blob-to-height, auto);
+  opacity: 1;
+  transform: scale(1);
+  animation: none;
+}
+
+.cell-button[data-claimed="true"][data-last="true"] {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.cell-button[data-claimed="true"][data-last="true"][data-remove-phase="collapse"],
+.cell-button[data-claimed="true"][data-last="true"][data-remove-phase="hold"] {
+  background: var(--matimato-board-cell);
+  color: inherit;
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+  box-shadow:
+    inset 1px 1px 1px rgba(255, 255, 255, 0.82),
+    inset -2px -2px 7px rgba(137, 94, 61, 0.13),
+    0 7px 14px rgba(70, 36, 18, 0.12);
+}
+
+.cell-button[data-claimed="true"][data-last="true"][data-remove-phase="grow"] {
+  animation: selected-card-remove 180ms linear both;
+  visibility: visible;
+}
+
+@keyframes selected-card-remove {
+  from {
+    opacity: 1;
+    transform: scale(0.92);
+    visibility: visible;
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.62);
+    visibility: hidden;
+  }
+}
+
+.cell-button[data-claimed="true"][data-last="true"][data-remove-phase="collapse"][data-sign="positive"],
+.cell-button[data-claimed="true"][data-last="true"][data-remove-phase="hold"][data-sign="positive"],
+.cell-button[data-claimed="true"][data-last="true"][data-remove-phase="grow"][data-sign="positive"] {
+  color: var(--matimato-positive);
+}
+
+.cell-button[data-claimed="true"][data-last="true"][data-remove-phase="collapse"][data-sign="negative"],
+.cell-button[data-claimed="true"][data-last="true"][data-remove-phase="hold"][data-sign="negative"],
+.cell-button[data-claimed="true"][data-last="true"][data-remove-phase="grow"][data-sign="negative"] {
+  color: var(--matimato-negative);
+}
