@@ -1,22 +1,13 @@
-import { NextRequest } from "next/server";
-import { errorResponse, successResponse } from "@/lib/server/http";
-import { resolveProfile } from "@/lib/server/profile-service";
-import { assertFeatureEnabled } from "@/lib/server/ops";
-import { assertRateLimit } from "@/lib/server/rate-limit";
+import { ok } from '@/lib/server/http';
 
-export async function GET(request: NextRequest) {
-  try {
-    assertRateLimit(request, { route: "/api/progression", limit: 60, windowMs: 60_000 });
-    assertFeatureEnabled("gamification");
-    const result = await resolveProfile(request);
-    return successResponse({
-      xp: result.profile.xp,
-      level: result.profile.level,
-      streak: result.profile.stats.currentStreak,
-      missions: result.profile.missions,
-      badges: result.profile.badges
-    }, { profileCredential: result.credential });
-  } catch (error) {
-    return errorResponse(error, { route: "/api/progression", request });
-  }
+export async function GET() {
+  const today = new Date().toISOString().slice(0, 10);
+  return ok({
+    daily: { id: today, title: 'Daily chase', board: '9x9', status: 'active' },
+    quests: [
+      { id: 'finish-one', title: 'Finish one match', progress: 0, target: 1, rewardXp: 80 },
+      { id: 'win-two', title: 'Win two duels', progress: 0, target: 2, rewardXp: 140 },
+      { id: 'positive-row', title: 'Claim a positive row swing', progress: 0, target: 1, rewardXp: 60 }
+    ]
+  });
 }
