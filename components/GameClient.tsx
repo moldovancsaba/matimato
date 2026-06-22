@@ -15,6 +15,7 @@ import {
 import { IconBolt, IconCrown, IconHistory, IconHome, IconPlus, IconRefresh, IconSwords, IconUserCircle } from "@tabler/icons-react";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { animate as motionAnimate } from "motion";
 import {
   destinationToScreen,
   resolveScreen,
@@ -98,6 +99,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const toastTimers = useRef<number[]>([]);
   const boardGridRef = useRef<HTMLDivElement | null>(null);
   const selectionBlobRef = useRef<HTMLDivElement | null>(null);
+  const cellRefs = useRef(new Map<string, HTMLButtonElement>());
   const blobAnimationRef = useRef<BlobAnimationState | null>(null);
   const blobActionRun = useRef(0);
   const lastSyncToastAt = useRef(0);
@@ -126,13 +128,6 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     const previousConstraint = previousGame?.constraintView;
 
     if (previousGame?.id === nextGame.id && previousGame.version === nextGame.version) {
-      if (!blobAnimationRef.current && nextGame.constraintView) {
-        updateBlobAnimation({
-          geometry: measuredTrackGeometry(boardGridRef.current, nextGame.constraintView.axis, nextGame.constraintView.index),
-          phase: "ready",
-          axis: nextGame.constraintView.axis
-        });
-      }
       return;
     }
 
@@ -155,9 +150,15 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     const run = blobActionRun.current + 1;
     blobActionRun.current = run;
     const boardElement = boardGridRef.current;
-    const cell = measuredCellGeometry(boardElement, nextGame.lastMoveView.viewRow, nextGame.lastMoveView.viewCol);
-    const from = previousConstraint ? measuredTrackGeometry(boardElement, previousConstraint.axis, previousConstraint.index) : cell;
-    const to = measuredTrackGeometry(boardElement, nextGame.constraintView.axis, nextGame.constraintView.index);
+    const cell = boardElement
+      ? measuredCellGeometry(boardElement, cellRefs.current, nextGame.lastMoveView.viewRow, nextGame.lastMoveView.viewCol)
+      : cellGeometry(nextGame.lastMoveView.viewRow, nextGame.lastMoveView.viewCol);
+    const from = previousConstraint && boardElement
+      ? measuredTrackGeometry(boardElement, cellRefs.current, previousConstraint.axis, previousConstraint.index)
+      : cell;
+    const to = boardElement
+      ? measuredTrackGeometry(boardElement, cellRefs.current, nextGame.constraintView.axis, nextGame.constraintView.index)
+      : trackGeometry(nextGame.constraintView.axis, nextGame.constraintView.index);
     const collapseMs = previousConstraint ? blobDurationForAxis(previousConstraint.axis) : 0;
     const growMs = blobDurationForAxis(nextGame.constraintView.axis);
 
@@ -181,7 +182,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     await animateBlob(selectionBlobRef.current, cell, to, growMs);
     if (blobActionRun.current !== run) return;
 
-    updateBlobAnimation({ geometry: to, phase: "ready", axis: nextGame.constraintView.axis });
+    updateBlobAnimation(null);
     setRibbonSettling(false);
   }, [updateBlobAnimation]);
 
@@ -873,6 +874,10 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                     return (
                       <button
                         key={key}
+                        ref={(element) => {
+                          if (element) cellRefs.current.set(key, element);
+                          else cellRefs.current.delete(key);
+                        }}
                         className="cell-button"
                         role="gridcell"
                         type="button"
@@ -1286,43 +1291,60 @@ async function animateBlob(element: HTMLElement | null, from: BlobGeometry, to: 
   if (
     !element ||
     durationMs <= 0 ||
-    typeof element.animate !== "function" ||
     window.matchMedia("(prefers-reduced-motion: reduce)").matches
   ) {
     return;
   }
-  const animation = element.animate(
-    [
-      { left: from.left, top: from.top, width: from.width, height: from.height, transform: "scale(1)" },
-      { left: to.left, top: to.top, width: to.width, height: to.height, transform: "scale(1)" }
-    ],
+  const controls = motionAnimate(
+    element,
     {
-      duration: durationMs,
-      easing: "linear",
-      fill: "forwards"
+      left: [from.left, to.left],
+      top: [from.top, to.top],
+      width: [from.width, to.width],
+      height: [from.height, to.height],
+      transform: ["scale(1)", "scale(1)"]
+    },
+    {
+      duration: durationMs / 1000,
+      ease: "linear"
     }
   );
-  await animation.finished.catch(() => undefined);
-  (animation as Animation & { commitStyles?: () => void }).commitStyles?.();
-  animation.cancel();
+  await controls.finished.catch(() => undefined);
+  controls.cancel();
 }
 
 function blobDurationForAxis(axis: "row" | "column") {
   return axis === "column" ? BLOB_COLUMN_TRAVEL_MS : BLOB_ROW_TRAVEL_MS;
 }
 
-function measuredTrackGeometry(board: HTMLElement | null, axis: "row" | "column", index: number): BlobGeometry {
+function measuredTrackGeometry(
+  board: HTMLElement,
+  refs: Map<string, HTMLButtonElement>,
+  axis: "row" | "column",
+  index: number
+): BlobGeometry {
   const metrics = boardMetrics(board);
   if (!metrics) return trackGeometry(axis, index);
+  const first = measuredCellGeometry(board, refs, axis === "row" ? index : 0, axis === "row" ? 0 : index);
   if (axis === "row") {
-    const top = metrics.padTop + index * (metrics.cellHeight + metrics.rowGap);
-    return pxGeometry(metrics.padLeft, top, metrics.innerWidth, metrics.cellHeight);
+    return pxGeometry(metrics.padLeft, pxValue(first.top), metrics.innerWidth, pxValue(first.height));
   }
-  const left = metrics.padLeft + index * (metrics.cellWidth + metrics.columnGap);
-  return pxGeometry(left, metrics.padTop, metrics.cellWidth, metrics.innerHeight);
+  return pxGeometry(pxValue(first.left), metrics.padTop, pxValue(first.width), metrics.innerHeight);
 }
 
-function measuredCellGeometry(board: HTMLElement | null, row: number, col: number): BlobGeometry {
+function measuredCellGeometry(board: HTMLElement, refs: Map<string, HTMLButtonElement>, row: number, col: number): BlobGeometry {
+  const element = refs.get(`${row}:${col}`);
+  if (element) {
+    const boardRect = board.getBoundingClientRect();
+    const cellRect = element.getBoundingClientRect();
+    return pxGeometry(
+      cellRect.left - boardRect.left,
+      cellRect.top - boardRect.top,
+      cellRect.width,
+      cellRect.height
+    );
+  }
+
   const metrics = boardMetrics(board);
   if (!metrics) return cellGeometry(row, col);
   return pxGeometry(
@@ -1331,6 +1353,11 @@ function measuredCellGeometry(board: HTMLElement | null, row: number, col: numbe
     metrics.cellWidth,
     metrics.cellHeight
   );
+}
+
+function pxValue(value: string) {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function boardMetrics(board: HTMLElement | null) {
