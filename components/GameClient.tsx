@@ -318,7 +318,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const constraintAxis = game?.constraintView?.axis;
   const constraintIndex = game?.constraintView?.index;
   const resultView = game ? toResultView(game) : null;
-  const currentBlob = blobAnimation ?? (
+  const currentBlob = blobAnimation && blobAnimation.phase !== "ready" ? blobAnimation : (
     game?.constraintView
       ? {
         geometry: trackGeometry(game.constraintView.axis, game.constraintView.index),
@@ -503,12 +503,8 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       return;
     }
 
-    if (!blobAnimationRef.current && game?.constraintView) {
-      updateBlobAnimation({
-        geometry: trackGeometry(game.constraintView.axis, game.constraintView.index),
-        phase: "ready",
-        axis: game.constraintView.axis
-      });
+    if (blobAnimationRef.current?.phase === "ready") {
+      updateBlobAnimation(null);
     }
   }, [currentScreen, gameVersion, constraintAxis, constraintIndex, game, updateBlobAnimation]);
 
