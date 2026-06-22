@@ -47,14 +47,12 @@ type BlobGeometry = {
 
 type BlobAnimationState = {
   geometry: BlobGeometry;
-  phase: "ready" | "collapse" | "hold" | "grow";
-  durationMs: number;
+  phase: "ready" | "collapse" | "grow";
 };
 
 const BOARD_SIZE = 9;
 const BLOB_ROW_TRAVEL_MS = 760;
 const BLOB_COLUMN_TRAVEL_MS = 1120;
-const BLOB_REMOVE_HOLD_MS = 140;
 const PREVIEW_BOARD = [
   [8, -2, 4, -7, 1, 9, -6, 3, 5],
   [3, 5, -9, 6, -1, 8, 4, -7, 2],
@@ -97,10 +95,11 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const [blobAnimation, setBlobAnimation] = useState<BlobAnimationState | null>(null);
   const [toasts, setToasts] = useState<GameToast[]>([]);
   const toastTimers = useRef<number[]>([]);
-  const blobTimers = useRef<number[]>([]);
+  const boardGridRef = useRef<HTMLDivElement | null>(null);
+  const selectionBlobRef = useRef<HTMLDivElement | null>(null);
+  const blobActionRun = useRef(0);
   const lastSyncToastAt = useRef(0);
   const trackedResultGameId = useRef<string | null>(null);
-  const lastAnimatedVersion = useRef<number | null>(null);
   const currentGameRef = useRef<PublicGameDto | null>(null);
 
   const dismiss = useCallback((id: string) => {
@@ -115,39 +114,57 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     toastTimers.current.push(timer);
   }, [dismiss]);
 
-  const primeBlobTransition = useCallback((nextGame: PublicGameDto) => {
-    if (nextGame.status !== "active" || !nextGame.constraintView || !nextGame.lastMoveView || lastAnimatedVersion.current === nextGame.version) return;
+  const commitGame = useCallback(async (nextGame: PublicGameDto) => {
     const previousGame = currentGameRef.current;
     const previousConstraint = previousGame?.constraintView;
-    if (!previousGame || previousGame.id !== nextGame.id) return;
 
-    const cell = cellGeometry(nextGame.lastMoveView.viewRow, nextGame.lastMoveView.viewCol);
-    const from = previousConstraint ? trackGeometry(previousConstraint.axis, previousConstraint.index) : cell;
-    const to = trackGeometry(nextGame.constraintView.axis, nextGame.constraintView.index);
+    if (
+      !previousGame ||
+      previousGame.id !== nextGame.id ||
+      nextGame.status !== "active" ||
+      !nextGame.constraintView ||
+      !nextGame.lastMoveView
+    ) {
+      currentGameRef.current = nextGame;
+      setGame(nextGame);
+      if (nextGame.status !== "active") {
+        setBlobAnimation(null);
+        setRibbonSettling(false);
+      }
+      return;
+    }
+
+    const run = blobActionRun.current + 1;
+    blobActionRun.current = run;
+    const boardElement = boardGridRef.current;
+    const cell = measuredCellGeometry(boardElement, nextGame.lastMoveView.viewRow, nextGame.lastMoveView.viewCol);
+    const from = previousConstraint ? measuredTrackGeometry(boardElement, previousConstraint.axis, previousConstraint.index) : cell;
+    const to = measuredTrackGeometry(boardElement, nextGame.constraintView.axis, nextGame.constraintView.index);
     const collapseMs = previousConstraint ? blobDurationForAxis(previousConstraint.axis) : 0;
     const growMs = blobDurationForAxis(nextGame.constraintView.axis);
 
-    lastAnimatedVersion.current = nextGame.version;
-    blobTimers.current.forEach((timer) => window.clearTimeout(timer));
-    blobTimers.current = [];
     setRibbonSettling(true);
-    setBlobAnimation({ geometry: from, phase: "collapse", durationMs: collapseMs });
+    setBlobAnimation({ geometry: from, phase: "collapse" });
+    await nextAnimationFrame();
+    if (blobActionRun.current !== run) return;
 
-    const collapseTimer = window.setTimeout(() => {
-      setBlobAnimation({ geometry: cell, phase: collapseMs === 0 ? "hold" : "collapse", durationMs: collapseMs });
-    }, 24);
-    const holdTimer = window.setTimeout(() => {
-      setBlobAnimation({ geometry: cell, phase: "hold", durationMs: 0 });
-    }, collapseMs + 24);
-    const growTimer = window.setTimeout(() => {
-      setBlobAnimation({ geometry: to, phase: "grow", durationMs: growMs });
-    }, collapseMs + BLOB_REMOVE_HOLD_MS + 24);
-    const unlockTimer = window.setTimeout(() => {
-      blobTimers.current = [];
-      setBlobAnimation({ geometry: to, phase: "ready", durationMs: 0 });
-      setRibbonSettling(false);
-    }, collapseMs + BLOB_REMOVE_HOLD_MS + growMs + 24);
-    blobTimers.current = [collapseTimer, holdTimer, growTimer, unlockTimer];
+    if (collapseMs > 0) {
+      await animateBlob(selectionBlobRef.current, from, cell, collapseMs);
+    }
+    if (blobActionRun.current !== run) return;
+
+    setBlobAnimation({ geometry: cell, phase: "collapse" });
+    currentGameRef.current = nextGame;
+    setGame(nextGame);
+    await nextAnimationFrame();
+    if (blobActionRun.current !== run) return;
+
+    setBlobAnimation({ geometry: to, phase: "grow" });
+    await animateBlob(selectionBlobRef.current, cell, to, growMs);
+    if (blobActionRun.current !== run) return;
+
+    setBlobAnimation({ geometry: to, phase: "ready" });
+    setRibbonSettling(false);
   }, []);
 
   const fetchGame = useCallback(async (id: string, quiet = false) => {
@@ -155,11 +172,10 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     const response = await fetch(`/api/games/${id}`, { cache: "no-store" });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.error?.message ?? "Could not load game.");
-    primeBlobTransition(payload.game);
-    setGame(payload.game);
+    await commitGame(payload.game);
     setApi({ loading: false });
     setSyncFailures(0);
-  }, [primeBlobTransition]);
+  }, [commitGame]);
 
   useEffect(() => {
     currentGameRef.current = game;
@@ -169,7 +185,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     const timers = toastTimers.current;
     return () => {
       timers.forEach((timer) => window.clearTimeout(timer));
-      blobTimers.current.forEach((timer) => window.clearTimeout(timer));
+      blobActionRun.current += 1;
     };
   }, []);
 
@@ -214,8 +230,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "Could not create game.");
-      primeBlobTransition(payload.game);
-      setGame(payload.game);
+      await commitGame(payload.game);
       trackEvent({ action: "create_game", category: "game", label: mode, value: BOARD_SIZE });
       window.history.replaceState(null, "", `/play/${payload.game.id}`);
       setApi({ loading: false });
@@ -236,8 +251,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "Could not join game.");
-      primeBlobTransition(payload.game);
-      setGame(payload.game);
+      await commitGame(payload.game);
       trackEvent({ action: "join_game", category: "game", label: "pvp" });
       window.history.replaceState(null, "", `/play/${payload.game.id}`);
       setApi({ loading: false });
@@ -259,8 +273,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "Move failed.");
-      primeBlobTransition(payload.game);
-      setGame(payload.game);
+      await commitGame(payload.game);
       trackEvent({ action: "submit_move", category: "game", label: game.mode, value: game.boardSize });
       setApi({ loading: false });
     } catch (error) {
@@ -283,8 +296,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const currentBlob = game?.constraintView
     ? blobAnimation ?? {
         geometry: trackGeometry(game.constraintView.axis, game.constraintView.index),
-        phase: "ready" as const,
-        durationMs: 0
+        phase: "ready" as const
       }
     : null;
 
@@ -414,7 +426,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       const response = await fetch(`/api/challenges/${dailyChallenge.date}/start`, { method: "POST" });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "Could not start challenge.");
-      setGame(payload.game);
+      await commitGame(payload.game);
       trackEvent({ action: "start_daily_challenge", category: "challenge", label: dailyChallenge.date });
       window.history.replaceState(null, "", `/play/${payload.game.id}`);
       setChallengeLoading(false);
@@ -457,8 +469,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
 
   useEffect(() => {
     if (currentScreen !== "match" || !constraintAxis || constraintIndex === undefined || gameVersion === undefined) {
-      blobTimers.current.forEach((timer) => window.clearTimeout(timer));
-      blobTimers.current = [];
+      blobActionRun.current += 1;
       setBlobAnimation(null);
       setRibbonSettling(false);
       return;
@@ -467,8 +478,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     if (!blobAnimation && game?.constraintView) {
       setBlobAnimation({
         geometry: trackGeometry(game.constraintView.axis, game.constraintView.index),
-        phase: "ready",
-        durationMs: 0
+        phase: "ready"
       });
     }
   }, [currentScreen, gameVersion, constraintAxis, constraintIndex, game, blobAnimation]);
@@ -805,6 +815,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
               </VisuallyHidden>
               <div
                 className="board-grid"
+                ref={boardGridRef}
                 data-constraint-axis={game.constraintView?.axis ?? "free"}
                 data-blob-phase={currentBlob?.phase ?? "ready"}
                 style={{
@@ -819,6 +830,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                   <div
                     aria-hidden="true"
                     className="selection-blob"
+                    ref={selectionBlobRef}
                     key="selection-blob"
                     data-phase={currentBlob.phase}
                     style={selectionBlobStyle(currentBlob)}
@@ -1236,13 +1248,75 @@ function selectionBlobStyle(blob: BlobAnimationState): CSSProperties {
     left: blob.geometry.left,
     top: blob.geometry.top,
     width: blob.geometry.width,
-    height: blob.geometry.height,
-    transitionDuration: `${blob.durationMs}ms`
+    height: blob.geometry.height
   } as CSSProperties;
+}
+
+function nextAnimationFrame() {
+  return new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+async function animateBlob(element: HTMLElement | null, from: BlobGeometry, to: BlobGeometry, durationMs: number) {
+  if (!element || durationMs <= 0 || typeof element.animate !== "function") return;
+  const animation = element.animate(
+    [
+      { left: from.left, top: from.top, width: from.width, height: from.height, transform: "scale(1)" },
+      { left: to.left, top: to.top, width: to.width, height: to.height, transform: "scale(1)" }
+    ],
+    {
+      duration: durationMs,
+      easing: "linear",
+      fill: "forwards"
+    }
+  );
+  await animation.finished.catch(() => undefined);
+  animation.commitStyles();
+  animation.cancel();
 }
 
 function blobDurationForAxis(axis: "row" | "column") {
   return axis === "column" ? BLOB_COLUMN_TRAVEL_MS : BLOB_ROW_TRAVEL_MS;
+}
+
+function measuredTrackGeometry(board: HTMLElement | null, axis: "row" | "column", index: number): BlobGeometry {
+  const metrics = boardMetrics(board);
+  if (!metrics) return trackGeometry(axis, index);
+  const start = metrics.pad + index * (metrics.cell + metrics.gap);
+  if (axis === "row") {
+    return pxGeometry(metrics.pad, start, metrics.inner, metrics.cell);
+  }
+  return pxGeometry(start, metrics.pad, metrics.cell, metrics.inner);
+}
+
+function measuredCellGeometry(board: HTMLElement | null, row: number, col: number): BlobGeometry {
+  const metrics = boardMetrics(board);
+  if (!metrics) return cellGeometry(row, col);
+  return pxGeometry(
+    metrics.pad + col * (metrics.cell + metrics.gap),
+    metrics.pad + row * (metrics.cell + metrics.gap),
+    metrics.cell,
+    metrics.cell
+  );
+}
+
+function boardMetrics(board: HTMLElement | null) {
+  if (!board) return null;
+  const styles = window.getComputedStyle(board);
+  const pad = Number.parseFloat(styles.paddingLeft) || 0;
+  const gap = Number.parseFloat(styles.columnGap || styles.gap) || 0;
+  const inner = board.clientWidth - pad * 2;
+  const cell = (inner - gap * (BOARD_SIZE - 1)) / BOARD_SIZE;
+  if (!Number.isFinite(cell) || cell <= 0) return null;
+  return { pad, gap, inner, cell };
+}
+
+function pxGeometry(left: number, top: number, width: number, height: number): BlobGeometry {
+  return {
+    left: `${left}px`,
+    top: `${top}px`,
+    width: `${width}px`,
+    height: `${height}px`
+  };
 }
 
 function trackGeometry(axis: "row" | "column", index: number): BlobGeometry {
