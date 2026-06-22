@@ -1,35 +1,70 @@
-import { NextRequest } from "next/server";
-import { z } from "zod";
-import { createGameForMode } from "@/lib/server/game-service";
-import { errorResponse, successResponse } from "@/lib/server/http";
-import { resolveProfile } from "@/lib/server/profile-service";
-import { assertRateLimit } from "@/lib/server/rate-limit";
-import { getCredentialCookieName } from "@/lib/server/session";
+import { randomUUID } from 'node:crypto';
+import { z } from 'zod';
+import { applyMove, chooseAiMove, joinBattle, newGame, sideForPlayer } from '@/lib/game/rules';
+import { completeGame, findGame, findGameByInvite, saveGame } from '@/lib/server/store';
+import { fail, ok } from '@/lib/server/http';
+import type { GameApiResponse, GameMode, MoveFrame } from '@/lib/shared/types';
 
-const createSchema = z.object({
-  mode: z.enum(["ai", "pvp"]),
-  boardSize: z.literal(9).default(9),
-  difficulty: z.enum(["basic", "standard", "hard"]).default("standard"),
-  displayName: z.string().trim().min(1).max(40).default("Player 1")
-});
+const schema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('create'), mode: z.enum(['solo', 'battle', 'daily']), playerId: z.string().min(1), playerTag: z.string().min(1) }),
+  z.object({ type: z.literal('join'), inviteCode: z.string().min(3), playerId: z.string().min(1), playerTag: z.string().min(1) }),
+  z.object({ type: z.literal('move'), matchId: z.string().min(1), playerId: z.string().min(1), actionId: z.string().min(1), row: z.number().int().min(0).max(8), col: z.number().int().min(0).max(8), expectedVersion: z.number().int().min(0) }),
+  z.object({ type: z.literal('sync'), matchId: z.string().min(1), playerId: z.string().optional() })
+]);
 
-export async function POST(request: NextRequest) {
+export async function GET(request: Request) {
   try {
-    assertRateLimit(request, { route: "/api/games", limit: 20, windowMs: 60_000 });
-    const body = createSchema.parse(await request.json());
-    const profile = await resolveProfile(request, body.displayName);
-    const result = await createGameForMode({ ...body, profileId: profile.profileId });
-    return successResponse(
-      { game: result.game },
-      {
-        status: 201,
-        credential: result.credential,
-        gameId: result.game.id,
-        existingCredentialCookie: request.cookies.get(getCredentialCookieName())?.value,
-        profileCredential: profile.credential
-      }
-    );
+    const id = new URL(request.url).searchParams.get('id');
+    if (!id) throw new Error('Missing game id.');
+    const snapshot = await findGame(id);
+    if (!snapshot) throw new Error('Game not found.');
+    return ok({ snapshot, frames: [] } satisfies GameApiResponse);
   } catch (error) {
-    return errorResponse(error, { route: "/api/games", request });
+    return fail(error, 404);
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const input = schema.parse(await request.json());
+    if (input.type === 'create') {
+      const snapshot = newGame(randomUUID(), input.mode as GameMode, input.playerId, input.playerTag);
+      await saveGame(snapshot);
+      return ok({ snapshot } satisfies GameApiResponse);
+    }
+    if (input.type === 'join') {
+      const existing = await findGameByInvite(input.inviteCode);
+      if (!existing) throw new Error('Battle code not found.');
+      const snapshot = joinBattle(existing, input.playerId, input.playerTag);
+      await saveGame(snapshot);
+      return ok({ snapshot } satisfies GameApiResponse);
+    }
+    if (input.type === 'sync') {
+      const snapshot = await findGame(input.matchId);
+      if (!snapshot) throw new Error('Game not found.');
+      return ok({ snapshot, frames: [] } satisfies GameApiResponse);
+    }
+    const snapshot = await findGame(input.matchId);
+    if (!snapshot) throw new Error('Game not found.');
+    if (input.expectedVersion !== snapshot.version) throw new Error('Game state changed. Refreshing required.');
+    const side = sideForPlayer(snapshot, input.playerId);
+    if (!side) throw new Error('Player is not in this game.');
+    const frames: MoveFrame[] = [];
+    let result = applyMove(snapshot, side, input.row, input.col, input.actionId);
+    frames.push(result.frame);
+    let next = result.snapshot;
+    if (!next.outcome && next.mode !== 'battle' && next.currentTurn === 'south') {
+      const ai = chooseAiMove(next);
+      if (ai) {
+        result = applyMove(next, 'south', ai.row, ai.col, `${input.actionId}:ai`);
+        frames.push(result.frame);
+        next = result.snapshot;
+      }
+    }
+    await saveGame(next);
+    if (next.outcome) await completeGame(next);
+    return ok({ snapshot: next, frames } satisfies GameApiResponse);
+  } catch (error) {
+    return fail(error);
   }
 }
