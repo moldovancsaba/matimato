@@ -768,7 +768,7 @@ select {
 @media (prefers-reduced-motion: reduce) {
   .cell-button,
   .preview-board span,
-  .selection-ribbon {
+  .selection-blob {
     transition: none;
     animation: none;
   }
@@ -1342,7 +1342,7 @@ select {
   position: relative;
 }
 
-.selection-ribbon {
+.selection-blob {
   position: absolute;
   z-index: 1;
   border: 0;
@@ -1355,28 +1355,14 @@ select {
     inset 0 -10px 20px rgba(120, 53, 15, 0.2),
     0 12px 28px rgba(249, 115, 22, 0.4);
   pointer-events: none;
-  animation: ribbon-row-grow 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  left: var(--blob-to-left, auto);
+  top: var(--blob-to-top, auto);
+  width: var(--blob-to-width, auto);
+  height: var(--blob-to-height, auto);
 }
 
-.selection-ribbon[data-axis="column"] {
-  animation-name: ribbon-column-grow;
-}
-
-.selection-ribbon[data-phase="exit"] {
-  z-index: 3;
-  animation-duration: 260ms;
-}
-
-.selection-ribbon[data-phase="exit"][data-axis="row"] {
-  animation-name: ribbon-row-collapse;
-}
-
-.selection-ribbon[data-phase="exit"][data-axis="column"] {
-  animation-name: ribbon-column-collapse;
-}
-
-.selection-ribbon[data-phase="enter"] {
-  animation-delay: 240ms;
+.selection-blob[data-phase="morph"] {
+  animation: blob-morph 760ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .cell-button {
@@ -1469,51 +1455,37 @@ select {
   }
 }
 
-@keyframes ribbon-row-grow {
-  from {
-    opacity: 0;
-    transform: scaleX(0.12) scaleY(0.88);
-  }
-
-  to {
+@keyframes blob-morph {
+  0% {
+    left: var(--blob-from-left);
+    top: var(--blob-from-top);
+    width: var(--blob-from-width);
+    height: var(--blob-from-height);
     opacity: 1;
-    transform: scaleX(1) scaleY(1);
-  }
-}
-
-@keyframes ribbon-column-grow {
-  from {
-    opacity: 0;
-    transform: scaleX(0.88) scaleY(0.12);
   }
 
-  to {
-    opacity: 1;
-    transform: scaleX(1) scaleY(1);
-  }
-}
-
-@keyframes ribbon-row-collapse {
-  from {
-    opacity: 1;
-    transform: scaleX(1) scaleY(1);
+  38% {
+    left: var(--blob-cell-left);
+    top: var(--blob-cell-top);
+    width: var(--blob-cell-width);
+    height: var(--blob-cell-height);
+    opacity: 0.98;
   }
 
-  to {
+  52% {
+    left: var(--blob-cell-left);
+    top: var(--blob-cell-top);
+    width: var(--blob-cell-width);
+    height: var(--blob-cell-height);
     opacity: 0.9;
-    transform: scaleX(0.12) scaleY(0.88);
   }
-}
 
-@keyframes ribbon-column-collapse {
-  from {
+  100% {
+    left: var(--blob-to-left);
+    top: var(--blob-to-top);
+    width: var(--blob-to-width);
+    height: var(--blob-to-height);
     opacity: 1;
-    transform: scaleX(1) scaleY(1);
-  }
-
-  to {
-    opacity: 0.9;
-    transform: scaleX(0.88) scaleY(0.12);
   }
 }
 

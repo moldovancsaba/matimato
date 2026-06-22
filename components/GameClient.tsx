@@ -716,26 +716,14 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                 aria-label={`Matimato ${game.boardSize} by ${game.boardSize} board`}
               >
                 {game.constraintView ? (
-                  <>
-                    {game.lastMoveView ? (
-                      <div
-                        aria-hidden="true"
-                        className="selection-ribbon"
-                        key={`exit-${game.version}`}
-                        data-axis={previousRibbonAxis(game.constraintView.axis)}
-                        data-phase="exit"
-                        style={previousRibbonStyle(game.constraintView.axis, game.lastMoveView)}
-                      />
-                    ) : null}
-                    <div
-                      aria-hidden="true"
-                      className="selection-ribbon"
-                      key={`enter-${game.constraintView.axis}-${game.constraintView.index}-${game.version}`}
-                      data-axis={game.constraintView.axis}
-                      data-phase="enter"
-                      style={selectionRibbonStyle(game.constraintView.axis, game.constraintView.index, game.lastMoveView)}
-                    />
-                  </>
+                  <div
+                    aria-hidden="true"
+                    className="selection-blob"
+                    key={`blob-${game.constraintView.axis}-${game.constraintView.index}-${game.version}`}
+                    data-axis={game.constraintView.axis}
+                    data-phase={game.lastMoveView ? "morph" : "ready"}
+                    style={selectionBlobStyle(game.constraintView.axis, game.constraintView.index, game.lastMoveView)}
+                  />
                 ) : null}
                 {game.boardView.map((row, rowIndex) =>
                   row.map((value, colIndex) => {
@@ -1142,43 +1130,75 @@ function cellLabel(value: number | null, row: number, col: number, legal: boolea
   return `Row ${row + 1}, column ${col + 1}, ${state}${legal ? ", legal move" : ""}${last ? ", last move" : ""}`;
 }
 
-function selectionRibbonStyle(
+type BlobGeometry = {
+  left: string;
+  top: string;
+  width: string;
+  height: string;
+};
+
+function selectionBlobStyle(
   axis: "row" | "column",
   index: number,
   lastMove?: NonNullable<PublicGameDto["lastMoveView"]>
 ): CSSProperties {
-  const originX = lastMove ? `${((lastMove.viewCol + 0.5) / BOARD_SIZE) * 100}%` : "50%";
-  const originY = lastMove ? `${((lastMove.viewRow + 0.5) / BOARD_SIZE) * 100}%` : "50%";
+  const target = trackGeometry(axis, index);
+  if (!lastMove) return target;
+
+  const previousAxis = previousRibbonAxis(axis);
+  const previousIndex = previousAxis === "row" ? lastMove.viewRow : lastMove.viewCol;
+  const from = trackGeometry(previousAxis, previousIndex);
+  const cell = cellGeometry(lastMove.viewRow, lastMove.viewCol);
+
+  return {
+    ...target,
+    "--blob-from-left": from.left,
+    "--blob-from-top": from.top,
+    "--blob-from-width": from.width,
+    "--blob-from-height": from.height,
+    "--blob-cell-left": cell.left,
+    "--blob-cell-top": cell.top,
+    "--blob-cell-width": cell.width,
+    "--blob-cell-height": cell.height,
+    "--blob-to-left": target.left,
+    "--blob-to-top": target.top,
+    "--blob-to-width": target.width,
+    "--blob-to-height": target.height
+  } as CSSProperties;
+}
+
+function trackGeometry(axis: "row" | "column", index: number): BlobGeometry {
   if (axis === "row") {
     return {
       top: trackStart(index),
       left: "var(--board-pad)",
       width: "calc(100% - var(--board-pad) - var(--board-pad))",
-      height: "var(--board-cell-size)",
-      transformOrigin: `${originX} 50%`
+      height: "var(--board-cell-size)"
     };
   }
   return {
     top: "var(--board-pad)",
     left: trackStart(index),
     width: "var(--board-cell-size)",
-    height: "calc(100% - var(--board-pad) - var(--board-pad))",
-    transformOrigin: `50% ${originY}`
+    height: "calc(100% - var(--board-pad) - var(--board-pad))"
   };
 }
 
 function trackStart(index: number) {
   return index === 0
     ? "var(--board-pad)"
-    : `calc(var(--board-pad) + (${index} * (var(--board-cell-size) + var(--board-gap))))`;
+    : `calc(var(--board-pad) + ${Array.from({ length: index }, () => "var(--board-cell-size) + var(--board-gap)").join(" + ")})`;
 }
 
 function previousRibbonAxis(axis: "row" | "column") {
   return axis === "row" ? "column" : "row";
 }
 
-function previousRibbonStyle(axis: "row" | "column", lastMove: NonNullable<PublicGameDto["lastMoveView"]>): CSSProperties {
-  const previousAxis = previousRibbonAxis(axis);
-  const previousIndex = previousAxis === "row" ? lastMove.viewRow : lastMove.viewCol;
-  return selectionRibbonStyle(previousAxis, previousIndex, lastMove);
+function cellGeometry(row: number, col: number): BlobGeometry {
+  return {
+    top: trackStart(row),
+    left: trackStart(col),
+    width: "var(--board-cell-size)",
+    height: "var(--board-cell-size)"
+  };
 }
