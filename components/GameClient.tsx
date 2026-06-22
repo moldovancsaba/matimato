@@ -82,6 +82,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   const [ribbonSettling, setRibbonSettling] = useState(false);
   const [toasts, setToasts] = useState<GameToast[]>([]);
   const toastTimers = useRef<number[]>([]);
+  const blobUnlockTimer = useRef<number | null>(null);
   const lastSyncToastAt = useRef(0);
   const trackedResultGameId = useRef<string | null>(null);
   const lastAnimatedVersion = useRef<number | null>(null);
@@ -112,6 +113,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
     const timers = toastTimers.current;
     return () => {
       timers.forEach((timer) => window.clearTimeout(timer));
+      if (blobUnlockTimer.current !== null) window.clearTimeout(blobUnlockTimer.current);
     };
   }, []);
 
@@ -389,11 +391,24 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
   }, [currentScreen, dailyChallenge, challengeLoading, loadChallenge]);
 
   useEffect(() => {
-    if (currentScreen !== "match" || !constraintAxis || constraintIndex === undefined || gameVersion === undefined || lastAnimatedVersion.current === gameVersion) return;
+    if (currentScreen !== "match" || !constraintAxis || constraintIndex === undefined || gameVersion === undefined) {
+      if (blobUnlockTimer.current !== null) {
+        window.clearTimeout(blobUnlockTimer.current);
+        blobUnlockTimer.current = null;
+      }
+      setRibbonSettling(false);
+      return;
+    }
+
+    if (lastAnimatedVersion.current === gameVersion) return;
+
     lastAnimatedVersion.current = gameVersion;
+    if (blobUnlockTimer.current !== null) window.clearTimeout(blobUnlockTimer.current);
     setRibbonSettling(true);
-    const timer = window.setTimeout(() => setRibbonSettling(false), blobSettleMs);
-    return () => window.clearTimeout(timer);
+    blobUnlockTimer.current = window.setTimeout(() => {
+      blobUnlockTimer.current = null;
+      setRibbonSettling(false);
+    }, blobSettleMs);
   }, [currentScreen, gameVersion, constraintAxis, constraintIndex, blobSettleMs]);
 
   async function copyInviteLink() {

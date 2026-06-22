@@ -1642,6 +1642,7 @@ select {
 
 .selection-blob[data-phase="morph"] {
   animation-name: blob-morph-sequenced;
+  animation-timing-function: linear;
 }
 
 @keyframes blob-morph-sequenced {
@@ -1654,7 +1655,7 @@ select {
     transform: scale(1);
   }
 
-  43% {
+  45% {
     left: var(--blob-cell-left);
     top: var(--blob-cell-top);
     width: var(--blob-cell-width);
@@ -1663,7 +1664,7 @@ select {
     transform: scale(0.96);
   }
 
-  57% {
+  55% {
     left: var(--blob-cell-left);
     top: var(--blob-cell-top);
     width: var(--blob-cell-width);
