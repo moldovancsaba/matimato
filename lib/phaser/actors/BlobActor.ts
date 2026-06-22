@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 import type { Rect } from '../types';
 
-const SPEED = 1550;
+const SPEED = 1780;
 const MIN_DURATION = 120;
 
 export class BlobActor {
@@ -39,7 +39,7 @@ export class BlobActor {
         width: to.width,
         height: to.height,
         duration,
-        ease: 'Sine.easeInOut',
+        ease: 'Cubic.easeInOut',
         onUpdate: () => this.draw(proxy),
         onComplete: () => {
           this.rect = { ...to };

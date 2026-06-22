@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import type { BoardCell, LegalTarget } from '@/lib/shared/types';
+import type { BoardCell, LegalTarget, PlayerSide } from '@/lib/shared/types';
 import { BoardGeometry } from '../geometry/BoardGeometry';
 import { TileActor } from './TileActor';
 
@@ -22,6 +22,11 @@ export class BoardActor {
       const legal = !tile.removed && (target.axis === 'any' || (target.axis === 'row' && tile.cell.row === target.index) || (target.axis === 'column' && tile.cell.col === target.index));
       tile.setEnabled(legal);
     }
+  }
+
+  async showSelected(row: number, col: number, side: PlayerSide) {
+    const accent = side === 'north' ? 0xff6a2a : 0xff3f93;
+    await this.tiles.get(key(row, col))?.showSelected(accent);
   }
 
   async remove(row: number, col: number) { await this.tiles.get(key(row, col))?.remove(true); }
