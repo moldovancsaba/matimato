@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { applyMove, chooseAiMove, joinBattle, newGame, sideForPlayer } from '@/lib/game/rules';
+import { applyMove, chooseAiMove, computeOutcome, joinBattle, newGame, sideForPlayer } from '@/lib/game/rules';
 import { completeGame, findGame, findGameByInvite, saveGame } from '@/lib/server/store';
 import { fail, ok } from '@/lib/server/http';
 import type { GameApiResponse, GameMode, MoveFrame } from '@/lib/shared/types';
@@ -24,6 +24,11 @@ function resolveAutomatedTurns(snapshot: import('@/lib/shared/types').GameSnapsh
     frames.push(result.frame);
     next = result.snapshot;
     guard += 1;
+  }
+  const scores = { north: next.players.north?.score ?? 0, south: next.players.south?.score ?? 0 };
+  const outcome = next.outcome ?? computeOutcome(next.board, next.legalTarget, scores);
+  if (outcome && next.status !== 'complete') {
+    next = { ...next, outcome, status: 'complete', updatedAt: new Date().toISOString() };
   }
   return { snapshot: next, frames };
 }

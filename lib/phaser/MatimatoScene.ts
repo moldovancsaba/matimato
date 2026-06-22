@@ -44,8 +44,9 @@ export class MatimatoScene extends Phaser.Scene {
       complete: (snapshot) => this.showResult(snapshot)
     });
     this.commit(this.snapshot);
-    this.payload.onEvent({ type: 'announce', message: 'Game ready. Claim any open tile.' });
-    this.maybeSyncAutomatedTurn();
+    this.payload.onEvent({ type: 'announce', message: 'Game ready.' });
+    if (this.snapshot.outcome || this.snapshot.status === 'complete') this.showResult(this.snapshot);
+    else this.maybeSyncAutomatedTurn();
   }
 
   private drawShell() {
@@ -71,7 +72,7 @@ export class MatimatoScene extends Phaser.Scene {
     this.northScore = this.add.text(78, 224, '', { fontFamily: 'Arial', fontSize: '54px', fontStyle: '900', color: '#fff8ec' }).setDepth(20);
     this.southTag = this.add.text(508, 198, '', { fontFamily: 'Arial', fontSize: '22px', color: '#ffcfb5' }).setDepth(20);
     this.southScore = this.add.text(508, 224, '', { fontFamily: 'Arial', fontSize: '54px', fontStyle: '900', color: '#fff8ec' }).setDepth(20);
-    this.add.text(730, 86, 'ACTIVE', { fontFamily: 'Arial', fontSize: '18px', fontStyle: '900', color: '#ffb06f' }).setDepth(20);
+    this.add.text(730, 86, 'LIVE', { fontFamily: 'Arial', fontSize: '18px', fontStyle: '900', color: '#ffb06f' }).setDepth(20);
     const dock = this.add.graphics().setDepth(28);
     dock.fillStyle(0x260c1d, 0.9);
     dock.fillRoundedRect(50, 1218, 800, 96, 30);
@@ -85,7 +86,7 @@ export class MatimatoScene extends Phaser.Scene {
     const homeLabel = this.add.text(181, 1266, 'Home', { fontFamily: 'Arial', fontSize: '24px', fontStyle: '900', color: '#ffffff' }).setOrigin(0.5).setDepth(30);
     const homeHit = this.add.zone(72, 1236, 218, 60).setOrigin(0).setInteractive({ useHandCursor: true }).setDepth(31);
     homeHit.on('pointerdown', () => this.payload.onEvent({ type: 'exit' }));
-    this.add.text(320, 1252, '9x9 chase · Phaser board', { fontFamily: 'Arial', fontSize: '22px', color: '#ffcfb5' }).setDepth(30);
+    this.add.text(320, 1252, '9x9 chase', { fontFamily: 'Arial', fontSize: '22px', color: '#ffcfb5' }).setDepth(30);
     void homeLabel;
   }
 
@@ -133,7 +134,7 @@ export class MatimatoScene extends Phaser.Scene {
         const response = await this.network.sync(this.snapshot.id, this.payload.playerId);
         for (const frame of 'frames' in response ? response.frames : []) await this.playFrame(frame);
         this.commit(response.snapshot);
-        if (response.snapshot.outcome) this.showResult(response.snapshot);
+        if (response.snapshot.outcome || response.snapshot.status === 'complete') this.showResult(response.snapshot);
       } catch (error) {
         this.payload.onEvent({ type: 'announce', message: error instanceof Error ? error.message : 'Sync failed.' });
       } finally {
@@ -144,16 +145,22 @@ export class MatimatoScene extends Phaser.Scene {
 
   private showResult(snapshot: GameSnapshot) {
     const side = this.sideForPlayer(snapshot);
+    this.snapshot = { ...snapshot, status: 'complete' };
+    this.blob?.hide();
     const winner = snapshot.outcome?.winner;
     const title = winner === 'draw' ? 'Draw' : winner === side ? 'Victory' : 'Defeat';
     this.resultLayer?.destroy();
     const layer = this.add.container(450, 650).setDepth(100);
-    const bg = this.add.rectangle(0, 0, 720, 420, 0x120811, 0.94).setStrokeStyle(3, 0xff6a2a, 0.8);
-    const label = this.add.text(0, -80, title, { fontFamily: 'Arial', fontSize: '76px', fontStyle: '900', color: '#fff8ec' }).setOrigin(0.5);
-    const score = this.add.text(0, 20, `${snapshot.players.north?.score ?? 0} / ${snapshot.players.south?.score ?? 0}`, { fontFamily: 'Arial', fontSize: '34px', color: '#ffb06f' }).setOrigin(0.5);
+    const bg = this.add.rectangle(0, 0, 760, 500, 0x120811, 0.96).setStrokeStyle(3, 0xff6a2a, 0.9);
+    const burst = this.add.graphics();
+    burst.fillStyle(title === 'Victory' ? 0x35d07f : title === 'Draw' ? 0xffb238 : 0xff3f93, 0.24);
+    burst.fillCircle(0, -84, 150);
+    const label = this.add.text(0, -118, title.toUpperCase(), { fontFamily: 'Arial', fontSize: '74px', fontStyle: '900', color: '#fff8ec' }).setOrigin(0.5);
+    const score = this.add.text(0, 0, `${snapshot.players.north?.score ?? 0}  :  ${snapshot.players.south?.score ?? 0}`, { fontFamily: 'Arial', fontSize: '52px', fontStyle: '900', color: '#ffb06f' }).setOrigin(0.5);
+    const reason = this.add.text(0, 70, snapshot.outcome?.reason === 'no-legal-cells' ? 'No legal moves left' : 'Board complete', { fontFamily: 'Arial', fontSize: '26px', color: '#fff8ec' }).setOrigin(0.5);
     const exit = this.add.text(0, 118, 'Back home', { fontFamily: 'Arial', fontSize: '28px', fontStyle: '900', color: '#ffffff', backgroundColor: '#ff3f93', padding: { x: 28, y: 18 } }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     exit.on('pointerdown', () => this.payload.onEvent({ type: 'exit' }));
-    layer.add([bg, label, score, exit]);
+    layer.add([bg, burst, label, score, reason, exit]);
     this.resultLayer = layer;
     this.payload.onEvent({ type: 'complete', snapshot });
   }
