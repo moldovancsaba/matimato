@@ -4,7 +4,6 @@ import {
   Badge,
   BodyText,
   Button,
-  ChoiceChip,
   Group,
   InlineAlert,
   PageTitle,
@@ -497,8 +496,16 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                   onChange={(event) => setDisplayName(event.currentTarget.value)}
                 />
                 <div className="mode-grid" role="group" aria-label="Game mode">
-                  <ChoiceChip label="BATTLE" active={mode === "pvp"} onClick={() => setMode("pvp")} />
-                  <ChoiceChip label="SOLO" active={mode === "ai"} onClick={() => setMode("ai")} />
+                  <button className="mode-card" type="button" data-active={mode === "pvp"} aria-pressed={mode === "pvp"} onClick={() => setMode("pvp")}>
+                    <span className="mode-card-kicker">BATTLE</span>
+                    <strong>Duel a rival</strong>
+                    <span>Share a code and control the 9x9 arena together.</span>
+                  </button>
+                  <button className="mode-card" type="button" data-active={mode === "ai"} aria-pressed={mode === "ai"} onClick={() => setMode("ai")}>
+                    <span className="mode-card-kicker">SOLO</span>
+                    <strong>Face Matimato AI</strong>
+                    <span>Practice the row-column trap loop instantly.</span>
+                  </button>
                 </div>
                 <Button onClick={createGame} loading={api.loading}>Start match</Button>
                 <TextInput label="Battle code" value={joinCode} onChange={(event) => setJoinCode(event.currentTarget.value.toUpperCase())} />
@@ -729,13 +736,14 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                     style={selectionBlobStyle(game.constraintView.axis, game.constraintView.index, game.lastMoveView)}
                   />
                 ) : null}
-                {game.boardView.map((row, rowIndex) =>
-                  row.map((value, colIndex) => {
-                    const key = `${rowIndex}:${colIndex}`;
-                    const legal = legalKey.has(key);
-                    const constrainedLegal = Boolean(game.constraintView) && legal;
-                    const last = game.lastMoveView?.viewRow === rowIndex && game.lastMoveView?.viewCol === colIndex;
-                    const claimed = value === null;
+                  {game.boardView.map((row, rowIndex) =>
+                    row.map((value, colIndex) => {
+                      const key = `${rowIndex}:${colIndex}`;
+                      const legal = legalKey.has(key);
+                      const hasActiveTrack = Boolean(game.constraintView);
+                      const constrainedLegal = hasActiveTrack && legal;
+                      const last = hasActiveTrack && game.lastMoveView?.viewRow === rowIndex && game.lastMoveView?.viewCol === colIndex;
+                      const claimed = value === null;
                     return (
                       <button
                         key={key}
@@ -744,7 +752,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
                         type="button"
                         data-legal={constrainedLegal}
                         data-claimed={claimed}
-                        data-last={last}
+                        data-last={last ? "true" : undefined}
                         data-sign={value === null ? "claimed" : value > 0 ? "positive" : "negative"}
                         style={{ "--reveal-order": value === null ? 18 : value + 9 } as CSSProperties}
                         disabled={!game.viewer?.canMove || !legal || claimed || api.loading || syncFailures > 0 || ribbonSettling}
