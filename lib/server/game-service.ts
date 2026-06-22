@@ -95,10 +95,10 @@ export async function applyViewerMove(
   const next = maybeApplyAiMove(afterViewerMove);
   const saved = await store.update(next, game.version);
   await recordTerminalSummary(saved);
-  const animationGames = afterViewerMove.version === saved.version
+  const animationFrames = afterViewerMove.version === saved.version
     ? [toPublicGameDto(saved, player.playerId)]
     : [toPublicGameDto(afterViewerMove, player.playerId), toPublicGameDto(saved, player.playerId)];
-  return { game: toPublicGameDto(saved, player.playerId), animationGames };
+  return { game: toPublicGameDto(saved, player.playerId), animationFrames };
 }
 
 export async function forfeitGame(id: string, credential?: PlayerCredential) {

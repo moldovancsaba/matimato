@@ -281,7 +281,7 @@ export default function GameClient({ initialGameId }: { initialGameId?: string }
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error?.message ?? "Move failed.");
-      await commitGameFrames(payload.animationGames, payload.game);
+      await commitGameFrames(payload.animationFrames ?? payload.animationGames, payload.game);
       trackEvent({ action: "submit_move", category: "game", label: game.mode, value: game.boardSize });
       setApi({ loading: false });
     } catch (error) {
