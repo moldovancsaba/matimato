@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from 'next';
+import '@doneisbetter/gds-theme/styles.css';
+import { GdsRoot } from '@/components/GdsRoot';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -20,7 +22,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body><GdsRoot>{children}</GdsRoot></body>
     </html>
   );
 }

@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import type { BoardCell, GameSnapshot, LegalTarget, MoveFrame, PlayerSide } from '@/lib/shared/types';
+import type { BoardCell, GameSnapshot, MoveFrame, PlayerSide } from '@/lib/shared/types';
 import type { PhaserBootPayload } from './types';
 import { BoardActor } from './actors/BoardActor';
 import { BlobActor } from './actors/BlobActor';
