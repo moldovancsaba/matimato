@@ -23,7 +23,8 @@ import {
 } from '@/lib/client/api';
 import { getSuggestedTutorialCell, createTutorialState, resolveTutorialAi, selectTutorialCell, TUTORIAL_STEPS, type TutorialState } from '@/lib/game/tutorial';
 import { isLegal } from '@/lib/game/rules';
-import type { BoardCell, GameMode, GameSnapshot, LobbyState, MatchSummary, OnboardingState, ProfileSummary, RankEntry, TutorialStepId } from '@/lib/shared/types';
+import { emitTelemetry, installTelemetryPagehide } from '@/lib/client/telemetry';
+import type { BoardCell, GameMode, GameSnapshot, LobbyState, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, QuestProgress, RankEntry, TutorialStepId } from '@/lib/shared/types';
 import { PhaserGameRoot } from './PhaserGameRoot';
 
 type Screen = 'home' | 'battle' | 'quests' | 'ranks' | 'history' | 'profile' | 'match' | 'tutorial' | 'lobby';
@@ -32,6 +33,7 @@ type Props = { initialScreen: Screen; initialMatchId?: string };
 
 const ONBOARDING_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_ONBOARDING !== 'false';
 const LOBBY_V2_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_LOBBY_V2 !== 'false';
+const DAILY_V2_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_DAILY_V2 !== 'false';
 
 export function GameApp({ initialScreen, initialMatchId }: Props) {
   const [screen, setScreen] = useState<Screen>(initialScreen);
@@ -43,7 +45,8 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [history, setHistory] = useState<MatchSummary[]>([]);
   const [leaderboard, setLeaderboard] = useState<RankEntry[]>([]);
-  const [quests, setQuests] = useState<Array<{ id: string; title: string; progress: number; target: number; rewardXp: number }>>([]);
+  const [progression, setProgression] = useState<ProgressionResponse | null>(null);
+  const [quests, setQuests] = useState<QuestProgress[]>([]);
   const [onboarding, setOnboarding] = useState<OnboardingState | null>(null);
   const [tutorial, setTutorial] = useState<TutorialState>(() => createTutorialState());
   const [tutorialReplay, setTutorialReplay] = useState(false);
@@ -62,6 +65,8 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     }
   }, [initialMatchId, initialScreen]);
 
+  useEffect(() => installTelemetryPagehide(), []);
+
   useEffect(() => {
     if (!playerId) return;
     if (initialMatchId) {
@@ -76,6 +81,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
   useEffect(() => {
     if (!playerId) return;
     fetchProgression(playerId).then((data) => {
+      setProgression(data);
       if (data.onboarding) {
         setOnboarding(data.onboarding);
         setLocalOnboarding(data.onboarding);
@@ -88,8 +94,18 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     if (!playerId) return;
     if (screen === 'profile') fetchProfile(playerId, tag || 'Player').then((data) => setProfile(data.profile)).catch((error: Error) => setNotice(error.message));
     if (screen === 'history') fetchHistory(playerId).then((data) => setHistory(data.history)).catch((error: Error) => setNotice(error.message));
-    if (screen === 'ranks') fetchLeaderboard().then((data) => setLeaderboard(data.leaderboard)).catch((error: Error) => setNotice(error.message));
-    if (screen === 'quests') fetchProgression(playerId).then((data) => setQuests(data.quests)).catch((error: Error) => setNotice(error.message));
+    if (screen === 'ranks') fetchLeaderboard().then((data) => {
+      setLeaderboard(data.leaderboard);
+      emitTelemetry({ name: 'rank_viewed', playerId, properties: { screen: 'ranks' } });
+    }).catch((error: Error) => setNotice(error.message));
+    if (screen === 'quests') fetchProgression(playerId).then((data) => {
+      setProgression(data);
+      setQuests(data.quests);
+      emitTelemetry({ name: 'daily_viewed', playerId, properties: { date: data.daily.date, status: data.daily.status, streakCurrent: data.streak.current } });
+    }).catch((error: Error) => {
+      emitTelemetry({ name: 'daily_error', playerId, result: 'error', properties: { errorCode: 'progression_fetch_failed' } });
+      setNotice(error.message);
+    });
   }, [screen, playerId, tag]);
 
   useEffect(() => {
@@ -106,6 +122,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
         if ('lobby' in data) setNotice(lobbyNotice(data.lobby));
         if (data.snapshot.status === 'active') {
           setNotice('Both players are ready. Entering match.');
+          emitTelemetry({ name: 'lobby_entered_match', playerId, matchId, properties: { status: 'active' } });
           setScreen('match');
           historyReplace(`/play/${data.snapshot.id}`);
           return;
@@ -114,6 +131,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
       } catch (error) {
         if (!cancelled) {
           setNotice(error instanceof Error ? error.message : 'Lobby reconnect failed.');
+          emitTelemetry({ name: 'lobby_poll_failed', playerId, matchId, result: 'error', properties: { retryable: true } });
           delay = Math.min(delay + 1000, 6000);
         }
       }
@@ -138,19 +156,23 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     try {
       setBusy(`start-${mode}`);
       persistTag();
-      const options = mode === 'battle' && LOBBY_V2_ENABLED ? { lobbyVersion: 2 as const } : undefined;
+      const options = mode === 'battle' && LOBBY_V2_ENABLED ? { lobbyVersion: 2 as const } : mode === 'daily' && progression?.daily ? { dailyId: progression.daily.id } : undefined;
       const data = await createGame(mode, playerId, safeTag, options);
       setSnapshot(data.snapshot);
       if (data.snapshot.lobby && data.snapshot.status !== 'active') {
         setNotice(`Battle code ${data.snapshot.inviteCode} is ready to share.`);
+        emitTelemetry({ name: 'lobby_created', playerId, matchId: data.snapshot.id, properties: { status: 'waiting' } });
         setScreen('lobby');
       } else {
-        setNotice(mode === 'battle' ? `Share battle code ${data.snapshot.inviteCode}.` : 'Match ready.');
+        const resumedDaily = mode === 'daily' && data.snapshot.version > 0;
+        setNotice(mode === 'battle' ? `Share battle code ${data.snapshot.inviteCode}.` : resumedDaily ? 'Daily challenge resumed.' : 'Match ready.');
+        if (mode === 'daily') emitTelemetry({ name: resumedDaily ? 'daily_resumed' : 'daily_started', playerId, matchId: data.snapshot.id, properties: { dailyId: data.snapshot.dailyId ?? '', date: data.snapshot.dailyId ?? '' } });
         setScreen('match');
       }
       historyReplace(`/play/${data.snapshot.id}`);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Could not start match.');
+      if (mode === 'daily') emitTelemetry({ name: 'daily_error', playerId, result: 'error', properties: { errorCode: 'daily_start_failed' } });
     } finally {
       setBusy('');
     }
@@ -163,6 +185,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
       const data = await joinGame(inviteCode, playerId, safeTag);
       setSnapshot(data.snapshot);
       setNotice(data.snapshot.lobby ? 'Battle lobby joined. Mark ready when you are set.' : 'Battle joined.');
+      emitTelemetry({ name: 'lobby_joined', playerId, matchId: data.snapshot.id, properties: { status: data.snapshot.lobby?.status ?? 'active' } });
       setScreen(data.snapshot.lobby && data.snapshot.status !== 'active' ? 'lobby' : 'match');
       historyReplace(`/play/${data.snapshot.id}`);
     } catch (error) {
@@ -176,6 +199,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     const local: OnboardingState = { playerId, lastStep: step, completedAt: completed ? new Date().toISOString() : onboarding?.completedAt, dismissedAt: onboarding?.dismissedAt, updatedAt: new Date().toISOString() };
     setOnboarding(local);
     setLocalOnboarding(local);
+    emitTelemetry({ name: completed ? 'onboarding_completed' : 'onboarding_step_completed', playerId, properties: { step } });
     try {
       const data = await persistOnboarding(playerId, { step, completed });
       setOnboarding(data.onboarding);
@@ -192,6 +216,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     setTutorialReplay(false);
     setScreen('home');
     setNotice('Tutorial skipped. You can replay it from Profile.');
+    emitTelemetry({ name: 'onboarding_skipped', playerId, result: 'cancelled' });
     try {
       const data = await persistOnboarding(playerId, { dismissed: true });
       setOnboarding(data.onboarding);
@@ -207,6 +232,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     setTutorialReplay(replay);
     setScreen('tutorial');
     setNotice(replay ? 'Tutorial replay started.' : 'Tutorial resumed.');
+    emitTelemetry({ name: 'onboarding_started', playerId, properties: { source: replay ? 'profile' : 'first-run' } });
   }
 
   function selectTutorialTile(cell: BoardCell) {
@@ -242,6 +268,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     try {
       await navigator.clipboard.writeText(`${snapshot.inviteCode} ${url}`);
       setNotice('Invite copied.');
+      emitTelemetry({ name: 'lobby_copied', playerId, matchId: snapshot.id, properties: { status: snapshot.lobby?.status ?? 'waiting' } });
     } catch {
       setNotice(`Copy failed. Select the code ${snapshot.inviteCode}.`);
     }
@@ -257,6 +284,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     try {
       await navigator.share({ title: 'Matimato battle', text: `Join my Matimato battle with code ${snapshot.inviteCode}.`, url });
       setNotice('Share sheet opened.');
+      emitTelemetry({ name: 'lobby_shared', playerId, matchId: snapshot.id, properties: { status: snapshot.lobby?.status ?? 'waiting' } });
     } catch {
       setNotice('Share cancelled. The invite code remains visible.');
     }
@@ -269,6 +297,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
       const data = await readyLobby(snapshot.id, playerId);
       setSnapshot(data.snapshot);
       setNotice(data.snapshot.status === 'active' ? 'Both players are ready. Entering match.' : 'Ready marked. Waiting for the other player.');
+      emitTelemetry({ name: 'lobby_ready', playerId, matchId: snapshot.id, properties: { status: data.snapshot.lobby?.status ?? data.snapshot.status } });
       if (data.snapshot.status === 'active') setScreen('match');
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Could not mark ready.');
@@ -286,6 +315,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
       setScreen('home');
       historyReplace('/');
       setNotice(kind === 'cancel' ? 'Battle lobby cancelled.' : 'You left the battle lobby.');
+      emitTelemetry({ name: kind === 'cancel' ? 'lobby_cancelled' : 'lobby_cancelled', playerId, matchId: snapshot.id, result: 'cancelled', properties: { status: data.snapshot.lobby?.status ?? 'cancelled' } });
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Could not update lobby.');
     } finally {
@@ -294,7 +324,12 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
   }
 
   if (screen === 'match' && snapshot) {
-    return <PhaserGameRoot snapshot={snapshot} playerId={playerId} onExit={() => { setScreen('home'); historyReplace('/'); }} onComplete={(next) => { setSnapshot(next); setNotice('Match complete.'); }} />;
+    return <PhaserGameRoot snapshot={snapshot} playerId={playerId} onExit={() => { setScreen('home'); historyReplace('/'); }} onComplete={(next) => {
+      setSnapshot(next);
+      setNotice('Match complete.');
+      emitTelemetry({ name: next.mode === 'daily' ? 'daily_completed' : 'match_completed', playerId, matchId: next.id, properties: { mode: next.mode, dailyId: next.dailyId ?? '', scoreBucket: scoreBucket(next.players.north?.score ?? 0) } });
+      if (next.mode === 'daily') void fetchProgression(playerId).then((data) => { setProgression(data); setQuests(data.quests); });
+    }} />;
   }
 
   return (
@@ -306,7 +341,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
       {screen === 'tutorial' ? <Tutorial state={tutorial} select={selectTutorialTile} suggest={selectSuggestedTile} resolveAi={resolveAiTurn} finish={finishTutorial} skip={skipTutorial} busy={busy} /> : null}
       {screen === 'battle' ? <Battle tag={tag} setTag={setTag} start={start} inviteCode={inviteCode} setInviteCode={setInviteCode} join={join} busy={busy} /> : null}
       {screen === 'lobby' && snapshot && lobby ? <Lobby snapshot={snapshot} lobby={lobby} playerId={playerId} copy={copyInvite} share={shareInvite} ready={markReady} exit={exitLobby} busy={busy} /> : null}
-      {screen === 'quests' ? <Quests quests={quests} start={() => start('daily')} busy={busy} /> : null}
+      {screen === 'quests' ? <Quests progression={progression} quests={quests} start={() => start('daily')} busy={busy} dailyEnabled={DAILY_V2_ENABLED} /> : null}
       {screen === 'ranks' ? <Ranks leaderboard={leaderboard} /> : null}
       {screen === 'history' ? <History history={history} /> : null}
       {screen === 'profile' ? <Profile tag={tag} setTag={setTag} persistTag={persistTag} profile={profile} replayTutorial={() => openTutorial(true)} /> : null}
@@ -444,8 +479,46 @@ function Seat({ label, player, ready }: { label: string; player: string; ready: 
   return <div className="list-card"><strong>{label}</strong><p className="copy">{player}</p><Badge color={ready ? 'green' : 'gray'} variant="light">{ready ? 'Ready' : 'Waiting'}</Badge></div>;
 }
 
-function Quests({ quests, start, busy }: { quests: Array<{ id: string; title: string; progress: number; target: number; rewardXp: number }>; start: () => void; busy: string }) {
-  return <section className="panel stack"><span className="hero-tag">Daily challenge</span><h2>Same grid. New chase.</h2><Button loading={busy === 'start-daily'} onClick={start}>Start daily</Button>{quests.map((quest) => <div className="list-card" key={quest.id}><strong>{quest.title}</strong><p className="copy">{quest.progress}/{quest.target} · {quest.rewardXp} XP</p></div>)}</section>;
+function Quests({ progression, quests, start, busy, dailyEnabled }: { progression: ProgressionResponse | null; quests: QuestProgress[]; start: () => void; busy: string; dailyEnabled: boolean }) {
+  const daily = progression?.daily;
+  const completed = daily?.status === 'completed';
+  return (
+    <section className="panel">
+      <Stack gap="md">
+        <Group justify="space-between">
+          <span className="hero-tag">Daily challenge</span>
+          {daily ? <Badge color={completed ? 'green' : 'blue'} variant="light">{daily.status}</Badge> : null}
+        </Group>
+        <h2>Same grid. New chase.</h2>
+        <p className="copy">{daily ? `UTC daily ${daily.date}. Resets ${new Date(daily.resetAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.` : 'Loading daily challenge.'}</p>
+        {progression ? (
+          <SimpleGrid cols={2}>
+            <Kpi label="Current streak" value={progression.streak.current} />
+            <Kpi label="Best streak" value={progression.streak.best} />
+          </SimpleGrid>
+        ) : null}
+        {progression?.dailyResult ? (
+          <div className="list-card" role="status">
+            <strong>Completed today</strong>
+            <p className="copy">Score {progression.dailyResult.score} · Attempts {progression.dailyResult.attempts} · {new Date(progression.dailyResult.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+          </div>
+        ) : null}
+        <Button loading={busy === 'start-daily'} disabled={!dailyEnabled || completed || !daily} onClick={start}>{completed ? 'Daily complete' : 'Start or resume daily'}</Button>
+        <div className="stack" aria-label="Daily quests">
+          {quests.map((quest) => <div className="list-card" key={quest.id}><strong>{quest.title}</strong><p className="copy">{Math.min(quest.progress, quest.target)}/{quest.target} · {quest.rewardXp} XP</p></div>)}
+        </div>
+        <div className="stack" aria-label="Weekly challenge leaderboard">
+          <strong>Weekly challenge ranks</strong>
+          {progression?.weeklyLeaderboard.length ? progression.weeklyLeaderboard.slice(0, 8).map((entry) => (
+            <div className="list-card rank-row" key={`${entry.rank}-${entry.playerHash}`}>
+              <strong>#{entry.rank} {entry.tag}</strong>
+              <p className="copy">Score {entry.score} · Attempts {entry.attempts} · {new Date(entry.completedAt).toLocaleDateString()}</p>
+            </div>
+          )) : <p className="copy">No daily completions on this week board yet.</p>}
+        </div>
+      </Stack>
+    </section>
+  );
 }
 
 function Ranks({ leaderboard }: { leaderboard: RankEntry[] }) {
@@ -497,6 +570,14 @@ function targetLabel(target: TutorialState['legalTarget']): string {
 
 function signedValue(value: number): string {
   return value > 0 ? `+${value}` : String(value);
+}
+
+function scoreBucket(score: number): string {
+  if (score >= 50) return '50+';
+  if (score >= 25) return '25-49';
+  if (score >= 0) return '0-24';
+  if (score >= -25) return '-25--1';
+  return '<-25';
 }
 
 function historyReplace(path: string) {

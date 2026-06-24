@@ -36,6 +36,18 @@ type OnboardingState = {
 
 The first-run tutorial uses a deterministic fixture seed (`matimato-guided-first-match-v1`) and the same 9x9 legal-target rules. Local storage records progress immediately; `/api/progression` idempotently upserts profile-backed progress when the network is available. Rollback is `NEXT_PUBLIC_MATIMATO_ONBOARDING=false`.
 
+## Daily challenge loop
+
+Daily challenges live inside the existing game and progression boundaries. The challenge id is the UTC date (`yyyy-mm-dd`) and the board seed is `daily:{yyyy-mm-dd}`, so every player receives the same 9x9 board for the current UTC day. `POST /api/games` with `mode: "daily"` validates the supplied `dailyId`, resumes an active daily for that player when one exists, and otherwise creates a normal AI-backed snapshot with `dailyId` attached.
+
+Daily completion writes one result per `challengeId:playerId` into `dailyResults` and updates the profile streak once. The weekly leaderboard is derived from current-week daily results with deterministic ordering: score descending, completed time ascending, attempts ascending, then stable hashed player id. Rollback is `NEXT_PUBLIC_MATIMATO_DAILY_V2=false`, which disables new daily entry from the client while keeping stored snapshots readable.
+
+## Telemetry and health
+
+Telemetry is an allowlisted product-event stream, not raw analytics capture. The client hashes session, player, and match identifiers before enqueueing events and redacts invite-like codes from string properties. `/api/events` accepts `{ events }` payloads capped at 50 events and 32 KB; invalid events are rejected individually, valid events fail open with `degraded: true` when storage is disabled or temporarily unavailable. Rollback controls are `NEXT_PUBLIC_MATIMATO_TELEMETRY=false` for the browser emitter and `MATIMATO_EVENTS_ENABLED=false` for server-side storage.
+
+`/api/health` reports release version, database status, and named check latencies so deploy verification can distinguish app boot from persistence availability.
+
 ## Battle lobby
 
 Battle lobby state is embedded on battle snapshots when V2 is requested:
@@ -85,6 +97,9 @@ Optional:
 - `MONGODB_DB`
 - `NEXT_PUBLIC_MATIMATO_ONBOARDING`
 - `NEXT_PUBLIC_MATIMATO_LOBBY_V2`
+- `NEXT_PUBLIC_MATIMATO_DAILY_V2`
+- `NEXT_PUBLIC_MATIMATO_TELEMETRY`
+- `MATIMATO_EVENTS_ENABLED`
 
 ## Verification
 

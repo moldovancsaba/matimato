@@ -1,13 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import { createDailyChallenge, isValidTodayDailyId } from '@/lib/game/daily';
 import { cancelLobby, createLobby, joinLobby, leaveLobby, markLobbyReady, refreshLobby } from '@/lib/game/lobby';
 import { applyMove, chooseAiMove, computeOutcome, joinBattle, newGame, sideForPlayer } from '@/lib/game/rules';
-import { completeGame, findGame, findGameByInvite, saveGame } from '@/lib/server/store';
+import { completeGame, findActiveDailyGame, findDailyResult, findGame, findGameByInvite, saveGame } from '@/lib/server/store';
 import { fail, ok } from '@/lib/server/http';
 import type { GameApiResponse, GameMode, MoveFrame } from '@/lib/shared/types';
 
 const schema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('create'), mode: z.enum(['solo', 'battle', 'daily']), playerId: z.string().min(1), playerTag: z.string().min(1), lobbyVersion: z.literal(2).optional() }),
+  z.object({ type: z.literal('create'), mode: z.enum(['solo', 'battle', 'daily']), playerId: z.string().min(1), playerTag: z.string().min(1), lobbyVersion: z.literal(2).optional(), dailyId: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }),
   z.object({ type: z.literal('join'), inviteCode: z.string().min(3), playerId: z.string().min(1), playerTag: z.string().min(1) }),
   z.object({ type: z.literal('move'), matchId: z.string().min(1), playerId: z.string().min(1), actionId: z.string().min(1), row: z.number().int().min(0).max(8), col: z.number().int().min(0).max(8), expectedVersion: z.number().int().min(0) }),
   z.object({ type: z.literal('sync'), matchId: z.string().min(1), playerId: z.string().optional() }),
@@ -64,6 +65,17 @@ export async function POST(request: Request) {
   try {
     const input = schema.parse(await request.json());
     if (input.type === 'create') {
+      if (input.mode === 'daily') {
+        if (!isValidTodayDailyId(input.dailyId)) throw new Error('Daily challenge is not available.');
+        const daily = createDailyChallenge();
+        const completedDaily = await findDailyResult(input.playerId, daily.id);
+        if (completedDaily) throw new Error('Daily challenge already completed.');
+        const existingDaily = await findActiveDailyGame(input.playerId, daily.id);
+        if (existingDaily) return ok({ snapshot: existingDaily } satisfies GameApiResponse);
+        const snapshot = newGame(randomUUID(), 'daily', input.playerId, input.playerTag, { boardSeed: daily.seed, dailyId: daily.id });
+        await saveGame(snapshot);
+        return ok({ snapshot } satisfies GameApiResponse);
+      }
       let snapshot = newGame(randomUUID(), input.mode as GameMode, input.playerId, input.playerTag);
       if (input.mode === 'battle' && input.lobbyVersion === 2) snapshot = { ...snapshot, lobby: createLobby(snapshot) };
       await saveGame(snapshot);

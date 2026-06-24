@@ -45,6 +45,7 @@ export class MatimatoScene extends Phaser.Scene {
     });
     this.commit(this.snapshot);
     this.payload.onEvent({ type: 'announce', message: 'Game ready.' });
+    this.payload.onEvent({ type: 'telemetry', name: 'phaser_booted', result: 'ok', properties: { phase: 'scene-ready' } });
     if (this.snapshot.outcome || this.snapshot.status === 'complete') this.showResult(this.snapshot);
     else this.maybeSyncAutomatedTurn();
   }
@@ -137,6 +138,7 @@ export class MatimatoScene extends Phaser.Scene {
         if (response.snapshot.outcome || response.snapshot.status === 'complete') this.showResult(response.snapshot);
       } catch (error) {
         this.payload.onEvent({ type: 'announce', message: error instanceof Error ? error.message : 'Sync failed.' });
+        this.payload.onEvent({ type: 'telemetry', name: 'sync_failed', result: 'error', properties: { errorCode: 'automated_sync_failed', retryable: true } });
       } finally {
         this.syncInFlight = false;
       }
@@ -170,6 +172,7 @@ export class MatimatoScene extends Phaser.Scene {
   }
 
   destroy() {
+    this.payload.onEvent({ type: 'telemetry', name: 'phaser_destroyed', result: 'ok', properties: { phase: 'scene-destroy' } });
     this.board?.destroy();
     this.blob?.destroy();
   }

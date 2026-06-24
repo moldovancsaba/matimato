@@ -1,7 +1,8 @@
-import type { GameSnapshot } from '@/lib/shared/types';
+import type { GameSnapshot, TelemetryEventName, TelemetryPropertyValue } from '@/lib/shared/types';
 
 export type PhaserOutboundEvent =
   | { type: 'announce'; message: string }
+  | { type: 'telemetry'; name: TelemetryEventName; result?: 'ok' | 'error' | 'cancelled'; properties?: Record<string, TelemetryPropertyValue> }
   | { type: 'exit' }
   | { type: 'complete'; snapshot: GameSnapshot };
 
