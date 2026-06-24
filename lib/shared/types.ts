@@ -3,6 +3,37 @@ export type GameMode = 'solo' | 'battle' | 'daily';
 export type GameStatus = 'waiting' | 'active' | 'complete';
 export type LobbyStatus = 'waiting' | 'ready' | 'active' | 'expired' | 'cancelled';
 export type TutorialStepId = 'first-pick' | 'column-target' | 'row-target' | 'negative-risk' | 'ai-turn' | 'finish';
+export type TelemetryEventName =
+  | 'onboarding_started'
+  | 'onboarding_step_completed'
+  | 'onboarding_skipped'
+  | 'onboarding_completed'
+  | 'onboarding_failed'
+  | 'lobby_created'
+  | 'lobby_copied'
+  | 'lobby_shared'
+  | 'lobby_joined'
+  | 'lobby_ready'
+  | 'lobby_expired'
+  | 'lobby_cancelled'
+  | 'lobby_poll_failed'
+  | 'lobby_entered_match'
+  | 'daily_viewed'
+  | 'daily_started'
+  | 'daily_resumed'
+  | 'daily_completed'
+  | 'streak_updated'
+  | 'weekly_rank_viewed'
+  | 'daily_error'
+  | 'match_completed'
+  | 'rank_viewed'
+  | 'move_conflict'
+  | 'sync_failed'
+  | 'phaser_booted'
+  | 'phaser_destroyed'
+  | 'phaser_runtime_error'
+  | 'api_error'
+  | 'pwa_recovery';
 export type LegalTarget = { axis: 'any' } | { axis: 'row'; index: number } | { axis: 'column'; index: number };
 
 export type BoardCell = {
@@ -41,6 +72,7 @@ export type GameSnapshot = {
   id: string;
   inviteCode: string;
   mode: GameMode;
+  dailyId?: string;
   status: GameStatus;
   version: number;
   board: BoardCell[];
@@ -71,7 +103,81 @@ export type OnboardingState = {
   updatedAt: string;
 };
 
-export type CreateGameRequest = { type: 'create'; mode: GameMode; playerId: string; playerTag: string; lobbyVersion?: 2 };
+export type DailyChallenge = {
+  id: string;
+  date: string;
+  seed: string;
+  startsAt: string;
+  endsAt: string;
+  boardSize: 9;
+  status: 'available' | 'completed' | 'missed';
+  resetAt: string;
+};
+
+export type DailyResult = {
+  id: string;
+  challengeId: string;
+  playerId: string;
+  tag: string;
+  score: number;
+  outcome: GameOutcome;
+  attempts: number;
+  completedAt: string;
+};
+
+export type StreakState = {
+  current: number;
+  best: number;
+  lastCompletedDate?: string;
+  protectedMisses: 0;
+};
+
+export type WeeklyRankEntry = {
+  rank: number;
+  playerHash: string;
+  tag: string;
+  score: number;
+  attempts: number;
+  completedAt: string;
+};
+
+export type QuestProgress = { id: string; title: string; progress: number; target: number; rewardXp: number };
+
+export type ProgressionResponse = {
+  daily: DailyChallenge;
+  dailyResult?: DailyResult;
+  streak: StreakState;
+  weeklyLeaderboard: WeeklyRankEntry[];
+  quests: QuestProgress[];
+  onboarding?: OnboardingState;
+};
+
+export type TelemetryPropertyValue = string | number | boolean | null;
+export type TelemetryEvent = {
+  name: TelemetryEventName;
+  version: 1;
+  occurredAt: string;
+  sessionHash: string;
+  playerHash?: string;
+  matchHash?: string;
+  phase?: string;
+  durationMs?: number;
+  result?: 'ok' | 'error' | 'cancelled';
+  properties: Record<string, TelemetryPropertyValue>;
+};
+
+export type TelemetryIngestResponse = { accepted: number; rejected: number; degraded?: boolean };
+
+export type HealthCheck = { name: string; status: 'ok' | 'error'; latencyMs: number };
+
+export type HealthResponse = {
+  ok: boolean;
+  database: 'connected' | 'error';
+  version: string;
+  checks: HealthCheck[];
+};
+
+export type CreateGameRequest = { type: 'create'; mode: GameMode; playerId: string; playerTag: string; lobbyVersion?: 2; dailyId?: string };
 export type JoinGameRequest = { type: 'join'; inviteCode: string; playerId: string; playerTag: string };
 export type MoveRequest = { type: 'move'; matchId: string; playerId: string; actionId: string; row: number; col: number; expectedVersion: number };
 export type SyncRequest = { type: 'sync'; matchId: string; playerId?: string };

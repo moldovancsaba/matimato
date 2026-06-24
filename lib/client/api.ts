@@ -1,4 +1,4 @@
-import type { GameApiResponse, GameMode, MatchSummary, OnboardingState, ProfileSummary, RankEntry, TutorialStepId } from '@/lib/shared/types';
+import type { GameApiResponse, GameMode, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, RankEntry, TutorialStepId } from '@/lib/shared/types';
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, { ...init, headers: { 'content-type': 'application/json', ...(init?.headers || {}) } });
@@ -40,7 +40,7 @@ export function setLocalOnboarding(onboarding: OnboardingState): void {
   localStorage.setItem(`matimato.onboarding.${onboarding.playerId}`, JSON.stringify(onboarding));
 }
 
-export function createGame(mode: GameMode, playerId: string, playerTag: string, options?: { lobbyVersion?: 2 }): Promise<GameApiResponse> {
+export function createGame(mode: GameMode, playerId: string, playerTag: string, options?: { lobbyVersion?: 2; dailyId?: string }): Promise<GameApiResponse> {
   return request('/api/games', { method: 'POST', body: JSON.stringify({ type: 'create', mode, playerId, playerTag, ...options }) });
 }
 
@@ -80,7 +80,7 @@ export function fetchLeaderboard(): Promise<{ leaderboard: RankEntry[] }> {
   return request('/api/leaderboard');
 }
 
-export function fetchProgression(playerId?: string): Promise<{ daily: { id: string; title: string; board: string; status: string }; quests: Array<{ id: string; title: string; progress: number; target: number; rewardXp: number }>; onboarding?: OnboardingState }> {
+export function fetchProgression(playerId?: string): Promise<ProgressionResponse> {
   const suffix = playerId ? `?playerId=${encodeURIComponent(playerId)}` : '';
   return request(`/api/progression${suffix}`);
 }

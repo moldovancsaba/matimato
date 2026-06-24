@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { GameSnapshot } from '@/lib/shared/types';
+import { emitTelemetry } from '@/lib/client/telemetry';
 
 type Props = {
   snapshot: GameSnapshot;
@@ -25,6 +26,7 @@ export function PhaserGameRoot({ snapshot, playerId, onExit, onComplete }: Props
         playerId,
         onEvent: (event) => {
           if (event.type === 'announce') setAnnouncement(event.message);
+          if (event.type === 'telemetry') emitTelemetry({ name: event.name, playerId, matchId: snapshot.id, result: event.result, properties: { mode: snapshot.mode, ...(event.properties ?? {}) } });
           if (event.type === 'exit') onExit();
           if (event.type === 'complete') onComplete(event.snapshot);
         }

@@ -23,7 +23,7 @@ export function createBoard(seedText: string): BoardCell[] {
   return board;
 }
 
-export function newGame(id: string, mode: GameMode, playerId: string, tag: string): GameSnapshot {
+export function newGame(id: string, mode: GameMode, playerId: string, tag: string, options?: { boardSeed?: string; dailyId?: string }): GameSnapshot {
   const now = new Date().toISOString();
   const north = createPlayer(playerId, tag, 'north');
   const south = mode === 'solo' || mode === 'daily' ? createPlayer('matimato-ai', 'Matimato AI', 'south') : null;
@@ -31,9 +31,10 @@ export function newGame(id: string, mode: GameMode, playerId: string, tag: strin
     id,
     inviteCode: makeInviteCode(id),
     mode,
+    dailyId: options?.dailyId,
     status: mode === 'battle' ? 'waiting' : 'active',
     version: 0,
-    board: createBoard(`${id}:${mode}`),
+    board: createBoard(options?.boardSeed ?? `${id}:${mode}`),
     players: { north, south },
     currentTurn: 'north',
     legalTarget: { axis: 'any' },
