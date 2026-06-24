@@ -1,6 +1,8 @@
 export type PlayerSide = 'north' | 'south';
 export type GameMode = 'solo' | 'battle' | 'daily';
 export type GameStatus = 'waiting' | 'active' | 'complete';
+export type LobbyStatus = 'waiting' | 'ready' | 'active' | 'expired' | 'cancelled';
+export type TutorialStepId = 'first-pick' | 'column-target' | 'row-target' | 'negative-risk' | 'ai-turn' | 'finish';
 export type LegalTarget = { axis: 'any' } | { axis: 'row'; index: number } | { axis: 'column'; index: number };
 
 export type BoardCell = {
@@ -46,20 +48,43 @@ export type GameSnapshot = {
   currentTurn: PlayerSide;
   legalTarget: LegalTarget;
   outcome?: GameOutcome;
+  lobby?: LobbyState;
   createdAt: string;
   updatedAt: string;
 };
 
-export type CreateGameRequest = { type: 'create'; mode: GameMode; playerId: string; playerTag: string };
+export type LobbyState = {
+  matchId: string;
+  inviteCode: string;
+  status: LobbyStatus;
+  ready: Partial<Record<PlayerSide, boolean>>;
+  expiresAt: string;
+  cancelledAt?: string;
+  lastSeenAt: Partial<Record<PlayerSide, string>>;
+};
+
+export type OnboardingState = {
+  playerId: string;
+  completedAt?: string;
+  lastStep?: TutorialStepId;
+  dismissedAt?: string;
+  updatedAt: string;
+};
+
+export type CreateGameRequest = { type: 'create'; mode: GameMode; playerId: string; playerTag: string; lobbyVersion?: 2 };
 export type JoinGameRequest = { type: 'join'; inviteCode: string; playerId: string; playerTag: string };
 export type MoveRequest = { type: 'move'; matchId: string; playerId: string; actionId: string; row: number; col: number; expectedVersion: number };
 export type SyncRequest = { type: 'sync'; matchId: string; playerId?: string };
-export type GameRequest = CreateGameRequest | JoinGameRequest | MoveRequest | SyncRequest;
+export type LobbyStatusRequest = { type: 'lobbyStatus'; matchId: string; playerId: string };
+export type LobbyReadyRequest = { type: 'ready'; matchId: string; playerId: string; actionId: string };
+export type LobbyLeaveRequest = { type: 'leave' | 'cancel'; matchId: string; playerId: string; actionId: string };
+export type GameRequest = CreateGameRequest | JoinGameRequest | MoveRequest | SyncRequest | LobbyStatusRequest | LobbyReadyRequest | LobbyLeaveRequest;
 
 export type CreateJoinResponse = { snapshot: GameSnapshot };
 export type MoveResponse = { snapshot: GameSnapshot; frames: MoveFrame[] };
 export type SyncResponse = { snapshot: GameSnapshot; frames: MoveFrame[] };
-export type GameApiResponse = CreateJoinResponse | MoveResponse | SyncResponse;
+export type LobbyResponse = { snapshot: GameSnapshot; lobby: LobbyState };
+export type GameApiResponse = CreateJoinResponse | MoveResponse | SyncResponse | LobbyResponse;
 
 export type ProfileSummary = {
   playerId: string;
@@ -70,6 +95,7 @@ export type ProfileSummary = {
   wins: number;
   draws: number;
   bestScore: number;
+  onboarding?: OnboardingState;
 };
 
 export type MatchSummary = {

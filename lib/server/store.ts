@@ -1,4 +1,4 @@
-import type { GameSnapshot, MatchSummary, ProfileSummary, RankEntry } from '@/lib/shared/types';
+import type { GameSnapshot, MatchSummary, OnboardingState, ProfileSummary, RankEntry, TutorialStepId } from '@/lib/shared/types';
 import { getDb } from './mongo';
 
 const GAMES = 'games';
@@ -49,10 +49,45 @@ export async function getProfile(playerId: string, fallbackTag = 'Player'): Prom
   const db = await getDb();
   const raw = await db.collection(PROFILE_DOC).findOne({ playerId }, { projection: { _id: 0 } });
   const xp = Number(raw?.xp ?? 0);
-  return { playerId, tag: String(raw?.tag ?? fallbackTag), xp, level: Math.max(1, Math.floor(xp / 150) + 1), matches: Number(raw?.matches ?? 0), wins: Number(raw?.wins ?? 0), draws: Number(raw?.draws ?? 0), bestScore: Number(raw?.bestScore ?? 0) };
+  return {
+    playerId,
+    tag: String(raw?.tag ?? fallbackTag),
+    xp,
+    level: Math.max(1, Math.floor(xp / 150) + 1),
+    matches: Number(raw?.matches ?? 0),
+    wins: Number(raw?.wins ?? 0),
+    draws: Number(raw?.draws ?? 0),
+    bestScore: Number(raw?.bestScore ?? 0),
+    onboarding: normalizeOnboarding(playerId, raw?.onboarding)
+  };
 }
 
 const PROFILE_DOC = PROFILES;
+
+export async function getOnboarding(playerId: string): Promise<OnboardingState> {
+  const profile = await getProfile(playerId);
+  return profile.onboarding ?? createEmptyOnboarding(playerId);
+}
+
+export async function updateOnboarding(input: { playerId: string; step?: TutorialStepId; completed?: boolean; dismissed?: boolean }): Promise<OnboardingState> {
+  const db = await getDb();
+  const current = await getOnboarding(input.playerId);
+  const now = new Date().toISOString();
+  const onboarding: OnboardingState = {
+    ...current,
+    playerId: input.playerId,
+    lastStep: input.step ?? current.lastStep,
+    completedAt: input.completed ? current.completedAt ?? now : current.completedAt,
+    dismissedAt: input.dismissed ? current.dismissedAt ?? now : current.dismissedAt,
+    updatedAt: now
+  };
+  await db.collection(PROFILES).updateOne(
+    { playerId: input.playerId },
+    { $set: { playerId: input.playerId, onboarding } },
+    { upsert: true }
+  );
+  return onboarding;
+}
 
 export async function getHistory(playerId: string): Promise<MatchSummary[]> {
   const db = await getDb();
@@ -63,4 +98,20 @@ export async function getLeaderboard(): Promise<RankEntry[]> {
   const db = await getDb();
   const rows = await db.collection(PROFILES).find({}, { projection: { _id: 0 } }).sort({ xp: -1, wins: -1 }).limit(50).toArray();
   return rows.map((row) => ({ playerId: String(row.playerId), tag: String(row.tag ?? 'Player'), score: Number(row.xp ?? 0), wins: Number(row.wins ?? 0), matches: Number(row.matches ?? 0) }));
+}
+
+function createEmptyOnboarding(playerId: string): OnboardingState {
+  return { playerId, updatedAt: new Date(0).toISOString() };
+}
+
+function normalizeOnboarding(playerId: string, value: unknown): OnboardingState | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const raw = value as Partial<OnboardingState>;
+  return {
+    playerId,
+    completedAt: typeof raw.completedAt === 'string' ? raw.completedAt : undefined,
+    dismissedAt: typeof raw.dismissedAt === 'string' ? raw.dismissedAt : undefined,
+    lastStep: raw.lastStep,
+    updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : new Date(0).toISOString()
+  };
 }

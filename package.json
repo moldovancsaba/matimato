@@ -1,32 +1,41 @@
 {
   "name": "matimato",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test": "vitest run",
     "verify": "npm run test && npm run build"
   },
   "dependencies": {
-    "mongodb": "^6.20.0",
-    "next": "^15.5.6",
+    "@doneisbetter/gds": "^3.5.0",
+    "@mantine/core": "^8.3.18",
+    "@mantine/hooks": "^8.3.18",
+    "@mantine/modals": "^8.3.18",
+    "@mantine/notifications": "^8.3.18",
+    "@tabler/icons-react": "^3.44.0",
+    "mongodb": "^6.21.0",
+    "next": "^15.5.19",
     "phaser": "^3.90.0",
-    "react": "^19.2.1",
-    "react-dom": "^19.2.1",
-    "zod": "^4.1.13"
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^24.12.3",
-    "@types/react": "^19.2.14",
+    "@types/node": "^24.13.2",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "eslint": "^9.39.1",
-    "eslint-config-next": "^15.5.6",
-    "jsdom": "^27.3.0",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^15.5.19",
+    "jsdom": "^27.4.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.9"
+  },
+  "overrides": {
+    "postcss": "^8.5.10"
   }
 }

@@ -1,15 +1,20 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import { cancelLobby, createLobby, joinLobby, leaveLobby, markLobbyReady, refreshLobby } from '@/lib/game/lobby';
 import { applyMove, chooseAiMove, computeOutcome, joinBattle, newGame, sideForPlayer } from '@/lib/game/rules';
 import { completeGame, findGame, findGameByInvite, saveGame } from '@/lib/server/store';
 import { fail, ok } from '@/lib/server/http';
 import type { GameApiResponse, GameMode, MoveFrame } from '@/lib/shared/types';
 
 const schema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('create'), mode: z.enum(['solo', 'battle', 'daily']), playerId: z.string().min(1), playerTag: z.string().min(1) }),
+  z.object({ type: z.literal('create'), mode: z.enum(['solo', 'battle', 'daily']), playerId: z.string().min(1), playerTag: z.string().min(1), lobbyVersion: z.literal(2).optional() }),
   z.object({ type: z.literal('join'), inviteCode: z.string().min(3), playerId: z.string().min(1), playerTag: z.string().min(1) }),
   z.object({ type: z.literal('move'), matchId: z.string().min(1), playerId: z.string().min(1), actionId: z.string().min(1), row: z.number().int().min(0).max(8), col: z.number().int().min(0).max(8), expectedVersion: z.number().int().min(0) }),
-  z.object({ type: z.literal('sync'), matchId: z.string().min(1), playerId: z.string().optional() })
+  z.object({ type: z.literal('sync'), matchId: z.string().min(1), playerId: z.string().optional() }),
+  z.object({ type: z.literal('lobbyStatus'), matchId: z.string().min(1), playerId: z.string().min(1) }),
+  z.object({ type: z.literal('ready'), matchId: z.string().min(1), playerId: z.string().min(1), actionId: z.string().min(1) }),
+  z.object({ type: z.literal('leave'), matchId: z.string().min(1), playerId: z.string().min(1), actionId: z.string().min(1) }),
+  z.object({ type: z.literal('cancel'), matchId: z.string().min(1), playerId: z.string().min(1), actionId: z.string().min(1) })
 ]);
 
 
@@ -39,6 +44,11 @@ export async function GET(request: Request) {
     if (!id) throw new Error('Missing game id.');
     const snapshot = await findGame(id);
     if (!snapshot) throw new Error('Game not found.');
+    if (snapshot.lobby && snapshot.status === 'waiting') {
+      const refreshed = refreshLobby(snapshot);
+      if (refreshed.updatedAt !== snapshot.updatedAt || refreshed.lobby?.status !== snapshot.lobby.status) await saveGame(refreshed);
+      return ok({ snapshot: refreshed, lobby: refreshed.lobby! } satisfies GameApiResponse);
+    }
     const resolved = resolveAutomatedTurns(snapshot, 'fetch');
     if (resolved.frames.length) {
       await saveGame(resolved.snapshot);
@@ -54,16 +64,17 @@ export async function POST(request: Request) {
   try {
     const input = schema.parse(await request.json());
     if (input.type === 'create') {
-      const snapshot = newGame(randomUUID(), input.mode as GameMode, input.playerId, input.playerTag);
+      let snapshot = newGame(randomUUID(), input.mode as GameMode, input.playerId, input.playerTag);
+      if (input.mode === 'battle' && input.lobbyVersion === 2) snapshot = { ...snapshot, lobby: createLobby(snapshot) };
       await saveGame(snapshot);
-      return ok({ snapshot } satisfies GameApiResponse);
+      return ok((snapshot.lobby ? { snapshot, lobby: snapshot.lobby } : { snapshot }) satisfies GameApiResponse);
     }
     if (input.type === 'join') {
       const existing = await findGameByInvite(input.inviteCode);
       if (!existing) throw new Error('Battle code not found.');
-      const snapshot = joinBattle(existing, input.playerId, input.playerTag);
+      const snapshot = existing.lobby ? joinLobby(existing, input.playerId, input.playerTag) : joinBattle(existing, input.playerId, input.playerTag);
       await saveGame(snapshot);
-      return ok({ snapshot } satisfies GameApiResponse);
+      return ok((snapshot.lobby ? { snapshot, lobby: snapshot.lobby } : { snapshot }) satisfies GameApiResponse);
     }
     if (input.type === 'sync') {
       const snapshot = await findGame(input.matchId);
@@ -75,13 +86,23 @@ export async function POST(request: Request) {
       }
       return ok({ snapshot: resolved.snapshot, frames: resolved.frames } satisfies GameApiResponse);
     }
+    if (input.type === 'lobbyStatus' || input.type === 'ready' || input.type === 'leave' || input.type === 'cancel') {
+      const snapshot = await findGame(input.matchId);
+      if (!snapshot) throw new Error('Game not found.');
+      let next = refreshLobby(snapshot, input.playerId);
+      if (input.type === 'ready') next = markLobbyReady(next, input.playerId);
+      if (input.type === 'leave') next = leaveLobby(next, input.playerId);
+      if (input.type === 'cancel') next = cancelLobby(next, input.playerId);
+      await saveGame(next);
+      return ok({ snapshot: next, lobby: next.lobby! } satisfies GameApiResponse);
+    }
     const snapshot = await findGame(input.matchId);
     if (!snapshot) throw new Error('Game not found.');
     if (input.expectedVersion !== snapshot.version) throw new Error('Game state changed. Refreshing required.');
     const side = sideForPlayer(snapshot, input.playerId);
     if (!side) throw new Error('Player is not in this game.');
     const frames: MoveFrame[] = [];
-    let result = applyMove(snapshot, side, input.row, input.col, input.actionId);
+    const result = applyMove(snapshot, side, input.row, input.col, input.actionId);
     frames.push(result.frame);
     let next = result.snapshot;
     const automated = resolveAutomatedTurns(next, input.actionId);
