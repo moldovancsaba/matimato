@@ -15,11 +15,12 @@ export function createBoard(seedText: string, boardSize: BoardSize = 9): BoardCe
   const rand = seededRandom(seedText);
   const rows = shuffle([...Array(size).keys()], rand);
   const cols = shuffle([...Array(size).keys()], rand);
+  const digits = shuffle([...Array(size).keys()].map((value) => value + 1), rand);
   const signs = createRandomSigns(size, rand);
   const board: BoardCell[] = [];
   for (let r = 0; r < size; r += 1) {
     for (let c = 0; c < size; c += 1) {
-      const magnitude = ((rows[r] * 3 + Math.floor(rows[r] / 3) + cols[c]) % size) + 1;
+      const magnitude = digits[(rows[r] + cols[c]) % size];
       const sign = signs[r][c];
       board.push({ row: r, col: c, magnitude, sign, value: magnitude * sign, removed: false });
     }

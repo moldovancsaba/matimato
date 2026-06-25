@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { applyMove, applyTimeout, newGame } from '@/lib/game/rules';
+import { applyMove, applyTimeout, createBoard, newGame } from '@/lib/game/rules';
+import type { BoardSize } from '@/lib/shared/types';
 
 describe('matimato rules', () => {
   it('creates default 9x9 boards and explicit 5x5 through 9x9 boards', () => {
@@ -10,6 +11,19 @@ describe('matimato rules', () => {
     expect(small.boardSize).toBe(5);
     expect(small.board).toHaveLength(25);
     expect(new Set(small.board.map((cell) => cell.row))).toEqual(new Set([0,1,2,3,4]));
+  });
+
+  it('generates Latin-square magnitudes for every progression board size', () => {
+    for (const size of [5, 6, 7, 8, 9] as BoardSize[]) {
+      const board = createBoard(`latin:${size}`, size);
+      const expected = new Set([...Array(size).keys()].map((value) => value + 1));
+      for (let index = 0; index < size; index += 1) {
+        const row = board.filter((cell) => cell.row === index).map((cell) => cell.magnitude);
+        const col = board.filter((cell) => cell.col === index).map((cell) => cell.magnitude);
+        expect(new Set(row), `${size}x${size} row ${index + 1}`).toEqual(expected);
+        expect(new Set(col), `${size}x${size} column ${index + 1}`).toEqual(expected);
+      }
+    }
   });
 
   it('starts with any tile and then restricts to the selected column', () => {
