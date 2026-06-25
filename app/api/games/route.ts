@@ -2,22 +2,32 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { createDailyChallenge, isValidTodayDailyId } from '@/lib/game/daily';
 import { cancelLobby, createLobby, joinLobby, leaveLobby, markLobbyReady, refreshLobby } from '@/lib/game/lobby';
-import { applyMove, chooseAiMove, computeOutcome, joinBattle, newGame, sideForPlayer } from '@/lib/game/rules';
+import { applyMove, applyTimeout, chooseAiMove, computeOutcome, joinBattle, newGame, sideForPlayer } from '@/lib/game/rules';
 import { completeGame, findActiveDailyGame, findDailyResult, findGame, findGameByInvite, saveGame } from '@/lib/server/store';
 import { fail, ok } from '@/lib/server/http';
 import type { GameApiResponse, GameMode, MoveFrame } from '@/lib/shared/types';
 
 const schema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('create'), mode: z.enum(['solo', 'battle', 'daily']), playerId: z.string().min(1), playerTag: z.string().min(1), lobbyVersion: z.literal(2).optional(), dailyId: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }),
+  z.object({
+    type: z.literal('create'),
+    mode: z.enum(['solo', 'battle', 'daily', 'blitz']),
+    playerId: z.string().min(1),
+    playerTag: z.string().min(1),
+    lobbyVersion: z.literal(2).optional(),
+    dailyId: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    clock: z.object({ turnLimitMs: z.number().int().min(5000).max(120000).optional() }).optional()
+  }),
   z.object({ type: z.literal('join'), inviteCode: z.string().min(3), playerId: z.string().min(1), playerTag: z.string().min(1) }),
   z.object({ type: z.literal('move'), matchId: z.string().min(1), playerId: z.string().min(1), actionId: z.string().min(1), row: z.number().int().min(0).max(8), col: z.number().int().min(0).max(8), expectedVersion: z.number().int().min(0) }),
   z.object({ type: z.literal('sync'), matchId: z.string().min(1), playerId: z.string().optional() }),
+  z.object({ type: z.literal('timeout'), matchId: z.string().min(1), playerId: z.string().min(1), deadlineVersion: z.number().int().min(0) }),
   z.object({ type: z.literal('lobbyStatus'), matchId: z.string().min(1), playerId: z.string().min(1) }),
   z.object({ type: z.literal('ready'), matchId: z.string().min(1), playerId: z.string().min(1), actionId: z.string().min(1) }),
   z.object({ type: z.literal('leave'), matchId: z.string().min(1), playerId: z.string().min(1), actionId: z.string().min(1) }),
   z.object({ type: z.literal('cancel'), matchId: z.string().min(1), playerId: z.string().min(1), actionId: z.string().min(1) })
 ]);
 
+const BLITZ_ENABLED = process.env.MATIMATO_BLITZ_ENABLED !== 'false';
 
 function resolveAutomatedTurns(snapshot: import('@/lib/shared/types').GameSnapshot, actionSeed = 'auto-sync') {
   const frames: MoveFrame[] = [];
@@ -65,6 +75,7 @@ export async function POST(request: Request) {
   try {
     const input = schema.parse(await request.json());
     if (input.type === 'create') {
+      if (input.mode === 'blitz' && !BLITZ_ENABLED) throw new Error('BLITZ_DISABLED');
       if (input.mode === 'daily') {
         if (!isValidTodayDailyId(input.dailyId)) throw new Error('Daily challenge is not available.');
         const daily = createDailyChallenge();
@@ -76,7 +87,7 @@ export async function POST(request: Request) {
         await saveGame(snapshot);
         return ok({ snapshot } satisfies GameApiResponse);
       }
-      let snapshot = newGame(randomUUID(), input.mode as GameMode, input.playerId, input.playerTag);
+      let snapshot = newGame(randomUUID(), input.mode as GameMode, input.playerId, input.playerTag, input.mode === 'blitz' ? { clock: input.clock } : undefined);
       if (input.mode === 'battle' && input.lobbyVersion === 2) snapshot = { ...snapshot, lobby: createLobby(snapshot) };
       await saveGame(snapshot);
       return ok((snapshot.lobby ? { snapshot, lobby: snapshot.lobby } : { snapshot }) satisfies GameApiResponse);
@@ -97,6 +108,20 @@ export async function POST(request: Request) {
         if (resolved.snapshot.outcome) await completeGame(resolved.snapshot);
       }
       return ok({ snapshot: resolved.snapshot, frames: resolved.frames } satisfies GameApiResponse);
+    }
+    if (input.type === 'timeout') {
+      const snapshot = await findGame(input.matchId);
+      if (!snapshot) throw new Error('Game not found.');
+      const side = sideForPlayer(snapshot, input.playerId);
+      if (!side) throw new Error('Player is not in this game.');
+      const timeout = applyTimeout(snapshot, side, input.deadlineVersion);
+      const resolved = timeout.resolved ? resolveAutomatedTurns(timeout.snapshot, `timeout:${input.deadlineVersion}`) : { snapshot: timeout.snapshot, frames: [] as MoveFrame[] };
+      const frames = [...timeout.frames, ...resolved.frames];
+      if (frames.length) {
+        await saveGame(resolved.snapshot);
+        if (resolved.snapshot.outcome) await completeGame(resolved.snapshot);
+      }
+      return ok({ snapshot: resolved.snapshot, frames } satisfies GameApiResponse);
     }
     if (input.type === 'lobbyStatus' || input.type === 'ready' || input.type === 'leave' || input.type === 'cancel') {
       const snapshot = await findGame(input.matchId);

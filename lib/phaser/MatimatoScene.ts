@@ -20,6 +20,10 @@ export class MatimatoScene extends Phaser.Scene {
   private southScore!: Phaser.GameObjects.Text;
   private resultLayer?: Phaser.GameObjects.Container;
   private syncInFlight = false;
+  private clockLabel!: Phaser.GameObjects.Text;
+  private clockTimer?: Phaser.Time.TimerEvent;
+  private announcedDeadline = new Set<string>();
+  private timeoutInFlight = false;
 
   constructor() { super('matimato'); }
 
@@ -35,6 +39,7 @@ export class MatimatoScene extends Phaser.Scene {
     this.machine = new ActionMachine(this.snapshot, {
       canSelect: (cell, snapshot) => this.canSelect(cell, snapshot),
       submitMove: async (cell, actionId, snapshot) => {
+        if (snapshot.mode === 'blitz') this.payload.onEvent({ type: 'telemetry', name: 'blitz_move_submitted', result: 'ok', properties: { version: snapshot.version, deadlineVersion: snapshot.clock?.deadlineVersion ?? 0 } });
         const response = await this.network.move({ matchId: snapshot.id, playerId: this.payload.playerId, actionId, row: cell.row, col: cell.col, expectedVersion: snapshot.version });
         return { snapshot: response.snapshot, frames: 'frames' in response ? response.frames : [] };
       },
@@ -44,6 +49,7 @@ export class MatimatoScene extends Phaser.Scene {
       complete: (snapshot) => this.showResult(snapshot)
     });
     this.commit(this.snapshot);
+    this.startClockLoop();
     this.payload.onEvent({ type: 'announce', message: 'Game ready.' });
     this.payload.onEvent({ type: 'telemetry', name: 'phaser_booted', result: 'ok', properties: { phase: 'scene-ready' } });
     if (this.snapshot.outcome || this.snapshot.status === 'complete') this.showResult(this.snapshot);
@@ -74,6 +80,7 @@ export class MatimatoScene extends Phaser.Scene {
     this.southTag = this.add.text(508, 198, '', { fontFamily: 'Arial', fontSize: '22px', color: '#ffcfb5' }).setDepth(20);
     this.southScore = this.add.text(508, 224, '', { fontFamily: 'Arial', fontSize: '54px', fontStyle: '900', color: '#fff8ec' }).setDepth(20);
     this.add.text(730, 86, 'LIVE', { fontFamily: 'Arial', fontSize: '18px', fontStyle: '900', color: '#ffb06f' }).setDepth(20);
+    this.clockLabel = this.add.text(450, 318, '', { fontFamily: 'Arial', fontSize: '28px', fontStyle: '900', color: '#fff8ec' }).setOrigin(0.5).setDepth(20);
     const dock = this.add.graphics().setDepth(28);
     dock.fillStyle(0x260c1d, 0.9);
     dock.fillRoundedRect(50, 1218, 800, 96, 30);
@@ -103,6 +110,11 @@ export class MatimatoScene extends Phaser.Scene {
   }
 
   private async playFrame(frame: MoveFrame) {
+    if (frame.timeout) {
+      this.payload.onEvent({ type: 'announce', message: `${frame.timeout.side} timed out. Turn resolved by server.` });
+      this.payload.onEvent({ type: 'telemetry', name: 'blitz_timeout_resolved', result: 'ok', properties: { deadlineVersion: frame.timeout.deadlineVersion, timeoutCount: frame.timeout.count } });
+      return;
+    }
     const geometry = this.board.geometry;
     const tileRect = geometry.cellRect(frame.selected.row, frame.selected.col);
     const from = frame.fromTarget.axis === 'column' ? geometry.colRect(frame.fromTarget.index) : geometry.rowRect(frame.selected.row);
@@ -118,11 +130,13 @@ export class MatimatoScene extends Phaser.Scene {
   private commit(snapshot: GameSnapshot) {
     this.snapshot = snapshot;
     this.machine?.update(snapshot);
+    this.board?.syncCells(snapshot.board);
     this.board?.setLegalTarget(snapshot.legalTarget);
     this.northTag?.setText(snapshot.players.north?.tag ?? 'Player');
     this.northScore?.setText(String(snapshot.players.north?.score ?? 0));
     this.southTag?.setText(snapshot.players.south?.tag ?? 'Rival');
     this.southScore?.setText(String(snapshot.players.south?.score ?? 0));
+    this.updateClockLabel();
   }
 
 
@@ -167,12 +181,67 @@ export class MatimatoScene extends Phaser.Scene {
     this.payload.onEvent({ type: 'complete', snapshot });
   }
 
+  private startClockLoop() {
+    this.clockTimer?.remove(false);
+    this.clockTimer = this.time.addEvent({ delay: 250, loop: true, callback: () => {
+      this.updateClockLabel();
+      void this.resolveExpiredClock();
+    } });
+  }
+
+  private updateClockLabel() {
+    if (!this.clockLabel) return;
+    const clock = this.snapshot.clock;
+    if (!clock?.enabled || !clock.deadlineAt) {
+      this.clockLabel.setText(this.snapshot.mode === 'blitz' ? 'Blitz complete' : '');
+      return;
+    }
+    const remainingMs = Math.max(0, new Date(clock.deadlineAt).getTime() - Date.now());
+    const seconds = Math.ceil(remainingMs / 1000);
+    const active = clock.activeSide === this.sideForPlayer(this.snapshot) ? 'Your clock' : 'Rival clock';
+    this.clockLabel.setText(`${active}: ${seconds}s`);
+    this.clockLabel.setColor(seconds <= 3 ? '#ffcf4a' : seconds <= 10 ? '#ffb06f' : '#fff8ec');
+    this.announceClockThreshold(seconds, clock.deadlineVersion ?? this.snapshot.version);
+  }
+
+  private announceClockThreshold(seconds: number, deadlineVersion: number) {
+    const key = `${deadlineVersion}:${seconds}`;
+    if ((seconds === 10 || seconds === 3 || seconds === 0) && !this.announcedDeadline.has(key)) {
+      this.announcedDeadline.add(key);
+      const message = seconds === 0 ? 'Blitz deadline expired. Resolving with the server.' : `${seconds} seconds remain on the Blitz clock.`;
+      this.payload.onEvent({ type: 'announce', message });
+      if (seconds === 10 || seconds === 3) this.payload.onEvent({ type: 'telemetry', name: 'blitz_deadline_warning', result: 'ok', properties: { deadlineVersion, durationBucket: `${seconds}s` } });
+    }
+  }
+
+  private async resolveExpiredClock() {
+    const clock = this.snapshot.clock;
+    if (this.timeoutInFlight || this.snapshot.status !== 'active' || !clock?.enabled || !clock.deadlineAt || clock.deadlineVersion === undefined) return;
+    if (clock.activeSide !== this.sideForPlayer(this.snapshot)) return;
+    if (Date.now() <= new Date(clock.deadlineAt).getTime() + clock.config.graceMs) return;
+    this.timeoutInFlight = true;
+    this.payload.onEvent({ type: 'telemetry', name: 'blitz_timeout_requested', result: 'ok', properties: { deadlineVersion: clock.deadlineVersion } });
+    try {
+      const response = await this.network.timeout(this.snapshot.id, this.payload.playerId, clock.deadlineVersion);
+      for (const frame of 'frames' in response ? response.frames : []) await this.playFrame(frame);
+      this.commit(response.snapshot);
+      if (response.snapshot.outcome || response.snapshot.status === 'complete') this.showResult(response.snapshot);
+    } catch (error) {
+      this.payload.onEvent({ type: 'announce', message: error instanceof Error ? error.message : 'Timeout sync failed.' });
+      this.payload.onEvent({ type: 'telemetry', name: 'sync_failed', result: 'error', properties: { errorCode: 'timeout_sync_failed', retryable: true } });
+    } finally {
+      this.timeoutInFlight = false;
+    }
+  }
+
   private sideForPlayer(snapshot: GameSnapshot): PlayerSide {
     return snapshot.players.south?.id === this.payload.playerId ? 'south' : 'north';
   }
 
   destroy() {
     this.payload.onEvent({ type: 'telemetry', name: 'phaser_destroyed', result: 'ok', properties: { phase: 'scene-destroy' } });
+    this.clockTimer?.remove(false);
+    this.network.destroy();
     this.board?.destroy();
     this.blob?.destroy();
   }
