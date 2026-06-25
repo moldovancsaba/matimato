@@ -31,7 +31,7 @@ export const TUTORIAL_STEPS: Array<{ id: TutorialStepId; title: string; body: st
 
 export function createTutorialState(lastStep?: TutorialStepId): TutorialState {
   let state: TutorialState = {
-    board: createBoard(TUTORIAL_SEED),
+    board: createBoard(TUTORIAL_SEED, 5),
     currentTurn: 'north',
     legalTarget: { axis: 'any' },
     scores: { north: 0, south: 0 },
