@@ -12,7 +12,7 @@ export function bootMatimato(parent: HTMLElement, payload: PhaserBootPayload): (
     width: 900,
     height: 1400,
     backgroundColor: '#120811',
-    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH, width: 900, height: 1400 },
+    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_HORIZONTALLY, width: 900, height: 1400 },
     input: { activePointers: 3 },
     scene: [MatimatoScene]
   });
