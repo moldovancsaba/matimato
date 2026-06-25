@@ -1,14 +1,16 @@
 import * as Phaser from 'phaser';
-import type { BoardCell, LegalTarget, PlayerSide } from '@/lib/shared/types';
+import { normalizeBoardSize } from '@/lib/game/progression';
+import type { BoardCell, BoardSize, LegalTarget, PlayerSide } from '@/lib/shared/types';
 import { BoardGeometry } from '../geometry/BoardGeometry';
 import { TileActor } from './TileActor';
 
 export class BoardActor {
-  readonly geometry = new BoardGeometry();
+  readonly geometry: BoardGeometry;
   private tiles = new Map<string, TileActor>();
   private bg: Phaser.GameObjects.Graphics;
 
-  constructor(private scene: Phaser.Scene, cells: BoardCell[], onSelect: (cell: BoardCell) => void) {
+  constructor(private scene: Phaser.Scene, cells: BoardCell[], onSelect: (cell: BoardCell) => void, boardSize?: BoardSize) {
+    this.geometry = new BoardGeometry(boardSize ?? deriveBoardSize(cells));
     this.bg = scene.add.graphics().setDepth(1);
     this.drawBackground();
     for (const cell of cells) {
@@ -49,3 +51,8 @@ export class BoardActor {
 }
 
 function key(row: number, col: number) { return `${row}:${col}`; }
+
+function deriveBoardSize(cells: BoardCell[]): BoardSize {
+  const size = Math.max(5, Math.max(...cells.map((cell) => Math.max(cell.row, cell.col))) + 1);
+  return normalizeBoardSize(size, 9);
+}

@@ -1,6 +1,6 @@
-import type { BlitzClockConfig, BoardCell, ClockState, GameMode, GameOutcome, GameSnapshot, LegalTarget, MoveFrame, PlayerSide, PlayerState, TimeoutResolution } from '@/lib/shared/types';
+import { normalizeBoardSize } from './progression';
+import type { BlitzClockConfig, BoardCell, BoardSize, ClockState, GameMode, GameOutcome, GameSnapshot, LegalTarget, MoveFrame, PlayerSide, PlayerState, TimeoutResolution } from '@/lib/shared/types';
 
-const SIZE = 9;
 const SIDES: PlayerSide[] = ['north', 'south'];
 export const DEFAULT_BLITZ_TURN_LIMIT_MS = 30_000;
 export const DEFAULT_BLITZ_GRACE_MS = 1_500;
@@ -10,15 +10,16 @@ export function createPlayer(id: string, tag: string, side: PlayerSide): PlayerS
   return { id, tag: tag.trim() || 'Player', side, score: 0 };
 }
 
-export function createBoard(seedText: string): BoardCell[] {
+export function createBoard(seedText: string, boardSize: BoardSize = 9): BoardCell[] {
+  const size = normalizeBoardSize(boardSize, 9);
   const rand = seededRandom(seedText);
-  const rows = shuffle([...Array(SIZE).keys()], rand);
-  const cols = shuffle([...Array(SIZE).keys()], rand);
-  const signs = createRandomSigns(rand);
+  const rows = shuffle([...Array(size).keys()], rand);
+  const cols = shuffle([...Array(size).keys()], rand);
+  const signs = createRandomSigns(size, rand);
   const board: BoardCell[] = [];
-  for (let r = 0; r < SIZE; r += 1) {
-    for (let c = 0; c < SIZE; c += 1) {
-      const magnitude = ((rows[r] * 3 + Math.floor(rows[r] / 3) + cols[c]) % SIZE) + 1;
+  for (let r = 0; r < size; r += 1) {
+    for (let c = 0; c < size; c += 1) {
+      const magnitude = ((rows[r] * 3 + Math.floor(rows[r] / 3) + cols[c]) % size) + 1;
       const sign = signs[r][c];
       board.push({ row: r, col: c, magnitude, sign, value: magnitude * sign, removed: false });
     }
@@ -26,8 +27,9 @@ export function createBoard(seedText: string): BoardCell[] {
   return board;
 }
 
-export function newGame(id: string, mode: GameMode, playerId: string, tag: string, options?: { boardSeed?: string; dailyId?: string; clock?: Partial<Pick<BlitzClockConfig, 'turnLimitMs'>>; now?: Date }): GameSnapshot {
+export function newGame(id: string, mode: GameMode, playerId: string, tag: string, options?: { boardSeed?: string; boardSize?: BoardSize; dailyId?: string; clock?: Partial<Pick<BlitzClockConfig, 'turnLimitMs'>>; now?: Date }): GameSnapshot {
   const now = (options?.now ?? new Date()).toISOString();
+  const boardSize = normalizeBoardSize(options?.boardSize, 9);
   const north = createPlayer(playerId, tag, 'north');
   const south = mode === 'solo' || mode === 'daily' || mode === 'blitz' ? createPlayer('matimato-ai', 'Matimato AI', 'south') : null;
   const clockConfig = mode === 'blitz' ? createBlitzClockConfig(options?.clock) : undefined;
@@ -36,9 +38,10 @@ export function newGame(id: string, mode: GameMode, playerId: string, tag: strin
     inviteCode: makeInviteCode(id),
     mode,
     dailyId: options?.dailyId,
+    boardSize,
     status: mode === 'battle' ? 'waiting' : 'active',
     version: 0,
-    board: createBoard(options?.boardSeed ?? `${id}:${mode}`),
+    board: createBoard(options?.boardSeed ?? `${id}:${mode}:${boardSize}`, boardSize),
     players: { north, south },
     currentTurn: 'north',
     legalTarget: { axis: 'any' },
@@ -198,21 +201,23 @@ function makeInviteCode(id: string): string {
 }
 
 
-function createRandomSigns(rand: () => number): (1 | -1)[][] {
+function createRandomSigns(size: BoardSize, rand: () => number): (1 | -1)[][] {
   const signs: (1 | -1)[][] = [];
-  const rowNegatives = Array.from({ length: SIZE }, () => 0);
-  const colNegatives = Array.from({ length: SIZE }, () => 0);
-  for (let row = 0; row < SIZE; row += 1) {
+  const rowNegatives = Array.from({ length: size }, () => 0);
+  const colNegatives = Array.from({ length: size }, () => 0);
+  const minNegatives = size <= 6 ? 1 : 2;
+  const maxNegatives = Math.max(minNegatives + 1, Math.floor(size * 0.56));
+  for (let row = 0; row < size; row += 1) {
     signs[row] = [];
-    for (let col = 0; col < SIZE; col += 1) {
-      const rowNeed = rowNegatives[row] < 2;
-      const colNeed = colNegatives[col] < 2 && row >= SIZE - 3;
-      const rowFull = rowNegatives[row] >= 5;
-      const colFull = colNegatives[col] >= 5;
+    for (let col = 0; col < size; col += 1) {
+      const rowNeed = rowNegatives[row] < minNegatives;
+      const colNeed = colNegatives[col] < minNegatives && row >= size - minNegatives - 1;
+      const rowFull = rowNegatives[row] >= maxNegatives;
+      const colFull = colNegatives[col] >= maxNegatives;
       const previousHorizontal = col >= 2 && signs[row][col - 1] === -1 && signs[row][col - 2] === -1;
       const previousVertical = row >= 2 && signs[row - 1][col] === -1 && signs[row - 2][col] === -1;
       let negative = rand() < 0.38;
-      if (rowNeed && col >= SIZE - 3) negative = true;
+      if (rowNeed && col >= size - minNegatives - 1) negative = true;
       if (colNeed) negative = true;
       if (rowFull || colFull || previousHorizontal || previousVertical) negative = false;
       signs[row][col] = negative ? -1 : 1;

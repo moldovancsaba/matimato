@@ -1,5 +1,6 @@
 import { createDailyChallenge, createEmptyStreak, getWeekEndExclusive, getWeekStart, rankWeeklyResults, updateStreak } from '@/lib/game/daily';
-import type { DailyResult, GameSnapshot, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, RankEntry, StreakState, TutorialStepId } from '@/lib/shared/types';
+import { applyBoardPurchase, createProgression, normalizeBoardSize, selectActiveBoard } from '@/lib/game/progression';
+import type { BoardProgression, BoardSize, DailyResult, GameSnapshot, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, RankEntry, StreakState, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
 import { getDb } from './mongo';
 
 const GAMES = 'games';
@@ -50,10 +51,12 @@ export async function completeGame(snapshot: GameSnapshot): Promise<void> {
     await db.collection<MatchSummary>(HISTORY).updateOne({ id: summary.id }, { $setOnInsert: summary }, { upsert: true });
     if (!existingHistory) {
       const xp = Math.max(10, Math.abs(score) + (result === 'victory' ? 80 : result === 'draw' ? 35 : 20));
+      const currentProfile = await db.collection(PROFILES).findOne({ playerId: player!.id }, { projection: { _id: 0 } });
+      const currentProgression = createProgression(currentProfile ?? {});
       await db.collection(PROFILES).updateOne(
         { playerId: player!.id },
         {
-          $set: { playerId: player!.id, tag: player!.tag },
+          $set: { playerId: player!.id, tag: player!.tag, spendableXp: currentProgression.wallet.spendableXp + xp },
           $inc: { xp, matches: 1, wins: result === 'victory' ? 1 : 0, draws: result === 'draw' ? 1 : 0 },
           $max: { bestScore: score }
         },
@@ -77,10 +80,13 @@ export async function getProfile(playerId: string, fallbackTag = 'Player'): Prom
   const db = await getDb();
   const raw = await db.collection(PROFILE_DOC).findOne({ playerId }, { projection: { _id: 0 } });
   const xp = Number(raw?.xp ?? 0);
+  const progression = createProgression(raw ?? { xp });
   return {
     playerId,
     tag: String(raw?.tag ?? fallbackTag),
     xp,
+    spendableXp: progression.wallet.spendableXp,
+    boardUnlocks: progression.boardUnlocks,
     level: Math.max(1, Math.floor(xp / 150) + 1),
     matches: Number(raw?.matches ?? 0),
     wins: Number(raw?.wins ?? 0),
@@ -97,7 +103,7 @@ export async function getOnboarding(playerId: string): Promise<OnboardingState> 
   return profile.onboarding ?? createEmptyOnboarding(playerId);
 }
 
-export async function updateOnboarding(input: { playerId: string; step?: TutorialStepId; completed?: boolean; dismissed?: boolean }): Promise<OnboardingState> {
+export async function updateOnboarding(input: { playerId: string; step?: TutorialStepId; completed?: boolean; dismissed?: boolean; trainingChoice?: TrainingChoice }): Promise<OnboardingState> {
   const db = await getDb();
   const current = await getOnboarding(input.playerId);
   const now = new Date().toISOString();
@@ -107,6 +113,8 @@ export async function updateOnboarding(input: { playerId: string; step?: Tutoria
     lastStep: input.step ?? current.lastStep,
     completedAt: input.completed ? current.completedAt ?? now : current.completedAt,
     dismissedAt: input.dismissed ? current.dismissedAt ?? now : current.dismissedAt,
+    trainingChoice: input.trainingChoice ?? current.trainingChoice,
+    trainingChoiceAt: input.trainingChoice ? current.trainingChoiceAt ?? now : current.trainingChoiceAt,
     updatedAt: now
   };
   await db.collection(PROFILES).updateOne(
@@ -142,6 +150,7 @@ export async function getProgression(playerId?: string, now = new Date()): Promi
     .limit(50)
     .toArray();
   const onboarding = playerId ? normalizeOnboarding(playerId, profile?.onboarding) ?? createEmptyOnboarding(playerId) : undefined;
+  const progression = playerId ? createProgression(profile ?? {}) : undefined;
   return {
     daily,
     dailyResult: dailyResult ?? undefined,
@@ -152,8 +161,57 @@ export async function getProgression(playerId?: string, now = new Date()): Promi
       { id: 'win-two', title: 'Win two duels', progress: Number(profile?.wins ?? 0), target: 2, rewardXp: 140 },
       { id: 'positive-row', title: 'Claim a positive row swing', progress: dailyResult && dailyResult.score > 0 ? 1 : 0, target: 1, rewardXp: 60 }
     ],
-    onboarding
+    onboarding,
+    progression
   };
+}
+
+export async function getPlayerProgression(playerId: string): Promise<BoardProgression> {
+  const db = await getDb();
+  const raw = await db.collection(PROFILES).findOne({ playerId }, { projection: { _id: 0 } });
+  return createProgression(raw ?? {});
+}
+
+export async function purchaseBoardUnlock(input: { playerId: string; boardSize: BoardSize; actionId: string }): Promise<BoardProgression> {
+  const db = await getDb();
+  const raw = await db.collection(PROFILES).findOne({ playerId: input.playerId }, { projection: { _id: 0 } });
+  const current = createProgression(raw ?? {});
+  const duplicate = current.boardUnlocks.purchases.some((purchase) => purchase.actionId === input.actionId || purchase.boardSize === input.boardSize);
+  const next = duplicate ? current : applyBoardPurchase(current, input.boardSize, input.actionId);
+  await db.collection(PROFILES).updateOne(
+    { playerId: input.playerId },
+    {
+      $set: {
+        playerId: input.playerId,
+        spendableXp: next.wallet.spendableXp,
+        boardUnlocks: next.boardUnlocks
+      },
+      $setOnInsert: { xp: next.wallet.lifetimeXp }
+    },
+    { upsert: true }
+  );
+  return next;
+}
+
+export async function updateActiveBoardSize(input: { playerId: string; boardSize: BoardSize }): Promise<BoardProgression> {
+  const db = await getDb();
+  const raw = await db.collection(PROFILES).findOne({ playerId: input.playerId }, { projection: { _id: 0 } });
+  const current = createProgression(raw ?? {});
+  const next = selectActiveBoard(current, input.boardSize);
+  await db.collection(PROFILES).updateOne(
+    { playerId: input.playerId },
+    { $set: { playerId: input.playerId, spendableXp: next.wallet.spendableXp, boardUnlocks: next.boardUnlocks }, $setOnInsert: { xp: next.wallet.lifetimeXp } },
+    { upsert: true }
+  );
+  return next;
+}
+
+export async function resolveBoardSizeForGame(playerId: string, requested?: BoardSize): Promise<BoardSize> {
+  if (process.env.MATIMATO_BOARD_JOURNEY_ENABLED === 'false' || process.env.NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY === 'false') return 9;
+  const progression = await getPlayerProgression(playerId);
+  const boardSize = normalizeBoardSize(requested ?? progression.boardUnlocks.activeBoardSize, 5);
+  if (!progression.boardUnlocks.unlockedBoardSizes.includes(boardSize)) throw new Error('BOARD_LOCKED');
+  return boardSize;
 }
 
 async function upsertDailyResult(input: Omit<DailyResult, 'id' | 'attempts'>): Promise<void> {
@@ -188,6 +246,8 @@ function normalizeOnboarding(playerId: string, value: unknown): OnboardingState 
     completedAt: typeof raw.completedAt === 'string' ? raw.completedAt : undefined,
     dismissedAt: typeof raw.dismissedAt === 'string' ? raw.dismissedAt : undefined,
     lastStep: raw.lastStep,
+    trainingChoice: raw.trainingChoice,
+    trainingChoiceAt: typeof raw.trainingChoiceAt === 'string' ? raw.trainingChoiceAt : undefined,
     updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : new Date(0).toISOString()
   };
 }

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { createDailyChallenge, isValidTodayDailyId } from '@/lib/game/daily';
 import { cancelLobby, createLobby, joinLobby, leaveLobby, markLobbyReady, refreshLobby } from '@/lib/game/lobby';
 import { applyMove, applyTimeout, chooseAiMove, computeOutcome, joinBattle, newGame, sideForPlayer } from '@/lib/game/rules';
-import { completeGame, findActiveDailyGame, findDailyResult, findGame, findGameByInvite, saveGame } from '@/lib/server/store';
+import { completeGame, findActiveDailyGame, findDailyResult, findGame, findGameByInvite, resolveBoardSizeForGame, saveGame } from '@/lib/server/store';
 import { fail, ok } from '@/lib/server/http';
 import type { GameApiResponse, GameMode, MoveFrame } from '@/lib/shared/types';
 
@@ -15,6 +15,7 @@ const schema = z.discriminatedUnion('type', [
     playerTag: z.string().min(1),
     lobbyVersion: z.literal(2).optional(),
     dailyId: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    boardSize: z.number().int().min(5).max(9).optional(),
     clock: z.object({ turnLimitMs: z.number().int().min(5000).max(120000).optional() }).optional()
   }),
   z.object({ type: z.literal('join'), inviteCode: z.string().min(3), playerId: z.string().min(1), playerTag: z.string().min(1) }),
@@ -83,11 +84,12 @@ export async function POST(request: Request) {
         if (completedDaily) throw new Error('Daily challenge already completed.');
         const existingDaily = await findActiveDailyGame(input.playerId, daily.id);
         if (existingDaily) return ok({ snapshot: existingDaily } satisfies GameApiResponse);
-        const snapshot = newGame(randomUUID(), 'daily', input.playerId, input.playerTag, { boardSeed: daily.seed, dailyId: daily.id });
+        const snapshot = newGame(randomUUID(), 'daily', input.playerId, input.playerTag, { boardSeed: daily.seed, boardSize: 9, dailyId: daily.id });
         await saveGame(snapshot);
         return ok({ snapshot } satisfies GameApiResponse);
       }
-      let snapshot = newGame(randomUUID(), input.mode as GameMode, input.playerId, input.playerTag, input.mode === 'blitz' ? { clock: input.clock } : undefined);
+      const boardSize = input.mode === 'solo' || input.mode === 'blitz' ? await resolveBoardSizeForGame(input.playerId, input.boardSize as 5 | 6 | 7 | 8 | 9 | undefined) : 9;
+      let snapshot = newGame(randomUUID(), input.mode as GameMode, input.playerId, input.playerTag, input.mode === 'blitz' ? { clock: input.clock, boardSize } : { boardSize });
       if (input.mode === 'battle' && input.lobbyVersion === 2) snapshot = { ...snapshot, lobby: createLobby(snapshot) };
       await saveGame(snapshot);
       return ok((snapshot.lobby ? { snapshot, lobby: snapshot.lobby } : { snapshot }) satisfies GameApiResponse);

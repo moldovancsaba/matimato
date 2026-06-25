@@ -32,11 +32,50 @@ type OnboardingState = {
   completedAt?: string;
   lastStep?: TutorialStepId;
   dismissedAt?: string;
+  trainingChoice?: 'learn' | 'play-now';
+  trainingChoiceAt?: string;
   updatedAt: string;
 };
 ```
 
-The first-run tutorial uses a deterministic fixture seed (`matimato-guided-first-match-v1`) and the same 9x9 legal-target rules. Local storage records progress immediately; `/api/progression` idempotently upserts profile-backed progress when the network is available. Rollback is `NEXT_PUBLIC_MATIMATO_ONBOARDING=false`.
+The first-run flow is choice-first when `NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE` is enabled. New players see a GDS explanation screen and choose `Learn the game` or `Play now`; direct `/play/[id]` routes bypass the choice so saved matches remain recoverable. The training path uses a deterministic fixture seed (`matimato-guided-first-match-v1`), legal-target rules, and optional coach bubbles controlled by `NEXT_PUBLIC_MATIMATO_COACH_BUBBLES`. Local storage records progress immediately; `/api/progression` idempotently upserts profile-backed progress when the network is available. Rollback controls are `NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE=false`, `NEXT_PUBLIC_MATIMATO_COACH_BUBBLES=false`, and `NEXT_PUBLIC_MATIMATO_ONBOARDING=false`.
+
+## Board progression and XP wallet
+
+Matimato is now a progressive board-size game for solo and Blitz. Players start on 5x5 and unlock 6x6, 7x7, 8x8, then 9x9 by spending XP. Battle and daily continue to use the safe 9x9 behavior until those modes receive explicit progression work.
+
+```ts
+type BoardSize = 5 | 6 | 7 | 8 | 9;
+type XpWallet = { lifetimeXp: number; spendableXp: number };
+type BoardUnlockState = {
+  unlockedBoardSizes: BoardSize[];
+  activeBoardSize: BoardSize;
+  nextUnlock?: { boardSize: BoardSize; costXp: number };
+};
+```
+
+Profile `xp` remains lifetime XP. `spendableXp` is initialized from legacy `xp` when missing and increments with match rewards. Board purchases reduce only `spendableXp`; they never reduce `xp`, leaderboard rank, or level. Stored board unlocks include a purchase ledger with board size, cost, action id, and timestamp for idempotency/recovery.
+
+Costs are deterministic:
+
+- 6x6: 120 XP
+- 7x7: 260 XP
+- 8x8: 520 XP
+- 9x9: 900 XP
+
+Runtime flow:
+
+```text
+Home or Journey
+  -> read /api/progression
+  -> render unlocked boards and next cost
+  -> purchaseBoard validates sequence + balance server-side
+  -> selectBoard validates unlocked board server-side
+  -> create solo/blitz game with selected boardSize
+  -> Phaser derives geometry from snapshot.boardSize
+```
+
+Rollback is two-layered. `NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY=false` hides the Journey UI. `MATIMATO_BOARD_JOURNEY_ENABLED=false` rejects new purchases and active-size changes and makes new solo/Blitz game creation fall back to 9x9 while preserving stored wallet/unlock data for forward recovery.
 
 ## Daily challenge loop
 
@@ -69,6 +108,8 @@ Game snapshots append accepted moves and timeout resolutions to optional `moveLo
 ## Telemetry and health
 
 Telemetry is an allowlisted product-event stream, not raw analytics capture. The client hashes session, player, and match identifiers before enqueueing events and redacts invite-like codes from string properties. `/api/events` accepts `{ events }` payloads capped at 50 events and 32 KB; invalid events are rejected individually, valid events fail open with `degraded: true` when storage is disabled or temporarily unavailable. Rollback controls are `NEXT_PUBLIC_MATIMATO_TELEMETRY=false` for the browser emitter and `MATIMATO_EVENTS_ENABLED=false` for server-side storage.
+
+Progression events are allowlisted: `training_choice_shown`, `training_choice_selected`, `coach_bubble_shown`, `coach_bubble_dismissed`, `board_unlock_viewed`, `board_unlock_purchased`, `board_unlock_failed`, and `board_size_selected`. Properties are bounded to safe keys such as board size, cost, choice, step, result, error code, and spendable XP bucket.
 
 `/api/health` reports release version, database status, and named check latencies so deploy verification can distinguish app boot from persistence availability.
 
@@ -106,11 +147,14 @@ For Blitz, a timeout request follows the same server-frame path. Timeout frames 
 
 ## Board rules
 
-- Only 9x9 games exist.
+- Solo and Blitz support 5x5 through 9x9 boards.
+- Existing snapshots that omit `boardSize` are treated as 9x9.
+- Daily and battle creation stay 9x9 for this release.
 - First move can select any open tile.
 - A move from an open/row target creates a column target.
 - A move from a column target creates a row target.
 - Positive values render green, negative values render red, and stored values remain signed.
+- Phaser keeps a fixed 900x1400 world and scales cells to the active board size.
 
 ## Environment
 
@@ -126,8 +170,22 @@ Optional:
 - `NEXT_PUBLIC_MATIMATO_DAILY_V2`
 - `NEXT_PUBLIC_MATIMATO_BLITZ_MODE`
 - `NEXT_PUBLIC_MATIMATO_TELEMETRY`
+- `NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE`
+- `NEXT_PUBLIC_MATIMATO_COACH_BUBBLES`
+- `NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY`
 - `MATIMATO_BLITZ_ENABLED`
 - `MATIMATO_EVENTS_ENABLED`
+- `MATIMATO_BOARD_JOURNEY_ENABLED`
+
+## Release and rollback runbook
+
+1. Run `npm run lint`, `npm test`, `npm run build`, `npm run verify`, and `npm audit --omit=dev`.
+2. Browser-smoke first-run Learn, first-run Play-now, coach bubble dismiss, Journey insufficient-XP state, successful 6x6 purchase, board selection, solo start, and Blitz start.
+3. Verify keyboard-only flow, screen-reader labels/descriptions, visible focus, disabled reasons, and reduced-motion behavior.
+4. Verify mobile layouts at 320x568, 390x844, and 430x932.
+5. Deploy to Vercel, check `/api/health`, and inspect deployment-window error logs.
+6. If training is unsafe, set `NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE=false` and/or `NEXT_PUBLIC_MATIMATO_COACH_BUBBLES=false`.
+7. If board progression is unsafe, set `NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY=false` and `MATIMATO_BOARD_JOURNEY_ENABLED=false`. Do not delete wallet or purchase ledger records; they are preserved for recovery.
 
 ## Verification
 

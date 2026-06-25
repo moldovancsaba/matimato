@@ -3,13 +3,19 @@ export type GameMode = 'solo' | 'battle' | 'daily' | 'blitz';
 export type GameStatus = 'waiting' | 'active' | 'complete';
 export type LobbyStatus = 'waiting' | 'ready' | 'active' | 'expired' | 'cancelled';
 export type TutorialStepId = 'first-pick' | 'column-target' | 'row-target' | 'negative-risk' | 'ai-turn' | 'finish';
+export type TrainingChoice = 'learn' | 'play-now';
+export type BoardSize = 5 | 6 | 7 | 8 | 9;
 export type BlitzTimeoutPolicy = 'skip-turn' | 'forfeit-on-repeat';
 export type TelemetryEventName =
   | 'onboarding_started'
+  | 'training_choice_shown'
+  | 'training_choice_selected'
   | 'onboarding_step_completed'
   | 'onboarding_skipped'
   | 'onboarding_completed'
   | 'onboarding_failed'
+  | 'coach_bubble_shown'
+  | 'coach_bubble_dismissed'
   | 'lobby_created'
   | 'lobby_copied'
   | 'lobby_shared'
@@ -46,7 +52,11 @@ export type TelemetryEventName =
   | 'recap_viewed'
   | 'recap_replay_started'
   | 'recap_shared'
-  | 'rematch_started';
+  | 'rematch_started'
+  | 'board_unlock_viewed'
+  | 'board_unlock_purchased'
+  | 'board_unlock_failed'
+  | 'board_size_selected';
 export type LegalTarget = { axis: 'any' } | { axis: 'row'; index: number } | { axis: 'column'; index: number };
 
 export type BoardCell = {
@@ -111,6 +121,7 @@ export type GameSnapshot = {
   inviteCode: string;
   mode: GameMode;
   dailyId?: string;
+  boardSize?: BoardSize;
   status: GameStatus;
   version: number;
   board: BoardCell[];
@@ -140,6 +151,8 @@ export type OnboardingState = {
   completedAt?: string;
   lastStep?: TutorialStepId;
   dismissedAt?: string;
+  trainingChoice?: TrainingChoice;
+  trainingChoiceAt?: string;
   updatedAt: string;
 };
 
@@ -183,6 +196,35 @@ export type WeeklyRankEntry = {
 
 export type QuestProgress = { id: string; title: string; progress: number; target: number; rewardXp: number };
 
+export type XpWallet = {
+  lifetimeXp: number;
+  spendableXp: number;
+};
+
+export type BoardUnlock = {
+  boardSize: BoardSize;
+  costXp: number;
+  purchasedAt: string;
+  actionId: string;
+};
+
+export type NextBoardUnlock = {
+  boardSize: BoardSize;
+  costXp: number;
+};
+
+export type BoardUnlockState = {
+  unlockedBoardSizes: BoardSize[];
+  activeBoardSize: BoardSize;
+  nextUnlock?: NextBoardUnlock;
+  purchases: BoardUnlock[];
+};
+
+export type BoardProgression = {
+  wallet: XpWallet;
+  boardUnlocks: BoardUnlockState;
+};
+
 export type ProgressionResponse = {
   daily: DailyChallenge;
   dailyResult?: DailyResult;
@@ -190,6 +232,7 @@ export type ProgressionResponse = {
   weeklyLeaderboard: WeeklyRankEntry[];
   quests: QuestProgress[];
   onboarding?: OnboardingState;
+  progression?: BoardProgression;
 };
 
 export type TelemetryPropertyValue = string | number | boolean | null;
@@ -217,7 +260,7 @@ export type HealthResponse = {
   checks: HealthCheck[];
 };
 
-export type CreateGameRequest = { type: 'create'; mode: GameMode; playerId: string; playerTag: string; lobbyVersion?: 2; dailyId?: string; clock?: Partial<Pick<BlitzClockConfig, 'turnLimitMs'>> };
+export type CreateGameRequest = { type: 'create'; mode: GameMode; playerId: string; playerTag: string; lobbyVersion?: 2; dailyId?: string; boardSize?: BoardSize; clock?: Partial<Pick<BlitzClockConfig, 'turnLimitMs'>> };
 export type JoinGameRequest = { type: 'join'; inviteCode: string; playerId: string; playerTag: string };
 export type MoveRequest = { type: 'move'; matchId: string; playerId: string; actionId: string; row: number; col: number; expectedVersion: number };
 export type SyncRequest = { type: 'sync'; matchId: string; playerId?: string };
@@ -238,6 +281,8 @@ export type ProfileSummary = {
   tag: string;
   level: number;
   xp: number;
+  spendableXp: number;
+  boardUnlocks: BoardUnlockState;
   matches: number;
   wins: number;
   draws: number;

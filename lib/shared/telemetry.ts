@@ -2,10 +2,14 @@ import type { TelemetryEventName } from './types';
 
 export const TELEMETRY_EVENT_NAMES = [
   'onboarding_started',
+  'training_choice_shown',
+  'training_choice_selected',
   'onboarding_step_completed',
   'onboarding_skipped',
   'onboarding_completed',
   'onboarding_failed',
+  'coach_bubble_shown',
+  'coach_bubble_dismissed',
   'lobby_created',
   'lobby_copied',
   'lobby_shared',
@@ -42,7 +46,11 @@ export const TELEMETRY_EVENT_NAMES = [
   'recap_viewed',
   'recap_replay_started',
   'recap_shared',
-  'rematch_started'
+  'rematch_started',
+  'board_unlock_viewed',
+  'board_unlock_purchased',
+  'board_unlock_failed',
+  'board_size_selected'
 ] as const satisfies readonly TelemetryEventName[];
 
 export const TELEMETRY_PROPERTY_KEYS = [
@@ -64,6 +72,10 @@ export const TELEMETRY_PROPERTY_KEYS = [
   'result',
   'version',
   'source',
+  'choice',
+  'boardSize',
+  'costXp',
+  'spendableBucket',
   'turnLimitMs',
   'deadlineVersion',
   'timeoutCount',

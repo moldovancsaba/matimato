@@ -17,17 +17,20 @@ import {
   joinGame,
   leaveLobby,
   persistOnboarding,
+  purchaseBoardSize,
   readyLobby,
+  selectBoardSize,
   setLocalOnboarding,
   setPlayerTag
 } from '@/lib/client/api';
 import { getSuggestedTutorialCell, createTutorialState, resolveTutorialAi, selectTutorialCell, TUTORIAL_STEPS, type TutorialState } from '@/lib/game/tutorial';
+import { BOARD_SIZES, boardUnlockCost, shouldShowTrainingChoice } from '@/lib/game/progression';
 import { isLegal } from '@/lib/game/rules';
 import { emitTelemetry, installTelemetryPagehide } from '@/lib/client/telemetry';
-import type { BoardCell, GameMode, GameSnapshot, LobbyState, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, QuestProgress, RankEntry, TutorialStepId } from '@/lib/shared/types';
+import type { BoardProgression, BoardSize, BoardCell, GameMode, GameSnapshot, LobbyState, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, QuestProgress, RankEntry, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
 import { PhaserGameRoot } from './PhaserGameRoot';
 
-type Screen = 'home' | 'battle' | 'quests' | 'ranks' | 'history' | 'profile' | 'match' | 'tutorial' | 'lobby' | 'recap';
+type Screen = 'home' | 'training-choice' | 'journey' | 'battle' | 'quests' | 'ranks' | 'history' | 'profile' | 'match' | 'tutorial' | 'lobby' | 'recap';
 
 type Props = { initialScreen: Screen; initialMatchId?: string };
 
@@ -35,6 +38,9 @@ const ONBOARDING_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_ONBOARDING !== 'fals
 const LOBBY_V2_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_LOBBY_V2 !== 'false';
 const DAILY_V2_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_DAILY_V2 !== 'false';
 const BLITZ_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_BLITZ_MODE !== 'false';
+const TRAINING_CHOICE_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE !== 'false';
+const COACH_BUBBLES_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_COACH_BUBBLES !== 'false';
+const BOARD_JOURNEY_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY !== 'false';
 
 export function GameApp({ initialScreen, initialMatchId }: Props) {
   const [screen, setScreen] = useState<Screen>(initialScreen);
@@ -51,6 +57,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
   const [onboarding, setOnboarding] = useState<OnboardingState | null>(null);
   const [tutorial, setTutorial] = useState<TutorialState>(() => createTutorialState());
   const [tutorialReplay, setTutorialReplay] = useState(false);
+  const [dismissedCoachSteps, setDismissedCoachSteps] = useState<TutorialStepId[]>([]);
   const [busy, setBusy] = useState('');
 
   useEffect(() => {
@@ -60,7 +67,12 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     setTag(savedTag);
     const localOnboarding = getLocalOnboarding(id);
     setOnboarding(localOnboarding);
-    if (!initialMatchId && initialScreen === 'home' && shouldShowTutorial(localOnboarding)) {
+    if (TRAINING_CHOICE_ENABLED && initialScreen === 'home' && shouldShowTrainingChoice(localOnboarding, initialMatchId)) {
+      setScreen('training-choice');
+      emitTelemetry({ name: 'training_choice_shown', playerId: id, properties: { source: 'first-run' } });
+      return;
+    }
+    if (!TRAINING_CHOICE_ENABLED && !initialMatchId && initialScreen === 'home' && shouldShowTutorial(localOnboarding)) {
       setTutorial(createTutorialState(localOnboarding?.lastStep));
       setScreen('tutorial');
     }
@@ -86,10 +98,15 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
       if (data.onboarding) {
         setOnboarding(data.onboarding);
         setLocalOnboarding(data.onboarding);
+        if (TRAINING_CHOICE_ENABLED && screen === 'home' && shouldShowTrainingChoice(data.onboarding, initialMatchId)) {
+          setScreen('training-choice');
+          emitTelemetry({ name: 'training_choice_shown', playerId, properties: { source: 'server-sync' } });
+        }
+        if (TRAINING_CHOICE_ENABLED && screen === 'training-choice' && !shouldShowTrainingChoice(data.onboarding, initialMatchId)) setScreen('home');
         if (screen === 'tutorial' && !tutorialReplay && !shouldShowTutorial(data.onboarding)) setScreen('home');
       }
     }).catch(() => undefined);
-  }, [playerId, screen, tutorialReplay]);
+  }, [initialMatchId, playerId, screen, tutorialReplay]);
 
   useEffect(() => {
     if (!playerId) return;
@@ -147,6 +164,8 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
 
   const safeTag = useMemo(() => tag.trim() || 'Player 1', [tag]);
   const lobby = snapshot?.lobby ?? null;
+  const boardProgression = progression?.progression;
+  const activeBoardSize = BOARD_JOURNEY_ENABLED ? boardProgression?.boardUnlocks.activeBoardSize ?? 5 : 9;
 
   const persistTag = useCallback(() => {
     setPlayerTag(safeTag);
@@ -162,8 +181,10 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
         : mode === 'daily' && progression?.daily
           ? { dailyId: progression.daily.id }
           : mode === 'blitz'
-            ? { clock: { turnLimitMs: 30_000 } }
-            : undefined;
+            ? { clock: { turnLimitMs: 30_000 }, boardSize: activeBoardSize }
+            : mode === 'solo'
+              ? { boardSize: activeBoardSize }
+              : undefined;
       const data = await createGame(mode, playerId, safeTag, options);
       setSnapshot(data.snapshot);
       if (data.snapshot.lobby && data.snapshot.status !== 'active') {
@@ -174,7 +195,8 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
         const resumedDaily = mode === 'daily' && data.snapshot.version > 0;
         setNotice(mode === 'battle' ? `Share battle code ${data.snapshot.inviteCode}.` : resumedDaily ? 'Daily challenge resumed.' : 'Match ready.');
         if (mode === 'daily') emitTelemetry({ name: resumedDaily ? 'daily_resumed' : 'daily_started', playerId, matchId: data.snapshot.id, properties: { dailyId: data.snapshot.dailyId ?? '', date: data.snapshot.dailyId ?? '' } });
-        if (mode === 'blitz') emitTelemetry({ name: 'blitz_started', playerId, matchId: data.snapshot.id, properties: { turnLimitMs: data.snapshot.clock?.config.turnLimitMs ?? 0 } });
+        if (mode === 'blitz') emitTelemetry({ name: 'blitz_started', playerId, matchId: data.snapshot.id, properties: { turnLimitMs: data.snapshot.clock?.config.turnLimitMs ?? 0, boardSize: data.snapshot.boardSize ?? 9 } });
+        if (mode === 'solo' || mode === 'blitz') emitTelemetry({ name: 'board_size_selected', playerId, matchId: data.snapshot.id, properties: { boardSize: data.snapshot.boardSize ?? 9, mode } });
         setScreen('match');
       }
       historyReplace(`/play/${data.snapshot.id}`);
@@ -263,6 +285,69 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     if (result.completedStep) void persistTutorial(result.completedStep);
   }
 
+  async function chooseTraining(choice: TrainingChoice) {
+    const now = new Date().toISOString();
+    const local: OnboardingState = { playerId, trainingChoice: choice, trainingChoiceAt: now, updatedAt: now };
+    setOnboarding(local);
+    setLocalOnboarding(local);
+    emitTelemetry({ name: 'training_choice_selected', playerId, properties: { choice } });
+    try {
+      const data = await persistOnboarding(playerId, { trainingChoice: choice });
+      setOnboarding(data.onboarding);
+      setLocalOnboarding(data.onboarding);
+    } catch {
+      setNotice('Training choice is saved locally. Server sync will retry from your next tutorial step.');
+      emitTelemetry({ name: 'onboarding_failed', playerId, result: 'error', properties: { errorCode: 'training_choice_sync_failed', retryable: true } });
+    }
+    if (choice === 'learn') openTutorial(false);
+    else {
+      setScreen('home');
+      setNotice('You can start on 5x5 now or open Journey to unlock larger boards.');
+    }
+  }
+
+  async function buyBoard(boardSize: BoardSize) {
+    try {
+      setBusy(`buy-${boardSize}`);
+      const data = await purchaseBoardSize(playerId, boardSize);
+      setProgression((current) => current ? { ...current, progression: data.progression } : current);
+      setNotice(`${boardSize}x${boardSize} unlocked. Spendable XP updated.`);
+      emitTelemetry({ name: 'board_unlock_purchased', playerId, properties: { boardSize, costXp: boardUnlockCost(boardSize), spendableBucket: xpBucket(data.progression.wallet.spendableXp), result: 'ok' } });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Board purchase failed.';
+      setNotice(boardPurchaseMessage(message, boardSize));
+      emitTelemetry({ name: 'board_unlock_failed', playerId, result: 'error', properties: { boardSize, costXp: boardUnlockCost(boardSize), errorCode: message, retryable: true } });
+      void refreshProgression();
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function chooseBoard(boardSize: BoardSize) {
+    try {
+      setBusy(`select-${boardSize}`);
+      const data = await selectBoardSize(playerId, boardSize);
+      setProgression((current) => current ? { ...current, progression: data.progression } : current);
+      setNotice(`${boardSize}x${boardSize} is now active for solo and Blitz.`);
+      emitTelemetry({ name: 'board_size_selected', playerId, properties: { boardSize } });
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Could not select board size.');
+      void refreshProgression();
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function refreshProgression() {
+    try {
+      const data = await fetchProgression(playerId);
+      setProgression(data);
+      setQuests(data.quests);
+    } catch {
+      setNotice('Progression is temporarily unavailable. Try again from Journey.');
+    }
+  }
+
   async function finishTutorial() {
     await persistTutorial('finish', true);
     setTutorialReplay(false);
@@ -347,8 +432,13 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
       <Header status={screen === 'home' ? 'Ready' : screen} />
       <p className="sr-only" aria-live="polite">{notice}</p>
       {notice ? <div className="notice" role="status">{notice}</div> : null}
-      {screen === 'home' ? <Home tag={tag} setTag={setTag} start={start} goBattle={() => setScreen('battle')} startTutorial={() => openTutorial(true)} busy={busy} /> : null}
-      {screen === 'tutorial' ? <Tutorial state={tutorial} select={selectTutorialTile} suggest={selectSuggestedTile} resolveAi={resolveAiTurn} finish={finishTutorial} skip={skipTutorial} busy={busy} /> : null}
+      {screen === 'training-choice' ? <TrainingChoiceScreen choose={chooseTraining} /> : null}
+      {screen === 'home' ? <Home tag={tag} setTag={setTag} start={start} goBattle={() => setScreen('battle')} goJourney={() => setScreen('journey')} startTutorial={() => openTutorial(true)} busy={busy} boardSize={activeBoardSize} journeyEnabled={BOARD_JOURNEY_ENABLED} /> : null}
+      {screen === 'journey' ? <BoardJourney progression={boardProgression} buy={buyBoard} select={chooseBoard} start={start} busy={busy} /> : null}
+      {screen === 'tutorial' ? <Tutorial state={tutorial} select={selectTutorialTile} suggest={selectSuggestedTile} resolveAi={resolveAiTurn} finish={finishTutorial} skip={skipTutorial} busy={busy} coachEnabled={COACH_BUBBLES_ENABLED} dismissedCoachSteps={dismissedCoachSteps} dismissCoach={(step) => {
+        setDismissedCoachSteps((steps) => steps.includes(step) ? steps : [...steps, step]);
+        emitTelemetry({ name: 'coach_bubble_dismissed', playerId, properties: { step } });
+      }} /> : null}
       {screen === 'battle' ? <Battle tag={tag} setTag={setTag} start={start} inviteCode={inviteCode} setInviteCode={setInviteCode} join={join} busy={busy} /> : null}
       {screen === 'lobby' && snapshot && lobby ? <Lobby snapshot={snapshot} lobby={lobby} playerId={playerId} copy={copyInvite} share={shareInvite} ready={markReady} exit={exitLobby} busy={busy} /> : null}
       {screen === 'recap' && snapshot ? <Recap snapshot={snapshot} playerId={playerId} rematch={() => start(snapshot.mode === 'daily' ? 'solo' : snapshot.mode)} home={() => { setScreen('home'); historyReplace('/'); }} ranks={() => setScreen('ranks')} busy={busy} /> : null}
@@ -356,7 +446,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
       {screen === 'ranks' ? <Ranks leaderboard={leaderboard} /> : null}
       {screen === 'history' ? <History history={history} /> : null}
       {screen === 'profile' ? <Profile tag={tag} setTag={setTag} persistTag={persistTag} profile={profile} replayTutorial={() => openTutorial(true)} /> : null}
-      {screen !== 'tutorial' && screen !== 'lobby' ? <Nav screen={screen} setScreen={setScreen} /> : null}
+      {screen !== 'tutorial' && screen !== 'lobby' && screen !== 'training-choice' ? <Nav screen={screen} setScreen={setScreen} /> : null}
     </main>
   );
 }
@@ -370,20 +460,93 @@ function Header({ status }: { status: string }) {
   );
 }
 
-function Home({ tag, setTag, start, goBattle, startTutorial, busy }: { tag: string; setTag: (v: string) => void; start: (mode: GameMode) => void; goBattle: () => void; startTutorial: () => void; busy: string }) {
+function TrainingChoiceScreen({ choose }: { choose: (choice: TrainingChoice) => void }) {
+  return (
+    <section className="panel training-choice" aria-labelledby="training-choice-title">
+      <Stack gap="md">
+        <Badge color="orange" variant="light">First run</Badge>
+        <h2 id="training-choice-title">Learn the chase or jump in.</h2>
+        <p className="copy">Matimato is a row-and-column score game. Claim tiles, add positive values, survive negative traps, and use each pick to force the next legal row or column.</p>
+        <div className="stack" aria-label="Game basics">
+          <div className="list-card"><strong>Start small</strong><p className="copy">Your first board is 5x5 so the rule loop is easier to read.</p></div>
+          <div className="list-card"><strong>Grow with XP</strong><p className="copy">Earn XP from matches, then spend available XP to unlock 6x6 through 9x9.</p></div>
+        </div>
+        <SimpleGrid cols={2}>
+          <Button size="lg" onClick={() => choose('learn')}>Learn the game</Button>
+          <Button size="lg" variant="light" onClick={() => choose('play-now')}>Play now</Button>
+        </SimpleGrid>
+      </Stack>
+    </section>
+  );
+}
+
+function Home({ tag, setTag, start, goBattle, goJourney, startTutorial, busy, boardSize, journeyEnabled }: { tag: string; setTag: (v: string) => void; start: (mode: GameMode) => void; goBattle: () => void; goJourney: () => void; startTutorial: () => void; busy: string; boardSize: BoardSize; journeyEnabled: boolean }) {
   return (
     <section className="panel">
       <Stack gap="md">
-        <span className="hero-tag">9x9 score chase</span>
+        <span className="hero-tag">{boardSize}x{boardSize} score chase</span>
         <h2>Own the grid.</h2>
-        <p className="copy">Pick bright tiles, dodge negative traps, and force the next move through rows and columns.</p>
+        <p className="copy">Pick bright tiles, dodge negative traps, force the next move through rows and columns, and spend XP to unlock bigger boards.</p>
         <TextInput label="Player tag" value={tag} onChange={(event) => setTag(event.currentTarget.value)} placeholder="Enter your tag" />
         <SimpleGrid cols={2}>
           <Button size="lg" loading={busy === 'start-solo'} onClick={() => start('solo')}>Start solo</Button>
           <Button size="lg" variant="light" onClick={goBattle}>Battle</Button>
         </SimpleGrid>
+        {journeyEnabled ? <Button variant="light" onClick={goJourney}>Board journey</Button> : null}
         <Button disabled={!BLITZ_ENABLED} loading={busy === 'start-blitz'} onClick={() => start('blitz')}>Blitz quick match</Button>
         <Button variant="subtle" onClick={startTutorial}>Replay tutorial</Button>
+      </Stack>
+    </section>
+  );
+}
+
+function BoardJourney({ progression, buy, select, start, busy }: { progression: BoardProgression | undefined; buy: (size: BoardSize) => void; select: (size: BoardSize) => void; start: (mode: GameMode) => void; busy: string }) {
+  useEffect(() => {
+    if (progression) emitTelemetry({ name: 'board_unlock_viewed', properties: { boardSize: progression.boardUnlocks.activeBoardSize, spendableBucket: xpBucket(progression.wallet.spendableXp) } });
+  }, [progression]);
+
+  if (!progression) {
+    return <section className="panel"><Stack gap="md"><Badge color="gray" variant="light">Journey</Badge><h2>Loading boards.</h2><p className="copy">Wallet and unlock state are loading.</p></Stack></section>;
+  }
+  const { wallet, boardUnlocks } = progression;
+  return (
+    <section className="panel" aria-labelledby="journey-title">
+      <Stack gap="md">
+        <Group justify="space-between">
+          <span className="hero-tag">Board journey</span>
+          <Badge color="green" variant="light">{boardUnlocks.activeBoardSize}x{boardUnlocks.activeBoardSize} active</Badge>
+        </Group>
+        <h2 id="journey-title">Unlock complexity with XP.</h2>
+        <p className="copy">Lifetime XP tracks what you have earned. Spendable XP goes down when you buy the next board.</p>
+        <SimpleGrid cols={2}>
+          <Kpi label="Lifetime XP" value={wallet.lifetimeXp} />
+          <Kpi label="Spendable XP" value={wallet.spendableXp} />
+        </SimpleGrid>
+        <div className="board-ladder" role="list" aria-label="Board unlock ladder">
+          {BOARD_SIZES.map((size) => {
+            const unlocked = boardUnlocks.unlockedBoardSizes.includes(size);
+            const active = boardUnlocks.activeBoardSize === size;
+            const next = boardUnlocks.nextUnlock?.boardSize === size;
+            const cost = size === 5 ? 0 : boardUnlockCost(size);
+            const canBuy = next && wallet.spendableXp >= cost;
+            const reason = unlocked ? active ? 'Currently active' : 'Unlocked' : next ? wallet.spendableXp >= cost ? `Costs ${cost} XP` : `Need ${cost - wallet.spendableXp} more XP` : 'Unlock earlier boards first';
+            return (
+              <div className="list-card board-step" role="listitem" key={size}>
+                <Group justify="space-between">
+                  <strong>{size}x{size}</strong>
+                  <Badge color={active ? 'green' : unlocked ? 'blue' : next ? 'orange' : 'gray'} variant="light">{active ? 'Active' : unlocked ? 'Unlocked' : next ? `${cost} XP` : 'Locked'}</Badge>
+                </Group>
+                <p className="copy" id={`board-${size}-reason`}>{reason}</p>
+                {unlocked ? <Button variant={active ? 'light' : 'filled'} disabled={active} loading={busy === `select-${size}`} aria-describedby={`board-${size}-reason`} onClick={() => select(size)}>{active ? 'Selected' : `Select ${size}x${size}`}</Button> : null}
+                {!unlocked ? <Button disabled={!canBuy} loading={busy === `buy-${size}`} aria-describedby={`board-${size}-reason`} onClick={() => buy(size)}>{next ? `Buy ${size}x${size}` : 'Locked'}</Button> : null}
+              </div>
+            );
+          })}
+        </div>
+        <SimpleGrid cols={2}>
+          <Button loading={busy === 'start-solo'} onClick={() => start('solo')}>Start solo</Button>
+          <Button loading={busy === 'start-blitz'} disabled={!BLITZ_ENABLED} variant="light" onClick={() => start('blitz')}>Start Blitz</Button>
+        </SimpleGrid>
       </Stack>
     </section>
   );
@@ -459,11 +622,15 @@ function Recap({ snapshot, playerId, rematch, home, ranks, busy }: { snapshot: G
   );
 }
 
-function Tutorial({ state, select, suggest, resolveAi, finish, skip, busy }: { state: TutorialState; select: (cell: BoardCell) => void; suggest: () => void; resolveAi: () => void; finish: () => void; skip: () => void; busy: string }) {
+function Tutorial({ state, select, suggest, resolveAi, finish, skip, busy, coachEnabled, dismissedCoachSteps, dismissCoach }: { state: TutorialState; select: (cell: BoardCell) => void; suggest: () => void; resolveAi: () => void; finish: () => void; skip: () => void; busy: string; coachEnabled: boolean; dismissedCoachSteps: TutorialStepId[]; dismissCoach: (step: TutorialStepId) => void }) {
   const step = TUTORIAL_STEPS.find((item) => item.id === state.step)!;
   const stepIndex = TUTORIAL_STEPS.findIndex((item) => item.id === state.step);
   const progress = ((stepIndex + 1) / TUTORIAL_STEPS.length) * 100;
   const suggested = getSuggestedTutorialCell(state);
+  const showCoach = coachEnabled && !dismissedCoachSteps.includes(state.step);
+  useEffect(() => {
+    if (showCoach) emitTelemetry({ name: 'coach_bubble_shown', properties: { step: state.step } });
+  }, [showCoach, state.step]);
   return (
     <section className="panel tutorial-shell" aria-labelledby="tutorial-title">
       <Stack gap="md">
@@ -473,6 +640,7 @@ function Tutorial({ state, select, suggest, resolveAi, finish, skip, busy }: { s
         </Group>
         <h2 id="tutorial-title">{step.title}</h2>
         <p className="copy">{step.body}</p>
+        {showCoach ? <CoachBubble step={state.step} dismiss={() => dismissCoach(state.step)} /> : null}
         <Progress value={progress} aria-label="Tutorial progress" />
         <div className="score-row" aria-label="Tutorial score">
           <Kpi label="You" value={state.scores.north} />
@@ -505,6 +673,23 @@ function Tutorial({ state, select, suggest, resolveAi, finish, skip, busy }: { s
         </Group>
       </Stack>
     </section>
+  );
+}
+
+function CoachBubble({ step, dismiss }: { step: TutorialStepId; dismiss: () => void }) {
+  const copy: Record<TutorialStepId, string> = {
+    'first-pick': 'This first pick is free. Watch the value: green numbers raise your score and red numbers reduce it.',
+    'column-target': 'The tile you picked created a column target. Only that column is legal now.',
+    'row-target': 'Column moves hand the next player a row. That back-and-forth is the core Matimato rule.',
+    'negative-risk': 'Negative tiles can still be the correct move if they force the rival into a worse target.',
+    'ai-turn': 'The AI follows the same target rule. Resolve it to see how turns hand off.',
+    finish: 'You now know scoring, legal targets, risk, and AI turns. A real match uses the same loop.'
+  };
+  return (
+    <div className="coach-bubble" role="note" aria-label="Rule explanation">
+      <p>{copy[step]}</p>
+      <Button size="xs" variant="light" onClick={dismiss}>Got it</Button>
+    </div>
   );
 }
 
@@ -617,10 +802,10 @@ function Profile({ tag, setTag, persistTag, profile, replayTutorial }: { tag: st
       <Stack gap="md">
         <span className="hero-tag">Player card</span>
         <h2>{tag || 'Player'}</h2>
-        <p className="copy">Track level, form, best score, and replay the rules path any time.</p>
+        <p className="copy">Track level, spendable XP, active board, and replay the rules path any time.</p>
         <TextInput label="Player tag" value={tag} onChange={(event) => setTag(event.currentTarget.value)} placeholder="Enter your tag" />
         <Group grow><Button onClick={persistTag}>Save tag</Button><Button variant="light" onClick={replayTutorial}>Replay tutorial</Button></Group>
-        <SimpleGrid cols={2}><Kpi label="Level" value={profile?.level ?? 1} /><Kpi label="XP" value={profile?.xp ?? 0} /><Kpi label="Matches" value={profile?.matches ?? 0} /><Kpi label="Wins" value={profile?.wins ?? 0} /></SimpleGrid>
+        <SimpleGrid cols={2}><Kpi label="Level" value={profile?.level ?? 1} /><Kpi label="Lifetime XP" value={profile?.xp ?? 0} /><Kpi label="Spendable XP" value={profile?.spendableXp ?? profile?.xp ?? 0} /><Kpi label="Active board" value={profile?.boardUnlocks.activeBoardSize ?? 5} /><Kpi label="Matches" value={profile?.matches ?? 0} /><Kpi label="Wins" value={profile?.wins ?? 0} /></SimpleGrid>
       </Stack>
     </section>
   );
@@ -629,7 +814,7 @@ function Profile({ tag, setTag, persistTag, profile, replayTutorial }: { tag: st
 function Kpi({ label, value }: { label: string; value: number }) { return <div className="kpi"><span className="chip">{label}</span><strong>{value}</strong></div>; }
 
 function Nav({ screen, setScreen }: { screen: Screen; setScreen: (screen: Screen) => void }) {
-  const items: Array<[Screen, string]> = [['home', 'Home'], ['battle', 'Battle'], ['quests', 'Quests'], ['ranks', 'Ranks'], ['history', 'History'], ['profile', 'Profile']];
+  const items: Array<[Screen, string]> = [['home', 'Home'], ['journey', 'Journey'], ['battle', 'Battle'], ['quests', 'Quests'], ['ranks', 'Ranks'], ['history', 'History'], ['profile', 'Profile']];
   return <nav className="nav" aria-label="Game navigation">{items.map(([key, label]) => <button key={key} className={screen === key ? 'active' : ''} onClick={() => setScreen(key)}>{label}</button>)}</nav>;
 }
 
@@ -660,6 +845,22 @@ function scoreBucket(score: number): string {
   if (score >= 0) return '0-24';
   if (score >= -25) return '-25--1';
   return '<-25';
+}
+
+function xpBucket(xp: number): string {
+  if (xp >= 900) return '900+';
+  if (xp >= 520) return '520-899';
+  if (xp >= 260) return '260-519';
+  if (xp >= 120) return '120-259';
+  return '0-119';
+}
+
+function boardPurchaseMessage(code: string, boardSize: BoardSize): string {
+  if (code.includes('INSUFFICIENT_XP')) return `Not enough spendable XP for ${boardSize}x${boardSize}. Finish more matches and try again.`;
+  if (code.includes('BOARD_SEQUENCE_LOCKED')) return 'Unlock the previous board before buying this one.';
+  if (code.includes('BOARD_ALREADY_UNLOCKED')) return `${boardSize}x${boardSize} is already unlocked.`;
+  if (code.includes('BOARD_JOURNEY_DISABLED')) return 'Board purchases are temporarily disabled.';
+  return 'Board purchase failed. Refresh Journey and try again.';
 }
 
 function historyReplace(path: string) {
