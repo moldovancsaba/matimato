@@ -456,7 +456,9 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     <main className={`app-shell theme-${screen === 'tutorial' ? 'home' : screen}`}>
       <Header status={screen === 'home' ? 'Ready' : screen} />
       <p className="sr-only" aria-live="polite">{notice}</p>
-      {notice ? <div className="notice" role="status">{notice}</div> : null}
+      <div className={`notice-slot${notice ? '' : ' empty'}`}>
+        {notice ? <div className="notice" role="status">{notice}</div> : null}
+      </div>
       <div className="screen-slot">
         {screen === 'training-choice' ? <TrainingChoiceScreen choose={chooseTraining} /> : null}
         {screen === 'home' ? <Home tag={tag} setTag={setTag} start={start} goBattle={() => setScreen('battle')} goJourney={() => setScreen('journey')} busy={busy} boardSize={activeBoardSize} journeyEnabled={BOARD_JOURNEY_ENABLED} /> : null}
@@ -861,7 +863,7 @@ function History({ history }: { history: MatchSummary[] }) {
 
 function Profile({ tag, setTag, persistTag, profile, replayTutorial, signOut }: { tag: string; setTag: (v: string) => void; persistTag: () => void; profile: ProfileSummary | null; replayTutorial: () => void; signOut: () => void }) {
   return (
-    <section className="panel scroll-screen">
+    <section className="panel scroll-screen profile-panel">
       <div className="scroll-screen-header">
         <span className="hero-tag">Player card</span>
         <h2>{tag || 'Player'}</h2>
@@ -873,7 +875,7 @@ function Profile({ tag, setTag, persistTag, profile, replayTutorial, signOut }: 
         </Button>
       </div>
       <div className="scroll-list" role="region" aria-label="Player stats" tabIndex={0}>
-        <SimpleGrid cols={2}><Kpi label="Level" value={profile?.level ?? 1} /><Kpi label="Lifetime XP" value={profile?.xp ?? 0} /><Kpi label="Spendable XP" value={profile?.spendableXp ?? profile?.xp ?? 0} /><Kpi label="Active board" value={profile?.boardUnlocks.activeBoardSize ?? 5} /><Kpi label="Matches" value={profile?.matches ?? 0} /><Kpi label="Wins" value={profile?.wins ?? 0} /></SimpleGrid>
+        <div className="profile-stats"><Kpi label="Level" value={profile?.level ?? 1} /><Kpi label="Lifetime XP" value={profile?.xp ?? 0} /><Kpi label="Spendable XP" value={profile?.spendableXp ?? profile?.xp ?? 0} /><Kpi label="Active board" value={profile?.boardUnlocks.activeBoardSize ?? 5} /><Kpi label="Matches" value={profile?.matches ?? 0} /><Kpi label="Wins" value={profile?.wins ?? 0} /></div>
       </div>
     </section>
   );
