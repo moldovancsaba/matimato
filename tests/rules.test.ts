@@ -2,10 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { applyMove, applyTimeout, newGame } from '@/lib/game/rules';
 
 describe('matimato rules', () => {
-  it('creates only 9x9 boards', () => {
+  it('creates default 9x9 boards and explicit 5x5 through 9x9 boards', () => {
     const game = newGame('test-game', 'solo', 'p1', 'Player');
     expect(game.board).toHaveLength(81);
     expect(new Set(game.board.map((cell) => cell.row))).toEqual(new Set([0,1,2,3,4,5,6,7,8]));
+    const small = newGame('test-game-small', 'solo', 'p1', 'Player', { boardSize: 5 });
+    expect(small.boardSize).toBe(5);
+    expect(small.board).toHaveLength(25);
+    expect(new Set(small.board.map((cell) => cell.row))).toEqual(new Set([0,1,2,3,4]));
   });
 
   it('starts with any tile and then restricts to the selected column', () => {

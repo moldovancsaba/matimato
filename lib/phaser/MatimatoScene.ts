@@ -34,7 +34,7 @@ export class MatimatoScene extends Phaser.Scene {
 
   create() {
     this.drawShell();
-    this.board = new BoardActor(this, this.snapshot.board, (cell) => void this.machine.select(cell));
+    this.board = new BoardActor(this, this.snapshot.board, (cell) => void this.machine.select(cell), this.snapshot.boardSize ?? 9);
     this.blob = new BlobActor(this);
     this.machine = new ActionMachine(this.snapshot, {
       canSelect: (cell, snapshot) => this.canSelect(cell, snapshot),
@@ -51,7 +51,7 @@ export class MatimatoScene extends Phaser.Scene {
     this.commit(this.snapshot);
     this.startClockLoop();
     this.payload.onEvent({ type: 'announce', message: 'Game ready.' });
-    this.payload.onEvent({ type: 'telemetry', name: 'phaser_booted', result: 'ok', properties: { phase: 'scene-ready' } });
+    this.payload.onEvent({ type: 'telemetry', name: 'phaser_booted', result: 'ok', properties: { phase: 'scene-ready', boardSize: this.snapshot.boardSize ?? 9 } });
     if (this.snapshot.outcome || this.snapshot.status === 'complete') this.showResult(this.snapshot);
     else this.maybeSyncAutomatedTurn();
   }
@@ -94,7 +94,7 @@ export class MatimatoScene extends Phaser.Scene {
     const homeLabel = this.add.text(181, 1266, 'Home', { fontFamily: 'Arial', fontSize: '24px', fontStyle: '900', color: '#ffffff' }).setOrigin(0.5).setDepth(30);
     const homeHit = this.add.zone(72, 1236, 218, 60).setOrigin(0).setInteractive({ useHandCursor: true }).setDepth(31);
     homeHit.on('pointerdown', () => this.payload.onEvent({ type: 'exit' }));
-    this.add.text(320, 1252, '9x9 chase', { fontFamily: 'Arial', fontSize: '22px', color: '#ffcfb5' }).setDepth(30);
+    this.add.text(320, 1252, `${this.snapshot.boardSize ?? 9}x${this.snapshot.boardSize ?? 9} chase`, { fontFamily: 'Arial', fontSize: '22px', color: '#ffcfb5' }).setDepth(30);
     void homeLabel;
   }
 

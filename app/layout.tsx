@@ -5,8 +5,9 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Matimato',
-  description: 'A 9x9 tactical number chase rebuilt as a Phaser game.',
+  description: 'A progressive tactical number chase rebuilt as a Phaser game.',
   appleWebApp: { capable: true, title: 'Matimato', statusBarStyle: 'black-translucent' },
+  icons: { icon: '/icon.svg', apple: '/icon.svg' },
   manifest: '/manifest.webmanifest'
 };
 

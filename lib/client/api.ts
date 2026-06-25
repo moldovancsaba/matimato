@@ -1,4 +1,4 @@
-import type { GameApiResponse, GameMode, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, RankEntry, TutorialStepId } from '@/lib/shared/types';
+import type { BoardProgression, BoardSize, GameApiResponse, GameMode, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, RankEntry, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, { ...init, headers: { 'content-type': 'application/json', ...(init?.headers || {}) } });
@@ -29,7 +29,16 @@ export function getLocalOnboarding(playerId: string): OnboardingState | null {
   const raw = localStorage.getItem(`matimato.onboarding.${playerId}`);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as OnboardingState;
+    const parsed = JSON.parse(raw) as Partial<OnboardingState>;
+    return {
+      playerId,
+      completedAt: typeof parsed.completedAt === 'string' ? parsed.completedAt : undefined,
+      lastStep: parsed.lastStep,
+      dismissedAt: typeof parsed.dismissedAt === 'string' ? parsed.dismissedAt : undefined,
+      trainingChoice: parsed.trainingChoice,
+      trainingChoiceAt: typeof parsed.trainingChoiceAt === 'string' ? parsed.trainingChoiceAt : undefined,
+      updatedAt: typeof parsed.updatedAt === 'string' ? parsed.updatedAt : new Date(0).toISOString()
+    };
   } catch {
     localStorage.removeItem(`matimato.onboarding.${playerId}`);
     return null;
@@ -40,7 +49,7 @@ export function setLocalOnboarding(onboarding: OnboardingState): void {
   localStorage.setItem(`matimato.onboarding.${onboarding.playerId}`, JSON.stringify(onboarding));
 }
 
-export function createGame(mode: GameMode, playerId: string, playerTag: string, options?: { lobbyVersion?: 2; dailyId?: string; clock?: { turnLimitMs?: number } }): Promise<GameApiResponse> {
+export function createGame(mode: GameMode, playerId: string, playerTag: string, options?: { lobbyVersion?: 2; dailyId?: string; boardSize?: BoardSize; clock?: { turnLimitMs?: number } }): Promise<GameApiResponse> {
   return request('/api/games', { method: 'POST', body: JSON.stringify({ type: 'create', mode, playerId, playerTag, ...options }) });
 }
 
@@ -89,6 +98,14 @@ export function fetchProgression(playerId?: string): Promise<ProgressionResponse
   return request(`/api/progression${suffix}`);
 }
 
-export function persistOnboarding(playerId: string, input: { step?: TutorialStepId; completed?: boolean; dismissed?: boolean }): Promise<{ ok: true; onboarding: OnboardingState }> {
+export function persistOnboarding(playerId: string, input: { step?: TutorialStepId; completed?: boolean; dismissed?: boolean; trainingChoice?: TrainingChoice }): Promise<{ ok: true; onboarding: OnboardingState }> {
   return request('/api/progression', { method: 'POST', body: JSON.stringify({ type: 'onboarding', playerId, ...input }) });
+}
+
+export function purchaseBoardSize(playerId: string, boardSize: BoardSize, actionId = crypto.randomUUID()): Promise<{ ok: true; progression: BoardProgression }> {
+  return request('/api/progression', { method: 'POST', body: JSON.stringify({ type: 'purchaseBoard', playerId, boardSize, actionId }) });
+}
+
+export function selectBoardSize(playerId: string, boardSize: BoardSize): Promise<{ ok: true; progression: BoardProgression }> {
+  return request('/api/progression', { method: 'POST', body: JSON.stringify({ type: 'selectBoard', playerId, boardSize }) });
 }

@@ -52,4 +52,22 @@ describe('telemetry validation and redaction', () => {
     process.env.MATIMATO_EVENTS_ENABLED = previous;
     expect(result).toEqual({ accepted: 1, rejected: 0, degraded: true });
   });
+
+  it('accepts progression journey events with bounded safe properties', () => {
+    const event = sanitizeTelemetryEvent({
+      name: 'board_unlock_purchased',
+      version: 1,
+      occurredAt: '2026-06-25T10:00:00.000Z',
+      sessionHash: 'a'.repeat(16),
+      playerHash: 'b'.repeat(16),
+      result: 'ok',
+      properties: {
+        boardSize: 6,
+        costXp: 120,
+        spendableBucket: '120-259',
+        playerId: 'raw-player-id'
+      }
+    });
+    expect(event?.properties).toEqual({ boardSize: 6, costXp: 120, spendableBucket: '120-259' });
+  });
 });

@@ -12,8 +12,8 @@ describe('phaser runtime contracts', () => {
     expect(() => validateBootPayload({ ...payload, playerId: '' })).toThrow('Missing Phaser player id.');
   });
 
-  it('uses deterministic 9x9 fixed-world board geometry', () => {
-    const geometry = new BoardGeometry();
+  it('uses deterministic fixed-world board geometry from 5x5 through 9x9', () => {
+    const geometry = new BoardGeometry(9);
     const rects = [];
     for (let row = 0; row < 9; row += 1) {
       for (let col = 0; col < 9; col += 1) rects.push(geometry.cellRect(row, col));
@@ -24,6 +24,13 @@ describe('phaser runtime contracts', () => {
     expect(rects[80].y + rects[80].height).toBeLessThanOrEqual(1160);
     expect(geometry.rowRect(4).height).toBe(geometry.cell);
     expect(geometry.colRect(4).width).toBe(geometry.cell);
+
+    const compact = new BoardGeometry(5);
+    const last = compact.cellRect(4, 4);
+    expect(compact.cellRect(0, 0)).toMatchObject({ x: 60, y: 370 });
+    expect(last.x + last.width).toBeLessThanOrEqual(850);
+    expect(last.y + last.height).toBeLessThanOrEqual(1160);
+    expect(compact.cell).toBeGreaterThan(geometry.cell);
   });
 
   it('keeps state-changing network writes single-flight', async () => {

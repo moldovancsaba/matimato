@@ -2,7 +2,7 @@
 
 A fresh Next.js + Phaser + MongoDB implementation of Matimato.
 
-Current release: `2.3.0`.
+Current release: `2.4.0`.
 
 ## Commands
 
@@ -43,8 +43,12 @@ NEXT_PUBLIC_MATIMATO_LOBBY_V2=true
 NEXT_PUBLIC_MATIMATO_DAILY_V2=true
 NEXT_PUBLIC_MATIMATO_BLITZ_MODE=true
 NEXT_PUBLIC_MATIMATO_TELEMETRY=true
+NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE=true
+NEXT_PUBLIC_MATIMATO_COACH_BUBBLES=true
+NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY=true
 MATIMATO_BLITZ_ENABLED=true
 MATIMATO_EVENTS_ENABLED=true
+MATIMATO_BOARD_JOURNEY_ENABLED=true
 ```
 
 `NEXT_PUBLIC_MATIMATO_ONBOARDING=false` disables automatic first-run tutorial entry while keeping normal solo and battle actions available.
@@ -56,6 +60,36 @@ MATIMATO_EVENTS_ENABLED=true
 `NEXT_PUBLIC_MATIMATO_BLITZ_MODE=false` hides Blitz entry points. `MATIMATO_BLITZ_ENABLED=false` rejects new Blitz creation server-side while keeping existing saved snapshots readable.
 
 `NEXT_PUBLIC_MATIMATO_TELEMETRY=false` disables the client event emitter. `MATIMATO_EVENTS_ENABLED=false` keeps `/api/events` accepting payloads but marks ingestion degraded and skips event storage.
+
+`NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE=false` restores the previous automatic onboarding behavior. `NEXT_PUBLIC_MATIMATO_COACH_BUBBLES=false` hides contextual tutorial explanations. `NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY=false` hides the board journey UI. `MATIMATO_BOARD_JOURNEY_ENABLED=false` rejects new board purchases and active-board changes server-side while keeping stored wallet/unlock data readable.
+
+## Board progression
+
+Players now start on a 5x5 board for solo and Blitz. The Journey screen shows lifetime XP, spendable XP, unlocked boards, next-board cost, active board selection, and start actions. Bigger boards are unlocked sequentially:
+
+| Board | Cost |
+| --- | ---: |
+| 5x5 | Free |
+| 6x6 | 120 XP |
+| 7x7 | 260 XP |
+| 8x8 | 520 XP |
+| 9x9 | 900 XP |
+
+Match rewards increase both lifetime XP and spendable XP. Purchases reduce spendable XP only; lifetime XP remains the ranking/progression total. Existing profiles without a wallet split are normalized by treating current XP as both lifetime and spendable XP.
+
+Progression APIs:
+
+```ts
+GET /api/progression?playerId=...
+
+POST /api/progression
+{ "type": "purchaseBoard", "playerId": "...", "boardSize": 6, "actionId": "uuid" }
+
+POST /api/progression
+{ "type": "selectBoard", "playerId": "...", "boardSize": 6 }
+```
+
+Purchases are server-validated by sequence and spendable balance, idempotent by action id or board size, and never trust client-supplied costs or final balances. Solo and Blitz creation accepts an unlocked `boardSize`; battle and daily remain on the current safe 9x9 behavior.
 
 ## Blitz mode
 
@@ -94,7 +128,7 @@ POST /api/events
 { "events": [{ "name": "daily_started", "version": 1, "occurredAt": "...", "sessionHash": "...", "properties": {} }] }
 ```
 
-Tracked product events cover onboarding, battle lobby, daily challenge, Blitz clocks/rematches, recap/share actions, weekly/rank views, match completion, Phaser lifecycle, sync errors, and recovery surfaces. `/api/health` returns release version plus database connectivity checks for deployment verification.
+Tracked product events cover optional training choice, coach bubbles, board journey purchases/selection, onboarding, battle lobby, daily challenge, Blitz clocks/rematches, recap/share actions, weekly/rank views, match completion, Phaser lifecycle, sync errors, and recovery surfaces. `/api/health` returns release version plus database connectivity checks for deployment verification.
 
 ## Core guarantee
 
@@ -102,7 +136,7 @@ The active board is rendered only by Phaser. There is no legacy React board fall
 
 ## Guided onboarding
 
-First-run players enter a GDS-owned guided match before normal home actions when onboarding has not been completed or dismissed. The tutorial uses the same 9x9 board and legal-target rules to teach:
+First-run players see a GDS-owned choice screen that explains Matimato and lets them choose `Learn the game` or `Play now`. The training path uses a guided match with coach bubbles; the play-now path reaches Home immediately and starts at the active board size. The tutorial uses the same legal-target rules to teach:
 
 - any first tile
 - column targeting
@@ -116,9 +150,27 @@ Progress is saved locally immediately and synced through `/api/progression` when
 ```ts
 POST /api/progression
 { "type": "onboarding", "playerId": "...", "step": "column-target", "completed": false }
+
+POST /api/progression
+{ "type": "onboarding", "playerId": "...", "trainingChoice": "learn" }
 ```
 
 Returning players can replay the tutorial from Profile without clearing completion state.
+
+## Progression release QA
+
+Before promoting a progression release, verify:
+
+- Clean first-run profile shows the Learn/Play choice and does not repeat after selection.
+- Learn path shows coach bubbles, supports keyboard-only tile selection, and can be skipped.
+- Play-now path reaches Home without starting training.
+- Journey shows 5x5 through 9x9, lifetime/spendable XP, disabled reasons, and active board state.
+- Insufficient XP cannot purchase the next board and exposes a readable reason.
+- Successful 6x6 purchase reduces spendable XP, preserves lifetime XP, and selects 6x6.
+- Duplicate purchase retry does not double-spend XP.
+- Solo and Blitz start with the selected unlocked board size.
+- Mobile viewports 320x568, 390x844, and 430x932 keep controls visible.
+- Rollback flags hide client entry points and reject server board mutations.
 
 ## Battle lobby
 
