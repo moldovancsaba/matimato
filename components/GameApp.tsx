@@ -839,11 +839,13 @@ function Quests({ progression, quests, start, busy, dailyEnabled }: { progressio
 
 function Ranks({ leaderboard }: { leaderboard: RankEntry[] }) {
   return (
-    <section className="panel scroll-screen">
-      <span className="hero-tag">Rank board</span>
-      <h2>Climb the arena.</h2>
-      <div className="scroll-list" role="region" aria-label="Ranking list" tabIndex={0}>
-        {leaderboard.length ? leaderboard.map((entry, index) => <div className="list-card" key={entry.playerId}><strong>#{index + 1} {entry.tag}</strong><p className="copy">{entry.score} XP · {entry.wins} wins</p></div>) : <p className="copy">No ranked matches yet.</p>}
+    <section className="panel scroll-panel" aria-labelledby="ranks-title" tabIndex={0}>
+      <div className="list-screen-header">
+        <span className="hero-tag">Rank board</span>
+        <h2 id="ranks-title">Climb the arena.</h2>
+      </div>
+      <div className="list-stack" role="list" aria-label="Ranking list">
+        {leaderboard.length ? leaderboard.map((entry, index) => <div className="list-card" role="listitem" key={entry.playerId}><strong>#{index + 1} {entry.tag}</strong><p className="copy">{entry.score} XP · {entry.wins} wins</p></div>) : <p className="copy">No ranked matches yet.</p>}
       </div>
     </section>
   );
@@ -851,11 +853,13 @@ function Ranks({ leaderboard }: { leaderboard: RankEntry[] }) {
 
 function History({ history }: { history: MatchSummary[] }) {
   return (
-    <section className="panel scroll-screen">
-      <span className="hero-tag">Match memory</span>
-      <h2>Recent duels.</h2>
-      <div className="scroll-list" role="region" aria-label="Match history list" tabIndex={0}>
-        {history.length ? history.map((match) => <div className="list-card" key={match.id}><strong>{match.result}</strong><p className="copy">vs {match.opponent} · {match.score}/{match.opponentScore} · {new Date(match.completedAt).toLocaleDateString()}</p></div>) : <p className="copy">Finish a match to build history.</p>}
+    <section className="panel scroll-panel" aria-labelledby="history-title" tabIndex={0}>
+      <div className="list-screen-header">
+        <span className="hero-tag">Match memory</span>
+        <h2 id="history-title">Recent duels.</h2>
+      </div>
+      <div className="list-stack" role="list" aria-label="Match history list">
+        {history.length ? history.map((match) => <div className="list-card" role="listitem" key={match.id}><strong>{match.result}</strong><p className="copy">vs {match.opponent} · {match.score}/{match.opponentScore} · {new Date(match.completedAt).toLocaleDateString()}</p></div>) : <p className="copy">Finish a match to build history.</p>}
       </div>
     </section>
   );
