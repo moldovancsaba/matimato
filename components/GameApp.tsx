@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Badge, Button, Group, Progress, SimpleGrid, Stack, TextInput } from '@doneisbetter/gds';
+import { IconCalendar, IconHistory, IconHome, IconRoute, IconSwords, IconTrophy, IconUser } from '@tabler/icons-react';
 import {
   cancelLobby,
   createGame,
@@ -432,20 +433,22 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
       <Header status={screen === 'home' ? 'Ready' : screen} />
       <p className="sr-only" aria-live="polite">{notice}</p>
       {notice ? <div className="notice" role="status">{notice}</div> : null}
-      {screen === 'training-choice' ? <TrainingChoiceScreen choose={chooseTraining} /> : null}
-      {screen === 'home' ? <Home tag={tag} setTag={setTag} start={start} goBattle={() => setScreen('battle')} goJourney={() => setScreen('journey')} startTutorial={() => openTutorial(true)} busy={busy} boardSize={activeBoardSize} journeyEnabled={BOARD_JOURNEY_ENABLED} /> : null}
-      {screen === 'journey' ? <BoardJourney progression={boardProgression} buy={buyBoard} select={chooseBoard} start={start} busy={busy} /> : null}
-      {screen === 'tutorial' ? <Tutorial state={tutorial} select={selectTutorialTile} suggest={selectSuggestedTile} resolveAi={resolveAiTurn} finish={finishTutorial} skip={skipTutorial} busy={busy} coachEnabled={COACH_BUBBLES_ENABLED} dismissedCoachSteps={dismissedCoachSteps} dismissCoach={(step) => {
-        setDismissedCoachSteps((steps) => steps.includes(step) ? steps : [...steps, step]);
-        emitTelemetry({ name: 'coach_bubble_dismissed', playerId, properties: { step } });
-      }} /> : null}
-      {screen === 'battle' ? <Battle tag={tag} setTag={setTag} start={start} inviteCode={inviteCode} setInviteCode={setInviteCode} join={join} busy={busy} /> : null}
-      {screen === 'lobby' && snapshot && lobby ? <Lobby snapshot={snapshot} lobby={lobby} playerId={playerId} copy={copyInvite} share={shareInvite} ready={markReady} exit={exitLobby} busy={busy} /> : null}
-      {screen === 'recap' && snapshot ? <Recap snapshot={snapshot} playerId={playerId} rematch={() => start(snapshot.mode === 'daily' ? 'solo' : snapshot.mode)} home={() => { setScreen('home'); historyReplace('/'); }} ranks={() => setScreen('ranks')} busy={busy} /> : null}
-      {screen === 'quests' ? <Quests progression={progression} quests={quests} start={() => start('daily')} busy={busy} dailyEnabled={DAILY_V2_ENABLED} /> : null}
-      {screen === 'ranks' ? <Ranks leaderboard={leaderboard} /> : null}
-      {screen === 'history' ? <History history={history} /> : null}
-      {screen === 'profile' ? <Profile tag={tag} setTag={setTag} persistTag={persistTag} profile={profile} replayTutorial={() => openTutorial(true)} /> : null}
+      <div className="screen-slot">
+        {screen === 'training-choice' ? <TrainingChoiceScreen choose={chooseTraining} /> : null}
+        {screen === 'home' ? <Home tag={tag} setTag={setTag} start={start} goBattle={() => setScreen('battle')} goJourney={() => setScreen('journey')} busy={busy} boardSize={activeBoardSize} journeyEnabled={BOARD_JOURNEY_ENABLED} /> : null}
+        {screen === 'journey' ? <BoardJourney progression={boardProgression} buy={buyBoard} select={chooseBoard} start={start} busy={busy} /> : null}
+        {screen === 'tutorial' ? <Tutorial state={tutorial} select={selectTutorialTile} suggest={selectSuggestedTile} resolveAi={resolveAiTurn} finish={finishTutorial} skip={skipTutorial} busy={busy} coachEnabled={COACH_BUBBLES_ENABLED} dismissedCoachSteps={dismissedCoachSteps} dismissCoach={(step) => {
+          setDismissedCoachSteps((steps) => steps.includes(step) ? steps : [...steps, step]);
+          emitTelemetry({ name: 'coach_bubble_dismissed', playerId, properties: { step } });
+        }} /> : null}
+        {screen === 'battle' ? <Battle tag={tag} setTag={setTag} start={start} inviteCode={inviteCode} setInviteCode={setInviteCode} join={join} busy={busy} /> : null}
+        {screen === 'lobby' && snapshot && lobby ? <Lobby snapshot={snapshot} lobby={lobby} playerId={playerId} copy={copyInvite} share={shareInvite} ready={markReady} exit={exitLobby} busy={busy} /> : null}
+        {screen === 'recap' && snapshot ? <Recap snapshot={snapshot} playerId={playerId} rematch={() => start(snapshot.mode === 'daily' ? 'solo' : snapshot.mode)} home={() => { setScreen('home'); historyReplace('/'); }} ranks={() => setScreen('ranks')} busy={busy} /> : null}
+        {screen === 'quests' ? <Quests progression={progression} quests={quests} start={() => start('daily')} busy={busy} dailyEnabled={DAILY_V2_ENABLED} /> : null}
+        {screen === 'ranks' ? <Ranks leaderboard={leaderboard} /> : null}
+        {screen === 'history' ? <History history={history} /> : null}
+        {screen === 'profile' ? <Profile tag={tag} setTag={setTag} persistTag={persistTag} profile={profile} replayTutorial={() => openTutorial(true)} /> : null}
+      </div>
       {screen !== 'tutorial' && screen !== 'lobby' && screen !== 'training-choice' ? <Nav screen={screen} setScreen={setScreen} /> : null}
     </main>
   );
@@ -480,10 +483,10 @@ function TrainingChoiceScreen({ choose }: { choose: (choice: TrainingChoice) => 
   );
 }
 
-function Home({ tag, setTag, start, goBattle, goJourney, startTutorial, busy, boardSize, journeyEnabled }: { tag: string; setTag: (v: string) => void; start: (mode: GameMode) => void; goBattle: () => void; goJourney: () => void; startTutorial: () => void; busy: string; boardSize: BoardSize; journeyEnabled: boolean }) {
+function Home({ tag, setTag, start, goBattle, goJourney, busy, boardSize, journeyEnabled }: { tag: string; setTag: (v: string) => void; start: (mode: GameMode) => void; goBattle: () => void; goJourney: () => void; busy: string; boardSize: BoardSize; journeyEnabled: boolean }) {
   return (
     <section className="panel">
-      <Stack gap="md">
+      <Stack gap="sm">
         <span className="hero-tag">{boardSize}x{boardSize} score chase</span>
         <h2>Own the grid.</h2>
         <p className="copy">Pick bright tiles, dodge negative traps, force the next move through rows and columns, and spend XP to unlock bigger boards.</p>
@@ -494,7 +497,6 @@ function Home({ tag, setTag, start, goBattle, goJourney, startTutorial, busy, bo
         </SimpleGrid>
         {journeyEnabled ? <Button variant="light" onClick={goJourney}>Board journey</Button> : null}
         <Button disabled={!BLITZ_ENABLED} loading={busy === 'start-blitz'} onClick={() => start('blitz')}>Blitz quick match</Button>
-        <Button variant="subtle" onClick={startTutorial}>Replay tutorial</Button>
       </Stack>
     </section>
   );
@@ -509,20 +511,26 @@ function BoardJourney({ progression, buy, select, start, busy }: { progression: 
     return <section className="panel"><Stack gap="md"><Badge color="gray" variant="light">Journey</Badge><h2>Loading boards.</h2><p className="copy">Wallet and unlock state are loading.</p></Stack></section>;
   }
   const { wallet, boardUnlocks } = progression;
+  const nextUnlock = boardUnlocks.nextUnlock;
+  const journeyStatus = nextUnlock
+    ? wallet.spendableXp >= nextUnlock.costXp
+      ? `${nextUnlock.boardSize}x${nextUnlock.boardSize} is ready to buy for ${nextUnlock.costXp} XP.`
+      : `Earn ${nextUnlock.costXp - wallet.spendableXp} more XP to unlock ${nextUnlock.boardSize}x${nextUnlock.boardSize}.`
+    : 'Every board size is unlocked. Pick the board you want to play.';
   return (
     <section className="panel" aria-labelledby="journey-title">
-      <Stack gap="md">
+      <Stack gap="sm">
         <Group justify="space-between">
           <span className="hero-tag">Board journey</span>
           <Badge color="green" variant="light">{boardUnlocks.activeBoardSize}x{boardUnlocks.activeBoardSize} active</Badge>
         </Group>
         <h2 id="journey-title">Unlock complexity with XP.</h2>
-        <p className="copy">Lifetime XP tracks what you have earned. Spendable XP goes down when you buy the next board.</p>
+        <p className="copy">{journeyStatus}</p>
         <SimpleGrid cols={2}>
           <Kpi label="Lifetime XP" value={wallet.lifetimeXp} />
           <Kpi label="Spendable XP" value={wallet.spendableXp} />
         </SimpleGrid>
-        <div className="board-ladder" role="list" aria-label="Board unlock ladder">
+        <div className="board-track" role="list" aria-label="Board unlock ladder">
           {BOARD_SIZES.map((size) => {
             const unlocked = boardUnlocks.unlockedBoardSizes.includes(size);
             const active = boardUnlocks.activeBoardSize === size;
@@ -531,15 +539,18 @@ function BoardJourney({ progression, buy, select, start, busy }: { progression: 
             const canBuy = next && wallet.spendableXp >= cost;
             const reason = unlocked ? active ? 'Currently active' : 'Unlocked' : next ? wallet.spendableXp >= cost ? `Costs ${cost} XP` : `Need ${cost - wallet.spendableXp} more XP` : 'Unlock earlier boards first';
             return (
-              <div className="list-card board-step" role="listitem" key={size}>
-                <Group justify="space-between">
-                  <strong>{size}x{size}</strong>
-                  <Badge color={active ? 'green' : unlocked ? 'blue' : next ? 'orange' : 'gray'} variant="light">{active ? 'Active' : unlocked ? 'Unlocked' : next ? `${cost} XP` : 'Locked'}</Badge>
-                </Group>
-                <p className="copy" id={`board-${size}-reason`}>{reason}</p>
-                {unlocked ? <Button variant={active ? 'light' : 'filled'} disabled={active} loading={busy === `select-${size}`} aria-describedby={`board-${size}-reason`} onClick={() => select(size)}>{active ? 'Selected' : `Select ${size}x${size}`}</Button> : null}
-                {!unlocked ? <Button disabled={!canBuy} loading={busy === `buy-${size}`} aria-describedby={`board-${size}-reason`} onClick={() => buy(size)}>{next ? `Buy ${size}x${size}` : 'Locked'}</Button> : null}
-              </div>
+              <button
+                className={`board-chip ${active ? 'active' : unlocked ? 'unlocked' : next ? 'next' : 'locked'}`}
+                disabled={active || (!unlocked && !canBuy)}
+                key={size}
+                type="button"
+                role="listitem"
+                aria-label={`${size} by ${size}. ${reason}`}
+                onClick={() => unlocked ? select(size) : buy(size)}
+              >
+                <strong>{size}x{size}</strong>
+                <span>{active ? 'Active' : unlocked ? 'Select' : next ? `${cost} XP` : 'Locked'}</span>
+              </button>
             );
           })}
         </div>
@@ -628,6 +639,11 @@ function Tutorial({ state, select, suggest, resolveAi, finish, skip, busy, coach
   const progress = ((stepIndex + 1) / TUTORIAL_STEPS.length) * 100;
   const suggested = getSuggestedTutorialCell(state);
   const showCoach = coachEnabled && !dismissedCoachSteps.includes(state.step);
+  const tutorialSize = Math.max(...state.board.map((cell) => cell.row)) + 1;
+  const boardStyle = { '--tutorial-size': tutorialSize } as CSSProperties;
+  function closeCoachForAction() {
+    if (showCoach) dismissCoach(state.step);
+  }
   useEffect(() => {
     if (showCoach) emitTelemetry({ name: 'coach_bubble_shown', properties: { step: state.step } });
   }, [showCoach, state.step]);
@@ -639,15 +655,14 @@ function Tutorial({ state, select, suggest, resolveAi, finish, skip, busy, coach
           <Badge color="gray" variant="outline">Step {stepIndex + 1} of {TUTORIAL_STEPS.length}</Badge>
         </Group>
         <h2 id="tutorial-title">{step.title}</h2>
-        <p className="copy">{step.body}</p>
-        {showCoach ? <CoachBubble step={state.step} dismiss={() => dismissCoach(state.step)} /> : null}
+        {showCoach ? <CoachModal step={state.step} title={step.title} body={step.body} dismiss={() => dismissCoach(state.step)} /> : null}
         <Progress value={progress} aria-label="Tutorial progress" />
         <div className="score-row" aria-label="Tutorial score">
           <Kpi label="You" value={state.scores.north} />
           <Kpi label="Matimato AI" value={state.scores.south} />
         </div>
         <p className="copy" role="status">{targetLabel(state.legalTarget)}</p>
-        <div className="tutorial-board" role="grid" aria-label="Tutorial board">
+        <div className="tutorial-board" role="grid" aria-label="Tutorial board" style={boardStyle}>
           {state.board.map((cell) => {
             const legal = isLegal(state.legalTarget, cell.row, cell.col, state.board);
             const disabled = cell.removed || state.step === 'ai-turn' || state.step === 'finish' || !legal;
@@ -657,7 +672,10 @@ function Tutorial({ state, select, suggest, resolveAi, finish, skip, busy, coach
                 className={`tutorial-tile ${cell.value < 0 ? 'negative' : 'positive'} ${legal ? 'legal' : ''}`}
                 disabled={disabled}
                 aria-label={`Row ${cell.row + 1}, column ${cell.col + 1}, ${cell.value > 0 ? 'positive' : 'negative'} ${Math.abs(cell.value)}${legal ? ', legal target' : ''}`}
-                onClick={() => select(cell)}
+                onClick={() => {
+                  closeCoachForAction();
+                  select(cell);
+                }}
                 role="gridcell"
               >
                 {cell.removed ? '' : cell.value}
@@ -666,9 +684,9 @@ function Tutorial({ state, select, suggest, resolveAi, finish, skip, busy, coach
           })}
         </div>
         <Group grow>
-          {state.step === 'ai-turn' ? <Button onClick={resolveAi}>Resolve AI turn</Button> : null}
-          {state.step !== 'ai-turn' && state.step !== 'finish' ? <Button onClick={suggest}>Choose suggested {signedValue(suggested.value)}</Button> : null}
-          {state.step === 'finish' ? <Button loading={busy === 'start-solo'} onClick={finish}>Start real solo</Button> : null}
+          {state.step === 'ai-turn' ? <Button onClick={() => { closeCoachForAction(); resolveAi(); }}>Resolve AI turn</Button> : null}
+          {state.step !== 'ai-turn' && state.step !== 'finish' ? <Button onClick={() => { closeCoachForAction(); suggest(); }}>Choose suggested {signedValue(suggested.value)}</Button> : null}
+          {state.step === 'finish' ? <Button loading={busy === 'start-solo'} onClick={() => { closeCoachForAction(); finish(); }}>Start real solo</Button> : null}
           <Button variant="light" color="gray" onClick={skip}>Skip</Button>
         </Group>
       </Stack>
@@ -676,7 +694,7 @@ function Tutorial({ state, select, suggest, resolveAi, finish, skip, busy, coach
   );
 }
 
-function CoachBubble({ step, dismiss }: { step: TutorialStepId; dismiss: () => void }) {
+function CoachModal({ step, title, body, dismiss }: { step: TutorialStepId; title: string; body: string; dismiss: () => void }) {
   const copy: Record<TutorialStepId, string> = {
     'first-pick': 'This first pick is free. Watch the value: green numbers raise your score and red numbers reduce it.',
     'column-target': 'The tile you picked created a column target. Only that column is legal now.',
@@ -686,9 +704,12 @@ function CoachBubble({ step, dismiss }: { step: TutorialStepId; dismiss: () => v
     finish: 'You now know scoring, legal targets, risk, and AI turns. A real match uses the same loop.'
   };
   return (
-    <div className="coach-bubble" role="note" aria-label="Rule explanation">
-      <p>{copy[step]}</p>
-      <Button size="xs" variant="light" onClick={dismiss}>Got it</Button>
+    <div className="coach-modal" role="dialog" aria-modal="false" aria-labelledby="coach-modal-title" aria-describedby="coach-modal-body">
+      <div>
+        <strong id="coach-modal-title">{title}</strong>
+        <p id="coach-modal-body">{body} {copy[step]}</p>
+      </div>
+      <Button size="xs" variant="light" onClick={dismiss}>Hide</Button>
     </div>
   );
 }
@@ -749,6 +770,8 @@ function Seat({ label, player, ready }: { label: string; player: string; ready: 
 function Quests({ progression, quests, start, busy, dailyEnabled }: { progression: ProgressionResponse | null; quests: QuestProgress[]; start: () => void; busy: string; dailyEnabled: boolean }) {
   const daily = progression?.daily;
   const completed = daily?.status === 'completed';
+  const visibleQuests = quests.slice(0, 3);
+  const visibleWeekly = progression?.weeklyLeaderboard.slice(0, 3) ?? [];
   return (
     <section className="panel">
       <Stack gap="md">
@@ -772,11 +795,11 @@ function Quests({ progression, quests, start, busy, dailyEnabled }: { progressio
         ) : null}
         <Button loading={busy === 'start-daily'} disabled={!dailyEnabled || completed || !daily} onClick={start}>{completed ? 'Daily complete' : 'Start or resume daily'}</Button>
         <div className="stack" aria-label="Daily quests">
-          {quests.map((quest) => <div className="list-card" key={quest.id}><strong>{quest.title}</strong><p className="copy">{Math.min(quest.progress, quest.target)}/{quest.target} · {quest.rewardXp} XP</p></div>)}
+          {visibleQuests.map((quest) => <div className="list-card" key={quest.id}><strong>{quest.title}</strong><p className="copy">{Math.min(quest.progress, quest.target)}/{quest.target} · {quest.rewardXp} XP</p></div>)}
         </div>
         <div className="stack" aria-label="Weekly challenge leaderboard">
           <strong>Weekly challenge ranks</strong>
-          {progression?.weeklyLeaderboard.length ? progression.weeklyLeaderboard.slice(0, 8).map((entry) => (
+          {visibleWeekly.length ? visibleWeekly.map((entry) => (
             <div className="list-card rank-row" key={`${entry.rank}-${entry.playerHash}`}>
               <strong>#{entry.rank} {entry.tag}</strong>
               <p className="copy">Score {entry.score} · Attempts {entry.attempts} · {new Date(entry.completedAt).toLocaleDateString()}</p>
@@ -789,11 +812,13 @@ function Quests({ progression, quests, start, busy, dailyEnabled }: { progressio
 }
 
 function Ranks({ leaderboard }: { leaderboard: RankEntry[] }) {
-  return <section className="panel stack"><span className="hero-tag">Rank board</span><h2>Climb the arena.</h2>{leaderboard.length ? leaderboard.map((entry, index) => <div className="list-card" key={entry.playerId}><strong>#{index + 1} {entry.tag}</strong><p className="copy">{entry.score} XP · {entry.wins} wins</p></div>) : <p className="copy">No ranked matches yet.</p>}</section>;
+  const visible = leaderboard.slice(0, 6);
+  return <section className="panel stack"><span className="hero-tag">Rank board</span><h2>Climb the arena.</h2>{visible.length ? visible.map((entry, index) => <div className="list-card" key={entry.playerId}><strong>#{index + 1} {entry.tag}</strong><p className="copy">{entry.score} XP · {entry.wins} wins</p></div>) : <p className="copy">No ranked matches yet.</p>}</section>;
 }
 
 function History({ history }: { history: MatchSummary[] }) {
-  return <section className="panel stack"><span className="hero-tag">Match memory</span><h2>Review every duel.</h2>{history.length ? history.map((match) => <div className="list-card" key={match.id}><strong>{match.result}</strong><p className="copy">vs {match.opponent} · {match.score}/{match.opponentScore} · {new Date(match.completedAt).toLocaleDateString()}</p></div>) : <p className="copy">Finish a match to build history.</p>}</section>;
+  const visible = history.slice(0, 5);
+  return <section className="panel stack"><span className="hero-tag">Match memory</span><h2>Recent duels.</h2>{visible.length ? visible.map((match) => <div className="list-card" key={match.id}><strong>{match.result}</strong><p className="copy">vs {match.opponent} · {match.score}/{match.opponentScore} · {new Date(match.completedAt).toLocaleDateString()}</p></div>) : <p className="copy">Finish a match to build history.</p>}</section>;
 }
 
 function Profile({ tag, setTag, persistTag, profile, replayTutorial }: { tag: string; setTag: (v: string) => void; persistTag: () => void; profile: ProfileSummary | null; replayTutorial: () => void }) {
@@ -814,8 +839,25 @@ function Profile({ tag, setTag, persistTag, profile, replayTutorial }: { tag: st
 function Kpi({ label, value }: { label: string; value: number }) { return <div className="kpi"><span className="chip">{label}</span><strong>{value}</strong></div>; }
 
 function Nav({ screen, setScreen }: { screen: Screen; setScreen: (screen: Screen) => void }) {
-  const items: Array<[Screen, string]> = [['home', 'Home'], ['journey', 'Journey'], ['battle', 'Battle'], ['quests', 'Quests'], ['ranks', 'Ranks'], ['history', 'History'], ['profile', 'Profile']];
-  return <nav className="nav" aria-label="Game navigation">{items.map(([key, label]) => <button key={key} className={screen === key ? 'active' : ''} onClick={() => setScreen(key)}>{label}</button>)}</nav>;
+  const items = [
+    ['home', 'Home', IconHome],
+    ['journey', 'Journey', IconRoute],
+    ['battle', 'Battle', IconSwords],
+    ['quests', 'Quests', IconCalendar],
+    ['ranks', 'Ranks', IconTrophy],
+    ['history', 'History', IconHistory],
+    ['profile', 'Profile', IconUser]
+  ] as const;
+  return (
+    <nav className="nav" aria-label="Game navigation">
+      {items.map(([key, label, Icon]) => (
+        <button key={key} className={screen === key ? 'active' : ''} type="button" aria-label={label} title={label} onClick={() => setScreen(key)}>
+          <Icon size={24} stroke={2.2} aria-hidden="true" />
+          <span className="sr-only">{label}</span>
+        </button>
+      ))}
+    </nav>
+  );
 }
 
 function shouldShowTutorial(onboarding: OnboardingState | null): boolean {
