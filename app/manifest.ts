@@ -10,6 +10,13 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: '#120811',
     theme_color: '#120811',
     orientation: 'portrait',
-    icons: [{ src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' }]
+    scope: '/',
+    categories: ['games', 'entertainment'],
+    icons: [
+      { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+      { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: '/icons/maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+    ]
   };
 }

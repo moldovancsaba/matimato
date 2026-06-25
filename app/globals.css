@@ -19,6 +19,9 @@ h1,h2,p { margin:0; } h1 { font-size:1.85rem; line-height:1; letter-spacing:0; w
 .nav { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); align-items:center; gap:6px; padding:7px; border:1px solid var(--mat-line); background:rgba(45,14,30,.92); backdrop-filter:blur(22px); border-radius:8px; height:62px; min-height:62px; max-height:62px; overflow:hidden; align-self:end; } .nav button { border:0; border-radius:8px; background:transparent; color:var(--mat-muted); height:46px; min-height:0; display:grid; place-items:center; align-self:center; } .nav button.active { color:white; background:linear-gradient(135deg,var(--mat-hot),var(--mat-pink)); } .nav svg { width:24px; height:24px; }
 .game-host { position:fixed; inset:0; background:var(--mat-bg); overflow:hidden; touch-action:none; } .game-canvas { width:100%; height:100%; } .notice { margin:12px 0; padding:14px 16px; border:1px solid var(--mat-line); background:rgba(255,255,255,.05); border-radius:16px; color:var(--mat-text); }
 .notice { margin:0; padding:10px 12px; border-radius:8px; max-height:44px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.network-recovery { display:flex; align-items:center; justify-content:space-between; gap:10px; white-space:normal; }
+.network-recovery span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.network-recovery button { flex:0 0 auto; min-height:28px; }
 .notice-slot { min-height:0; }
 .notice-slot.empty { height:0; overflow:hidden; }
 .list-card,.kpi { padding:11px; border:1px solid var(--mat-line); border-radius:8px; background:rgba(255,255,255,.04); min-width:0; } .kpi strong { display:block; font-size:24px; line-height:1.05; overflow:hidden; text-overflow:ellipsis; }

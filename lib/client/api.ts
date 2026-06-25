@@ -1,10 +1,59 @@
-import type { BoardProgression, BoardSize, GameApiResponse, GameMode, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, RankEntry, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
+import type { BoardProgression, BoardSize, GameApiResponse, GameMode, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, RankEntry, TelemetryEventName, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
+
+export const RETRY_POLICY = { maxAttempts: 3, baseDelayMs: 500, timeoutMs: 5000 } as const;
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, { ...init, headers: { 'content-type': 'application/json', ...(init?.headers || {}) } });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'Request failed');
-  return data as T;
+  const retryable = !init?.method || init.method === 'GET';
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= (retryable ? RETRY_POLICY.maxAttempts : 1); attempt += 1) {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), RETRY_POLICY.timeoutMs);
+    try {
+      const response = await fetch(url, { ...init, signal: controller.signal, headers: { 'content-type': 'application/json', ...(init?.headers || {}) } });
+      const data = await parseResponse(response);
+      if (!response.ok) throw new Error(data.error || 'Request failed');
+      return data as T;
+    } catch (error) {
+      lastError = error;
+      if (!retryable || attempt === RETRY_POLICY.maxAttempts || !isRetryableRequestError(error)) break;
+      await delay(RETRY_POLICY.baseDelayMs * 2 ** (attempt - 1));
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+  throw normalizeRequestError(lastError);
+}
+
+async function parseResponse(response: Response): Promise<{ error?: string } & Record<string, unknown>> {
+  try {
+    return await response.json();
+  } catch {
+    return { error: response.ok ? undefined : 'Request failed' };
+  }
+}
+
+function isRetryableRequestError(error: unknown): boolean {
+  if (error instanceof DOMException && error.name === 'AbortError') return true;
+  if (error instanceof TypeError) return true;
+  if (error instanceof Error && error.message.includes('NETWORK_OFFLINE')) return true;
+  return false;
+}
+
+function normalizeRequestError(error: unknown): Error {
+  if (error instanceof DOMException && error.name === 'AbortError') return new Error('Network timeout. Try again.');
+  if (error instanceof Error) return error;
+  return new Error('Request failed');
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+export function offlineTelemetryName(state: 'offline' | 'recovered' | 'retry' | 'error'): TelemetryEventName {
+  if (state === 'recovered') return 'ios_offline_recovered';
+  if (state === 'retry') return 'ios_offline_retry';
+  if (state === 'error') return 'ios_wrapper_error';
+  return 'ios_offline_state_changed';
 }
 
 export function getPlayerId(): string {

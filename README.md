@@ -2,7 +2,7 @@
 
 A fresh Next.js + Phaser + MongoDB implementation of Matimato.
 
-Current release: `2.4.0`.
+Current release: `2.5.0`.
 
 ## Commands
 
@@ -13,6 +13,10 @@ npm run dev
 npm run test
 npm run build
 npm run verify
+npm run assets:ios
+npm run mobile:smoke
+npm run ios:sync
+npm run ios:build
 npm audit --omit=dev
 ```
 
@@ -23,6 +27,8 @@ npm audit --omit=dev
 - Phaser 3 for the game board
 - MongoDB Atlas for persistence
 - Vitest for rules tests
+- Capacitor 8 for the iOS WKWebView wrapper
+- Playwright for mobile viewport smoke checks
 
 ## Required environment
 
@@ -46,9 +52,14 @@ NEXT_PUBLIC_MATIMATO_TELEMETRY=true
 NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE=true
 NEXT_PUBLIC_MATIMATO_COACH_BUBBLES=true
 NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY=true
+NEXT_PUBLIC_MATIMATO_SERVICE_WORKER=true
+NEXT_PUBLIC_MATIMATO_APP_VERSION=2.5.0
+NEXT_PUBLIC_MATIMATO_IOS_BUILD_NUMBER=web
 MATIMATO_BLITZ_ENABLED=true
 MATIMATO_EVENTS_ENABLED=true
 MATIMATO_BOARD_JOURNEY_ENABLED=true
+CAPACITOR_SERVER_URL=https://matimato.vercel.app
+CAPACITOR_BUILD_NUMBER=local
 ```
 
 `NEXT_PUBLIC_MATIMATO_ONBOARDING=false` disables automatic first-run tutorial entry while keeping normal solo and battle actions available.
@@ -62,6 +73,23 @@ MATIMATO_BOARD_JOURNEY_ENABLED=true
 `NEXT_PUBLIC_MATIMATO_TELEMETRY=false` disables the client event emitter. `MATIMATO_EVENTS_ENABLED=false` keeps `/api/events` accepting payloads but marks ingestion degraded and skips event storage.
 
 `NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE=false` restores the previous automatic onboarding behavior. `NEXT_PUBLIC_MATIMATO_COACH_BUBBLES=false` hides contextual tutorial explanations. `NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY=false` hides the board journey UI. `MATIMATO_BOARD_JOURNEY_ENABLED=false` rejects new board purchases and active-board changes server-side while keeping stored wallet/unlock data readable.
+
+`NEXT_PUBLIC_MATIMATO_SERVICE_WORKER=false` stops registering the offline shell worker for new sessions. `CAPACITOR_SERVER_URL` controls the iOS wrapper target and must stay on HTTPS for production.
+
+## iOS mobile app
+
+Matimato now has a production iOS delivery lane documented in [`docs/ios-mobile.md`](/Users/Shared/Projects/matimato/docs/ios-mobile.md). The chosen architecture is an installable iOS PWA plus a Capacitor WKWebView wrapper around the existing GDS/Phaser web runtime.
+
+Key commands:
+
+```bash
+npm run assets:ios
+npm run ios:sync
+npm run ios:build
+MATIMATO_SMOKE_URL=https://matimato.vercel.app npm run mobile:smoke
+```
+
+The local machine currently has Command Line Tools selected instead of full Xcode, so `ios:build` is expected to fail until Xcode is installed/selected. Apple signing, App Store Connect app creation, and TestFlight upload require external Apple Developer credentials and are intentionally not stored in this repository.
 
 ## Board progression
 
@@ -128,7 +156,7 @@ POST /api/events
 { "events": [{ "name": "daily_started", "version": 1, "occurredAt": "...", "sessionHash": "...", "properties": {} }] }
 ```
 
-Tracked product events cover optional training choice, coach bubbles, board journey purchases/selection, onboarding, battle lobby, daily challenge, Blitz clocks/rematches, recap/share actions, weekly/rank views, match completion, Phaser lifecycle, sync errors, and recovery surfaces. `/api/health` returns release version plus database connectivity checks for deployment verification.
+Tracked product events cover optional training choice, coach bubbles, board journey purchases/selection, onboarding, battle lobby, daily challenge, Blitz clocks/rematches, recap/share actions, weekly/rank views, match completion, Phaser lifecycle, sync errors, iOS runtime mode, offline retry/recovery, and recovery surfaces. `/api/health` returns release version plus database connectivity checks for deployment verification.
 
 ## Core guarantee
 
@@ -171,6 +199,18 @@ Before promoting a progression release, verify:
 - Solo and Blitz start with the selected unlocked board size.
 - Mobile viewports 320x568, 390x844, and 430x932 keep controls visible.
 - Rollback flags hide client entry points and reject server board mutations.
+
+## iOS release QA
+
+Before promoting an iOS app release, verify:
+
+- Manifest icons render in Safari and installed PWA mode.
+- Service worker cache opens the shell after one successful online load.
+- Offline unsafe writes are blocked and Retry recovers through `/api/health`.
+- `ios_runtime_detected`, offline retry/recovery, and wrapper error telemetry are accepted by `/api/events`.
+- `npm run mobile:smoke` passes at 320x568, 390x844, and 430x932.
+- `npx cap sync ios` succeeds.
+- `npm run ios:build` succeeds on a full-Xcode machine, or the Xcode/Apple credential blocker is recorded in the release issue.
 
 ## Battle lobby
 

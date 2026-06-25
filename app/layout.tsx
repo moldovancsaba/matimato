@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Matimato',
   description: 'A progressive tactical number chase rebuilt as a Phaser game.',
   appleWebApp: { capable: true, title: 'Matimato', statusBarStyle: 'black-translucent' },
-  icons: { icon: '/icon.svg', apple: '/icon.svg' },
+  icons: { icon: '/icon.svg', apple: '/icons/apple-touch-icon.png' },
   manifest: '/manifest.webmanifest'
 };
 
