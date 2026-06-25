@@ -25,6 +25,16 @@ export function setPlayerTag(tag: string): void {
   localStorage.setItem('matimato.playerTag', tag.trim());
 }
 
+export function clearPlayerSession(playerId?: string): void {
+  localStorage.removeItem('matimato.playerId');
+  localStorage.removeItem('matimato.playerTag');
+  if (playerId) localStorage.removeItem(`matimato.onboarding.${playerId}`);
+  for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+    const key = localStorage.key(index);
+    if (key?.startsWith('matimato.onboarding.')) localStorage.removeItem(key);
+  }
+}
+
 export function getLocalOnboarding(playerId: string): OnboardingState | null {
   const raw = localStorage.getItem(`matimato.onboarding.${playerId}`);
   if (!raw) return null;

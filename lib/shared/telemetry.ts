@@ -10,6 +10,7 @@ export const TELEMETRY_EVENT_NAMES = [
   'onboarding_failed',
   'coach_bubble_shown',
   'coach_bubble_dismissed',
+  'player_signed_out',
   'lobby_created',
   'lobby_copied',
   'lobby_shared',
