@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Badge, Button, Group, Progress, SimpleGrid, Stack, TextInput } from '@doneisbetter/gds';
 import { IconCalendar, IconHistory, IconHome, IconLogout, IconRoute, IconSwords, IconTrophy, IconUser } from '@tabler/icons-react';
 import {
@@ -21,6 +21,7 @@ import {
   persistOnboarding,
   purchaseBoardSize,
   readyLobby,
+  offlineTelemetryName,
   selectBoardSize,
   setLocalOnboarding,
   setPlayerTag
@@ -29,6 +30,7 @@ import { getSuggestedTutorialCell, createTutorialState, resolveTutorialAi, selec
 import { BOARD_SIZES, boardUnlockCost, shouldShowTrainingChoice } from '@/lib/game/progression';
 import { isLegal } from '@/lib/game/rules';
 import { emitTelemetry, installTelemetryPagehide } from '@/lib/client/telemetry';
+import { getRuntimeTelemetryProperties, registerServiceWorker, type NetworkState } from '@/lib/client/iosRuntime';
 import type { BoardProgression, BoardSize, BoardCell, GameMode, GameSnapshot, LobbyState, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, QuestProgress, RankEntry, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
 import { PhaserGameRoot } from './PhaserGameRoot';
 
@@ -61,6 +63,8 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
   const [tutorialReplay, setTutorialReplay] = useState(false);
   const [dismissedCoachSteps, setDismissedCoachSteps] = useState<TutorialStepId[]>([]);
   const [busy, setBusy] = useState('');
+  const [networkState, setNetworkState] = useState<NetworkState>('online');
+  const reportedRuntime = useRef(false);
 
   useEffect(() => {
     const id = getPlayerId();
@@ -81,6 +85,38 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
   }, [initialMatchId, initialScreen]);
 
   useEffect(() => installTelemetryPagehide(), []);
+
+  useEffect(() => {
+    if (reportedRuntime.current) return;
+    reportedRuntime.current = true;
+    void registerServiceWorker().then((serviceWorker) => {
+      emitTelemetry({ name: 'ios_runtime_detected', playerId: getPlayerId(), properties: { ...getRuntimeTelemetryProperties(), serviceWorker } });
+    }).catch(() => {
+      emitTelemetry({ name: 'ios_wrapper_error', playerId: getPlayerId(), result: 'error', properties: { ...getRuntimeTelemetryProperties(), errorCode: 'service_worker_register_failed' } });
+    });
+  }, []);
+
+  useEffect(() => {
+    function syncNetworkState() {
+      const next: NetworkState = navigator.onLine ? 'online' : 'offline';
+      setNetworkState((current) => {
+        if (current === next) return current;
+        emitTelemetry({
+          name: next === 'online' ? 'ios_offline_recovered' : 'ios_offline_state_changed',
+          playerId: getPlayerId(),
+          properties: { ...getRuntimeTelemetryProperties(), networkState: next }
+        });
+        return next;
+      });
+    }
+    syncNetworkState();
+    window.addEventListener('online', syncNetworkState);
+    window.addEventListener('offline', syncNetworkState);
+    return () => {
+      window.removeEventListener('online', syncNetworkState);
+      window.removeEventListener('offline', syncNetworkState);
+    };
+  }, []);
 
   useEffect(() => {
     if (!playerId) return;
@@ -169,6 +205,34 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
   const boardProgression = progression?.progression;
   const activeBoardSize = BOARD_JOURNEY_ENABLED ? boardProgression?.boardUnlocks.activeBoardSize ?? 5 : 9;
 
+  const blockOfflineWrite = useCallback((label: string) => {
+    if (networkState === 'online') return false;
+    setNotice(`${label} needs a live connection. Reconnect and retry.`);
+    emitTelemetry({ name: offlineTelemetryName('offline'), playerId: playerId || getPlayerId(), result: 'cancelled', properties: { ...getRuntimeTelemetryProperties(), networkState, source: label } });
+    return true;
+  }, [networkState, playerId]);
+
+  const retryNetwork = useCallback(async () => {
+    setNetworkState('reconnecting');
+    emitTelemetry({ name: 'ios_offline_retry', playerId: playerId || getPlayerId(), properties: { ...getRuntimeTelemetryProperties(), networkState: 'reconnecting' } });
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 5000);
+    try {
+      const response = await fetch('/api/health', { cache: 'no-store', signal: controller.signal });
+      if (!response.ok) throw new Error('health_failed');
+      setNetworkState('online');
+      setNotice('Connection restored.');
+      emitTelemetry({ name: 'ios_offline_recovered', playerId: playerId || getPlayerId(), result: 'ok', properties: { ...getRuntimeTelemetryProperties(), networkState: 'online' } });
+    } catch {
+      const next: NetworkState = navigator.onLine ? 'degraded' : 'offline';
+      setNetworkState(next);
+      setNotice(next === 'degraded' ? 'Network is available, but Matimato services are not responding yet.' : 'Still offline. The app shell remains available.');
+      emitTelemetry({ name: 'ios_wrapper_error', playerId: playerId || getPlayerId(), result: 'error', properties: { ...getRuntimeTelemetryProperties(), networkState: next, errorCode: 'health_retry_failed' } });
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }, [playerId]);
+
   const persistTag = useCallback(() => {
     setPlayerTag(safeTag);
     setTag(safeTag);
@@ -198,6 +262,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
   }, [playerId]);
 
   async function start(mode: GameMode) {
+    if (blockOfflineWrite('Starting a match')) return;
     try {
       setBusy(`start-${mode}`);
       persistTag();
@@ -234,6 +299,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
   }
 
   async function join() {
+    if (blockOfflineWrite('Joining a battle')) return;
     try {
       setBusy('join');
       persistTag();
@@ -332,6 +398,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
   }
 
   async function buyBoard(boardSize: BoardSize) {
+    if (blockOfflineWrite('Buying a board')) return;
     try {
       setBusy(`buy-${boardSize}`);
       const data = await purchaseBoardSize(playerId, boardSize);
@@ -349,6 +416,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
   }
 
   async function chooseBoard(boardSize: BoardSize) {
+    if (blockOfflineWrite('Selecting a board')) return;
     try {
       setBusy(`select-${boardSize}`);
       const data = await selectBoardSize(playerId, boardSize);
@@ -410,6 +478,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
 
   async function markReady() {
     if (!snapshot) return;
+    if (blockOfflineWrite('Marking ready')) return;
     try {
       setBusy('ready');
       const data = await readyLobby(snapshot.id, playerId);
@@ -426,6 +495,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
 
   async function exitLobby(kind: 'leave' | 'cancel') {
     if (!snapshot) return;
+    if (blockOfflineWrite(kind === 'cancel' ? 'Cancelling a lobby' : 'Leaving a lobby')) return;
     try {
       setBusy(kind);
       const data = kind === 'cancel' ? await cancelLobby(snapshot.id, playerId) : await leaveLobby(snapshot.id, playerId);
@@ -456,8 +526,10 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     <main className={`app-shell theme-${screen === 'tutorial' ? 'home' : screen}`}>
       <Header status={screen === 'home' ? 'Ready' : screen} />
       <p className="sr-only" aria-live="polite">{notice}</p>
-      <div className={`notice-slot${notice ? '' : ' empty'}`}>
-        {notice ? <div className="notice" role="status">{notice}</div> : null}
+      <div className={`notice-slot${notice || networkState !== 'online' ? '' : ' empty'}`}>
+        {networkState !== 'online'
+          ? <NetworkRecovery state={networkState} retry={retryNetwork} />
+          : notice ? <div className="notice" role="status">{notice}</div> : null}
       </div>
       <div className="screen-slot">
         {screen === 'training-choice' ? <TrainingChoiceScreen choose={chooseTraining} /> : null}
@@ -486,6 +558,20 @@ function Header({ status }: { status: string }) {
       <div className="brand"><div className="logo" aria-hidden="true">M</div><h1>Matimato</h1></div>
       <Badge variant="light" color="orange">{status}</Badge>
     </section>
+  );
+}
+
+function NetworkRecovery({ state, retry }: { state: NetworkState; retry: () => void }) {
+  const copy = state === 'reconnecting'
+    ? 'Reconnecting to Matimato.'
+    : state === 'degraded'
+      ? 'Server is not responding.'
+      : 'Offline. Shell only.';
+  return (
+    <div className="notice network-recovery" role="status" aria-live="assertive">
+      <span>{copy}</span>
+      <Button size="xs" variant="light" loading={state === 'reconnecting'} onClick={retry}>Retry</Button>
+    </div>
   );
 }
 

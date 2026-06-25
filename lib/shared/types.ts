@@ -57,7 +57,12 @@ export type TelemetryEventName =
   | 'board_unlock_viewed'
   | 'board_unlock_purchased'
   | 'board_unlock_failed'
-  | 'board_size_selected';
+  | 'board_size_selected'
+  | 'ios_runtime_detected'
+  | 'ios_offline_state_changed'
+  | 'ios_offline_retry'
+  | 'ios_offline_recovered'
+  | 'ios_wrapper_error';
 export type LegalTarget = { axis: 'any' } | { axis: 'row'; index: number } | { axis: 'column'; index: number };
 
 export type BoardCell = {

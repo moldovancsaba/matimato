@@ -8,6 +8,7 @@ Matimato has been rebuilt from zero.
 - Sovereign Squad General Design System owns React UI controls, theme bootstrap, accessibility patterns, and form/button primitives.
 - Phaser owns the active game board, tiles, blob, input lock, animation order, and result overlay.
 - MongoDB owns games, profiles, history, and leaderboard data.
+- Capacitor owns the optional iOS WKWebView wrapper and native build packaging. It does not own gameplay or visible product UI.
 
 ## No legacy surface
 
@@ -20,6 +21,23 @@ The Phaser boot boundary validates boot payloads, clears the mount host before c
 Matimato imports `@doneisbetter/gds-theme/styles.css` once at the app entry and wraps the app with `GdsProvider`. Product screens compose controls from `@doneisbetter/gds`; Phaser remains the exception surface for the active game renderer, with GDS-derived shell styling and DOM live-region support around it.
 
 Current consumed GDS version: `3.5.0`.
+
+## iOS PWA and native wrapper
+
+The iOS mobile strategy is PWA-first, then Capacitor for App Store packaging. The native shell is configured in `capacitor.config.ts` with bundle id `app.vercel.matimato`, app name `Matimato`, HTTPS server URL `https://matimato.vercel.app`, no webview zoom, automatic iOS content insets, and no extra plugin permissions.
+
+The web shell remains authoritative:
+
+```text
+Capacitor WKWebView or iOS Safari
+  -> https://matimato.vercel.app
+  -> Next.js routes and APIs
+  -> GDS screens / Phaser match renderer
+```
+
+The service worker caches only shell/static assets and never caches authoritative mutation responses. Unsafe writes are blocked while offline, and safe reads use bounded retry/timeouts. Runtime telemetry distinguishes `safari`, `standalone-pwa`, `capacitor-ios`, and desktop `browser` sessions.
+
+Rollback is split by layer: Vercel rollback for web/PWA regressions, service-worker registration flag plus cache version bump for offline-shell regressions, and TestFlight build expiration or Capacitor config revert for native wrapper regressions.
 
 ## Guided onboarding
 
@@ -109,7 +127,7 @@ Game snapshots append accepted moves and timeout resolutions to optional `moveLo
 
 Telemetry is an allowlisted product-event stream, not raw analytics capture. The client hashes session, player, and match identifiers before enqueueing events and redacts invite-like codes from string properties. `/api/events` accepts `{ events }` payloads capped at 50 events and 32 KB; invalid events are rejected individually, valid events fail open with `degraded: true` when storage is disabled or temporarily unavailable. Rollback controls are `NEXT_PUBLIC_MATIMATO_TELEMETRY=false` for the browser emitter and `MATIMATO_EVENTS_ENABLED=false` for server-side storage.
 
-Progression events are allowlisted: `training_choice_shown`, `training_choice_selected`, `coach_bubble_shown`, `coach_bubble_dismissed`, `board_unlock_viewed`, `board_unlock_purchased`, `board_unlock_failed`, and `board_size_selected`. Properties are bounded to safe keys such as board size, cost, choice, step, result, error code, and spendable XP bucket.
+Progression and iOS events are allowlisted: `training_choice_shown`, `training_choice_selected`, `coach_bubble_shown`, `coach_bubble_dismissed`, `board_unlock_viewed`, `board_unlock_purchased`, `board_unlock_failed`, `board_size_selected`, `ios_runtime_detected`, `ios_offline_state_changed`, `ios_offline_retry`, `ios_offline_recovered`, and `ios_wrapper_error`. Properties are bounded to safe keys such as board size, cost, choice, step, result, error code, spendable XP bucket, runtime mode, app version, build number, network state, and service worker status.
 
 `/api/health` reports release version, database status, and named check latencies so deploy verification can distinguish app boot from persistence availability.
 
@@ -173,9 +191,14 @@ Optional:
 - `NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE`
 - `NEXT_PUBLIC_MATIMATO_COACH_BUBBLES`
 - `NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY`
+- `NEXT_PUBLIC_MATIMATO_SERVICE_WORKER`
+- `NEXT_PUBLIC_MATIMATO_APP_VERSION`
+- `NEXT_PUBLIC_MATIMATO_IOS_BUILD_NUMBER`
 - `MATIMATO_BLITZ_ENABLED`
 - `MATIMATO_EVENTS_ENABLED`
 - `MATIMATO_BOARD_JOURNEY_ENABLED`
+- `CAPACITOR_SERVER_URL`
+- `CAPACITOR_BUILD_NUMBER`
 
 ## Release and rollback runbook
 
@@ -184,8 +207,11 @@ Optional:
 3. Verify keyboard-only flow, screen-reader labels/descriptions, visible focus, disabled reasons, and reduced-motion behavior.
 4. Verify mobile layouts at 320x568, 390x844, and 430x932.
 5. Deploy to Vercel, check `/api/health`, and inspect deployment-window error logs.
-6. If training is unsafe, set `NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE=false` and/or `NEXT_PUBLIC_MATIMATO_COACH_BUBBLES=false`.
-7. If board progression is unsafe, set `NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY=false` and `MATIMATO_BOARD_JOURNEY_ENABLED=false`. Do not delete wallet or purchase ledger records; they are preserved for recovery.
+6. Run `npm run mobile:smoke` against local production build and production alias.
+7. Run `npx cap sync ios` and `npm run ios:build` on a full-Xcode machine, or record the Xcode/signing blocker.
+8. If training is unsafe, set `NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE=false` and/or `NEXT_PUBLIC_MATIMATO_COACH_BUBBLES=false`.
+9. If board progression is unsafe, set `NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY=false` and `MATIMATO_BOARD_JOURNEY_ENABLED=false`. Do not delete wallet or purchase ledger records; they are preserved for recovery.
+10. If offline shell is unsafe, set `NEXT_PUBLIC_MATIMATO_SERVICE_WORKER=false`, bump the cache version after the fix, and redeploy.
 
 ## Verification
 
@@ -196,3 +222,6 @@ Release checks:
 - `npm run build`
 - `npm run verify`
 - `npm audit --omit=dev`
+- `npm run mobile:smoke`
+- `npx cap sync ios`
+- `npm run ios:build`
