@@ -770,11 +770,9 @@ function Seat({ label, player, ready }: { label: string; player: string; ready: 
 function Quests({ progression, quests, start, busy, dailyEnabled }: { progression: ProgressionResponse | null; quests: QuestProgress[]; start: () => void; busy: string; dailyEnabled: boolean }) {
   const daily = progression?.daily;
   const completed = daily?.status === 'completed';
-  const visibleQuests = quests.slice(0, 3);
-  const visibleWeekly = progression?.weeklyLeaderboard.slice(0, 3) ?? [];
   return (
-    <section className="panel">
-      <Stack gap="md">
+    <section className="panel scroll-screen">
+      <div className="scroll-screen-header">
         <Group justify="space-between">
           <span className="hero-tag">Daily challenge</span>
           {daily ? <Badge color={completed ? 'green' : 'blue'} variant="light">{daily.status}</Badge> : null}
@@ -794,31 +792,47 @@ function Quests({ progression, quests, start, busy, dailyEnabled }: { progressio
           </div>
         ) : null}
         <Button loading={busy === 'start-daily'} disabled={!dailyEnabled || completed || !daily} onClick={start}>{completed ? 'Daily complete' : 'Start or resume daily'}</Button>
+      </div>
+      <div className="scroll-list" role="region" aria-label="Daily quests and weekly ranks" tabIndex={0}>
         <div className="stack" aria-label="Daily quests">
-          {visibleQuests.map((quest) => <div className="list-card" key={quest.id}><strong>{quest.title}</strong><p className="copy">{Math.min(quest.progress, quest.target)}/{quest.target} · {quest.rewardXp} XP</p></div>)}
+          {quests.map((quest) => <div className="list-card" key={quest.id}><strong>{quest.title}</strong><p className="copy">{Math.min(quest.progress, quest.target)}/{quest.target} · {quest.rewardXp} XP</p></div>)}
         </div>
         <div className="stack" aria-label="Weekly challenge leaderboard">
           <strong>Weekly challenge ranks</strong>
-          {visibleWeekly.length ? visibleWeekly.map((entry) => (
+          {progression?.weeklyLeaderboard.length ? progression.weeklyLeaderboard.map((entry) => (
             <div className="list-card rank-row" key={`${entry.rank}-${entry.playerHash}`}>
               <strong>#{entry.rank} {entry.tag}</strong>
               <p className="copy">Score {entry.score} · Attempts {entry.attempts} · {new Date(entry.completedAt).toLocaleDateString()}</p>
             </div>
           )) : <p className="copy">No daily completions on this week board yet.</p>}
         </div>
-      </Stack>
+      </div>
     </section>
   );
 }
 
 function Ranks({ leaderboard }: { leaderboard: RankEntry[] }) {
-  const visible = leaderboard.slice(0, 6);
-  return <section className="panel stack"><span className="hero-tag">Rank board</span><h2>Climb the arena.</h2>{visible.length ? visible.map((entry, index) => <div className="list-card" key={entry.playerId}><strong>#{index + 1} {entry.tag}</strong><p className="copy">{entry.score} XP · {entry.wins} wins</p></div>) : <p className="copy">No ranked matches yet.</p>}</section>;
+  return (
+    <section className="panel scroll-screen">
+      <span className="hero-tag">Rank board</span>
+      <h2>Climb the arena.</h2>
+      <div className="scroll-list" role="region" aria-label="Ranking list" tabIndex={0}>
+        {leaderboard.length ? leaderboard.map((entry, index) => <div className="list-card" key={entry.playerId}><strong>#{index + 1} {entry.tag}</strong><p className="copy">{entry.score} XP · {entry.wins} wins</p></div>) : <p className="copy">No ranked matches yet.</p>}
+      </div>
+    </section>
+  );
 }
 
 function History({ history }: { history: MatchSummary[] }) {
-  const visible = history.slice(0, 5);
-  return <section className="panel stack"><span className="hero-tag">Match memory</span><h2>Recent duels.</h2>{visible.length ? visible.map((match) => <div className="list-card" key={match.id}><strong>{match.result}</strong><p className="copy">vs {match.opponent} · {match.score}/{match.opponentScore} · {new Date(match.completedAt).toLocaleDateString()}</p></div>) : <p className="copy">Finish a match to build history.</p>}</section>;
+  return (
+    <section className="panel scroll-screen">
+      <span className="hero-tag">Match memory</span>
+      <h2>Recent duels.</h2>
+      <div className="scroll-list" role="region" aria-label="Match history list" tabIndex={0}>
+        {history.length ? history.map((match) => <div className="list-card" key={match.id}><strong>{match.result}</strong><p className="copy">vs {match.opponent} · {match.score}/{match.opponentScore} · {new Date(match.completedAt).toLocaleDateString()}</p></div>) : <p className="copy">Finish a match to build history.</p>}
+      </div>
+    </section>
+  );
 }
 
 function Profile({ tag, setTag, persistTag, profile, replayTutorial }: { tag: string; setTag: (v: string) => void; persistTag: () => void; profile: ProfileSummary | null; replayTutorial: () => void }) {
