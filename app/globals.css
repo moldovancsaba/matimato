@@ -25,6 +25,8 @@ h1,h2,p { margin:0; } h1 { font-size:1.85rem; line-height:1; letter-spacing:0; w
 .scroll-screen-header { display:grid; gap:10px; flex:0 0 auto; min-width:0; }
 .scroll-list { flex:1 1 auto; min-height:0; display:grid; align-content:start; gap:10px; overflow-x:hidden; overflow-y:auto; padding-right:2px; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; touch-action:pan-y; scrollbar-width:thin; scrollbar-color:rgba(255,248,236,.35) transparent; }
 .scroll-list:focus-visible { outline:3px solid #fff8ec; outline-offset:2px; border-radius:8px; }
+.button-icon-label { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-width:0; }
+.button-icon-label svg { flex:0 0 auto; }
 .board-track { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; min-height:0; }
 .board-chip { min-height:64px; border:1px solid var(--mat-line); border-radius:8px; background:rgba(255,255,255,.04); color:var(--mat-text); display:grid; place-items:center; gap:2px; padding:6px 3px; text-align:center; }
 .board-chip strong { font-size:13px; line-height:1; }

@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Badge, Button, Group, Progress, SimpleGrid, Stack, TextInput } from '@doneisbetter/gds';
-import { IconCalendar, IconHistory, IconHome, IconRoute, IconSwords, IconTrophy, IconUser } from '@tabler/icons-react';
+import { IconCalendar, IconHistory, IconHome, IconLogout, IconRoute, IconSwords, IconTrophy, IconUser } from '@tabler/icons-react';
 import {
   cancelLobby,
+  clearPlayerSession,
   createGame,
   fetchGame,
   fetchHistory,
@@ -172,6 +173,29 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     setPlayerTag(safeTag);
     setTag(safeTag);
   }, [safeTag]);
+
+  const signOut = useCallback(() => {
+    const previousPlayerId = playerId || getPlayerId();
+    clearPlayerSession(previousPlayerId);
+    emitTelemetry({ name: 'player_signed_out', playerId: previousPlayerId, properties: { source: 'profile' } });
+    const nextPlayerId = getPlayerId();
+    setPlayerId(nextPlayerId);
+    setTag('');
+    setInviteCode('');
+    setSnapshot(null);
+    setProfile(null);
+    setHistory([]);
+    setLeaderboard([]);
+    setProgression(null);
+    setQuests([]);
+    setOnboarding(null);
+    setTutorial(createTutorialState());
+    setTutorialReplay(false);
+    setDismissedCoachSteps([]);
+    setNotice('Signed out on this device.');
+    setScreen(TRAINING_CHOICE_ENABLED ? 'training-choice' : 'home');
+    historyReplace('/');
+  }, [playerId]);
 
   async function start(mode: GameMode) {
     try {
@@ -447,7 +471,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
         {screen === 'quests' ? <Quests progression={progression} quests={quests} start={() => start('daily')} busy={busy} dailyEnabled={DAILY_V2_ENABLED} /> : null}
         {screen === 'ranks' ? <Ranks leaderboard={leaderboard} /> : null}
         {screen === 'history' ? <History history={history} /> : null}
-        {screen === 'profile' ? <Profile tag={tag} setTag={setTag} persistTag={persistTag} profile={profile} replayTutorial={() => openTutorial(true)} /> : null}
+        {screen === 'profile' ? <Profile tag={tag} setTag={setTag} persistTag={persistTag} profile={profile} replayTutorial={() => openTutorial(true)} signOut={signOut} /> : null}
       </div>
       {screen !== 'tutorial' && screen !== 'lobby' && screen !== 'training-choice' ? <Nav screen={screen} setScreen={setScreen} /> : null}
     </main>
@@ -835,17 +859,22 @@ function History({ history }: { history: MatchSummary[] }) {
   );
 }
 
-function Profile({ tag, setTag, persistTag, profile, replayTutorial }: { tag: string; setTag: (v: string) => void; persistTag: () => void; profile: ProfileSummary | null; replayTutorial: () => void }) {
+function Profile({ tag, setTag, persistTag, profile, replayTutorial, signOut }: { tag: string; setTag: (v: string) => void; persistTag: () => void; profile: ProfileSummary | null; replayTutorial: () => void; signOut: () => void }) {
   return (
-    <section className="panel">
-      <Stack gap="md">
+    <section className="panel scroll-screen">
+      <div className="scroll-screen-header">
         <span className="hero-tag">Player card</span>
         <h2>{tag || 'Player'}</h2>
         <p className="copy">Track level, spendable XP, active board, and replay the rules path any time.</p>
         <TextInput label="Player tag" value={tag} onChange={(event) => setTag(event.currentTarget.value)} placeholder="Enter your tag" />
         <Group grow><Button onClick={persistTag}>Save tag</Button><Button variant="light" onClick={replayTutorial}>Replay tutorial</Button></Group>
+        <Button variant="light" color="red" onClick={signOut}>
+          <span className="button-icon-label"><IconLogout size={18} aria-hidden="true" /> Sign out</span>
+        </Button>
+      </div>
+      <div className="scroll-list" role="region" aria-label="Player stats" tabIndex={0}>
         <SimpleGrid cols={2}><Kpi label="Level" value={profile?.level ?? 1} /><Kpi label="Lifetime XP" value={profile?.xp ?? 0} /><Kpi label="Spendable XP" value={profile?.spendableXp ?? profile?.xp ?? 0} /><Kpi label="Active board" value={profile?.boardUnlocks.activeBoardSize ?? 5} /><Kpi label="Matches" value={profile?.matches ?? 0} /><Kpi label="Wins" value={profile?.wins ?? 0} /></SimpleGrid>
-      </Stack>
+      </div>
     </section>
   );
 }
