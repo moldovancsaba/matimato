@@ -40,7 +40,7 @@ export function setLocalOnboarding(onboarding: OnboardingState): void {
   localStorage.setItem(`matimato.onboarding.${onboarding.playerId}`, JSON.stringify(onboarding));
 }
 
-export function createGame(mode: GameMode, playerId: string, playerTag: string, options?: { lobbyVersion?: 2; dailyId?: string }): Promise<GameApiResponse> {
+export function createGame(mode: GameMode, playerId: string, playerTag: string, options?: { lobbyVersion?: 2; dailyId?: string; clock?: { turnLimitMs?: number } }): Promise<GameApiResponse> {
   return request('/api/games', { method: 'POST', body: JSON.stringify({ type: 'create', mode, playerId, playerTag, ...options }) });
 }
 
@@ -50,6 +50,10 @@ export function joinGame(inviteCode: string, playerId: string, playerTag: string
 
 export function fetchGame(matchId: string): Promise<GameApiResponse> {
   return request(`/api/games?id=${encodeURIComponent(matchId)}`);
+}
+
+export function requestTimeout(matchId: string, playerId: string, deadlineVersion: number): Promise<GameApiResponse> {
+  return request('/api/games', { method: 'POST', body: JSON.stringify({ type: 'timeout', matchId, playerId, deadlineVersion }) });
 }
 
 export function fetchLobby(matchId: string, playerId: string): Promise<GameApiResponse> {

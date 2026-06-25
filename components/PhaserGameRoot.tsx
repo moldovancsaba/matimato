@@ -13,7 +13,14 @@ type Props = {
 
 export function PhaserGameRoot({ snapshot, playerId, onExit, onComplete }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
+  const onExitRef = useRef(onExit);
+  const onCompleteRef = useRef(onComplete);
   const [announcement, setAnnouncement] = useState('Matimato game loading.');
+
+  useEffect(() => {
+    onExitRef.current = onExit;
+    onCompleteRef.current = onComplete;
+  }, [onExit, onComplete]);
 
   useEffect(() => {
     let dispose: (() => void) | undefined;
@@ -27,8 +34,8 @@ export function PhaserGameRoot({ snapshot, playerId, onExit, onComplete }: Props
         onEvent: (event) => {
           if (event.type === 'announce') setAnnouncement(event.message);
           if (event.type === 'telemetry') emitTelemetry({ name: event.name, playerId, matchId: snapshot.id, result: event.result, properties: { mode: snapshot.mode, ...(event.properties ?? {}) } });
-          if (event.type === 'exit') onExit();
-          if (event.type === 'complete') onComplete(event.snapshot);
+          if (event.type === 'exit') onExitRef.current();
+          if (event.type === 'complete') onCompleteRef.current(event.snapshot);
         }
       });
     }
@@ -37,7 +44,7 @@ export function PhaserGameRoot({ snapshot, playerId, onExit, onComplete }: Props
       cancelled = true;
       dispose?.();
     };
-  }, [snapshot, playerId, onExit, onComplete]);
+  }, [snapshot, playerId]);
 
   return (
     <main className="game-host" aria-label="Matimato active match">

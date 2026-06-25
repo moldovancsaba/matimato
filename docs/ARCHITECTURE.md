@@ -13,6 +13,8 @@ Matimato has been rebuilt from zero.
 
 There is no React/SVG/CSS board implementation in this baseline. React mounts Phaser and listens for high-level events only.
 
+The Phaser boot boundary validates boot payloads, clears the mount host before creating a new game, and clears it again on destroy so React remounts cannot leave duplicate canvases. NetworkBridge owns abortable fetches and cancels pending reads/writes on scene teardown.
+
 ## GDS adoption
 
 Matimato imports `@doneisbetter/gds-theme/styles.css` once at the app entry and wraps the app with `GdsProvider`. Product screens compose controls from `@doneisbetter/gds`; Phaser remains the exception surface for the active game renderer, with GDS-derived shell styling and DOM live-region support around it.
@@ -41,6 +43,28 @@ The first-run tutorial uses a deterministic fixture seed (`matimato-guided-first
 Daily challenges live inside the existing game and progression boundaries. The challenge id is the UTC date (`yyyy-mm-dd`) and the board seed is `daily:{yyyy-mm-dd}`, so every player receives the same 9x9 board for the current UTC day. `POST /api/games` with `mode: "daily"` validates the supplied `dailyId`, resumes an active daily for that player when one exists, and otherwise creates a normal AI-backed snapshot with `dailyId` attached.
 
 Daily completion writes one result per `challengeId:playerId` into `dailyResults` and updates the profile streak once. The weekly leaderboard is derived from current-week daily results with deterministic ordering: score descending, completed time ascending, attempts ascending, then stable hashed player id. Rollback is `NEXT_PUBLIC_MATIMATO_DAILY_V2=false`, which disables new daily entry from the client while keeping stored snapshots readable.
+
+## Blitz mode and clock authority
+
+Blitz is an optional `GameMode` that adds a `ClockState` to snapshots:
+
+```ts
+type ClockState = {
+  enabled: boolean;
+  serverNow: string;
+  activeSide: PlayerSide;
+  deadlineAt?: string;
+  deadlineVersion?: number;
+  timeoutCount: Record<PlayerSide, number>;
+  config: { mode: 'perTurn'; turnLimitMs: number; graceMs: number; timeoutPolicy: 'forfeit-on-repeat' };
+};
+```
+
+The server creates deadlines, rejects expired move submissions, and resolves timeout requests by `deadlineVersion`. The browser may render countdowns and request timeout resolution, but it cannot advance gameplay without a confirmed server snapshot. Repeated timeouts trigger the configured forfeit policy. Rollback is two-layered: `NEXT_PUBLIC_MATIMATO_BLITZ_MODE=false` hides entry points and `MATIMATO_BLITZ_ENABLED=false` rejects new Blitz creation.
+
+## Match recap
+
+Game snapshots append accepted moves and timeout resolutions to optional `moveLog`. Completed matches transition from Phaser into a GDS-owned recap screen with final score, outcome reason, step-through replay, share action, ranks navigation, and rematch. Daily rematch routes to solo to avoid replaying a completed daily; Blitz rematch creates a fresh timed match with the default clock.
 
 ## Telemetry and health
 
@@ -78,6 +102,8 @@ The legacy battle create/join request shape still works for rollback. V2 lobbies
 8. Snapshot commits.
 9. Input unlocks if the game is still active.
 
+For Blitz, a timeout request follows the same server-frame path. Timeout frames do not animate tile removal; they announce the resolution, update the clock, and commit the returned snapshot.
+
 ## Board rules
 
 - Only 9x9 games exist.
@@ -98,7 +124,9 @@ Optional:
 - `NEXT_PUBLIC_MATIMATO_ONBOARDING`
 - `NEXT_PUBLIC_MATIMATO_LOBBY_V2`
 - `NEXT_PUBLIC_MATIMATO_DAILY_V2`
+- `NEXT_PUBLIC_MATIMATO_BLITZ_MODE`
 - `NEXT_PUBLIC_MATIMATO_TELEMETRY`
+- `MATIMATO_BLITZ_ENABLED`
 - `MATIMATO_EVENTS_ENABLED`
 
 ## Verification

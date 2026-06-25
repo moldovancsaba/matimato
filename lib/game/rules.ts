@@ -1,7 +1,10 @@
-import type { BoardCell, GameMode, GameOutcome, GameSnapshot, LegalTarget, MoveFrame, PlayerSide, PlayerState } from '@/lib/shared/types';
+import type { BlitzClockConfig, BoardCell, ClockState, GameMode, GameOutcome, GameSnapshot, LegalTarget, MoveFrame, PlayerSide, PlayerState, TimeoutResolution } from '@/lib/shared/types';
 
 const SIZE = 9;
 const SIDES: PlayerSide[] = ['north', 'south'];
+export const DEFAULT_BLITZ_TURN_LIMIT_MS = 30_000;
+export const DEFAULT_BLITZ_GRACE_MS = 1_500;
+export const MAX_BLITZ_TIMEOUTS_BEFORE_FORFEIT = 2;
 
 export function createPlayer(id: string, tag: string, side: PlayerSide): PlayerState {
   return { id, tag: tag.trim() || 'Player', side, score: 0 };
@@ -23,10 +26,11 @@ export function createBoard(seedText: string): BoardCell[] {
   return board;
 }
 
-export function newGame(id: string, mode: GameMode, playerId: string, tag: string, options?: { boardSeed?: string; dailyId?: string }): GameSnapshot {
-  const now = new Date().toISOString();
+export function newGame(id: string, mode: GameMode, playerId: string, tag: string, options?: { boardSeed?: string; dailyId?: string; clock?: Partial<Pick<BlitzClockConfig, 'turnLimitMs'>>; now?: Date }): GameSnapshot {
+  const now = (options?.now ?? new Date()).toISOString();
   const north = createPlayer(playerId, tag, 'north');
-  const south = mode === 'solo' || mode === 'daily' ? createPlayer('matimato-ai', 'Matimato AI', 'south') : null;
+  const south = mode === 'solo' || mode === 'daily' || mode === 'blitz' ? createPlayer('matimato-ai', 'Matimato AI', 'south') : null;
+  const clockConfig = mode === 'blitz' ? createBlitzClockConfig(options?.clock) : undefined;
   return {
     id,
     inviteCode: makeInviteCode(id),
@@ -38,6 +42,8 @@ export function newGame(id: string, mode: GameMode, playerId: string, tag: strin
     players: { north, south },
     currentTurn: 'north',
     legalTarget: { axis: 'any' },
+    clock: clockConfig ? nextClock('north', 0, { north: 0, south: 0 }, clockConfig, new Date(now)) : undefined,
+    moveLog: [],
     createdAt: now,
     updatedAt: now
   };
@@ -68,6 +74,8 @@ export function hasLegalCells(target: LegalTarget, board: BoardCell[]): boolean 
 export function applyMove(snapshot: GameSnapshot, side: PlayerSide, row: number, col: number, actionId: string): { snapshot: GameSnapshot; frame: MoveFrame } {
   if (snapshot.status !== 'active') throw new Error('Game is not active.');
   if (snapshot.currentTurn !== side) throw new Error('It is not this player turn.');
+  const now = new Date();
+  if (isDeadlineExpired(snapshot, now)) throw new Error('TURN_DEADLINE_EXPIRED');
   if (!isLegal(snapshot.legalTarget, row, col, snapshot.board)) throw new Error('Illegal tile selection.');
   const fromTarget = snapshot.legalTarget;
   const board = snapshot.board.map((cell) => cell.row === row && cell.col === col ? { ...cell, removed: true } : cell);
@@ -77,7 +85,8 @@ export function applyMove(snapshot: GameSnapshot, side: PlayerSide, row: number,
   const nextSide: PlayerSide = side === 'north' ? 'south' : 'north';
   const toTarget: LegalTarget = fromTarget.axis === 'column' ? { axis: 'row', index: row } : { axis: 'column', index: col };
   const outcome = computeOutcome(board, toTarget, scores);
-  const now = new Date().toISOString();
+  const updatedAt = now.toISOString();
+  const frame: MoveFrame = { actionId, version: snapshot.version + 1, side, selected: { row, col, value: selected.value }, fromTarget, toTarget, scores, outcome };
   const nextSnapshot: GameSnapshot = {
     ...snapshot,
     version: snapshot.version + 1,
@@ -88,14 +97,64 @@ export function applyMove(snapshot: GameSnapshot, side: PlayerSide, row: number,
     },
     currentTurn: nextSide,
     legalTarget: toTarget,
+    clock: snapshot.clock && !outcome ? nextClock(nextSide, snapshot.version + 1, snapshot.clock.timeoutCount, snapshot.clock.config, now) : stopClock(snapshot.clock, now),
+    moveLog: [...(snapshot.moveLog ?? []), frame],
     outcome,
     status: outcome ? 'complete' : 'active',
-    updatedAt: now
+    updatedAt
   };
   return {
     snapshot: nextSnapshot,
-    frame: { actionId, version: nextSnapshot.version, side, selected: { row, col, value: selected.value }, fromTarget, toTarget, scores, outcome }
+    frame
   };
+}
+
+export function createBlitzClockConfig(input?: Partial<Pick<BlitzClockConfig, 'turnLimitMs'>>): BlitzClockConfig {
+  const turnLimitMs = Number(input?.turnLimitMs ?? DEFAULT_BLITZ_TURN_LIMIT_MS);
+  if (!Number.isInteger(turnLimitMs) || turnLimitMs < 5_000 || turnLimitMs > 120_000) throw new Error('INVALID_CLOCK_CONFIG');
+  return { mode: 'perTurn', turnLimitMs, graceMs: DEFAULT_BLITZ_GRACE_MS, timeoutPolicy: 'forfeit-on-repeat' };
+}
+
+export function isDeadlineExpired(snapshot: GameSnapshot, now = new Date()): boolean {
+  if (!snapshot.clock?.enabled || !snapshot.clock.deadlineAt) return false;
+  return now.getTime() > new Date(snapshot.clock.deadlineAt).getTime() + snapshot.clock.config.graceMs;
+}
+
+export function applyTimeout(snapshot: GameSnapshot, side: PlayerSide, deadlineVersion: number, now = new Date()): { snapshot: GameSnapshot; frames: MoveFrame[]; resolved: boolean } {
+  if (snapshot.status !== 'active' || !snapshot.clock?.enabled || !snapshot.clock.deadlineAt) return { snapshot, frames: [], resolved: false };
+  if (snapshot.currentTurn !== side || snapshot.clock.activeSide !== side) return { snapshot, frames: [], resolved: false };
+  if (snapshot.clock.deadlineVersion !== deadlineVersion) return { snapshot, frames: [], resolved: false };
+  if (!isDeadlineExpired(snapshot, now)) return { snapshot, frames: [], resolved: false };
+
+  const counts = { ...snapshot.clock.timeoutCount, [side]: snapshot.clock.timeoutCount[side] + 1 };
+  const nextSide: PlayerSide = side === 'north' ? 'south' : 'north';
+  const scores = { north: snapshot.players.north?.score ?? 0, south: snapshot.players.south?.score ?? 0 };
+  const forfeit = counts[side] >= MAX_BLITZ_TIMEOUTS_BEFORE_FORFEIT;
+  const timeout: TimeoutResolution = { side, deadlineVersion, policy: snapshot.clock.config.timeoutPolicy, count: counts[side] };
+  const outcome: GameOutcome | undefined = forfeit ? { winner: nextSide, reason: 'timeout-forfeit' } : undefined;
+  const version = snapshot.version + 1;
+  const frame: MoveFrame = {
+    actionId: `timeout:${snapshot.id}:${side}:${deadlineVersion}`,
+    version,
+    side,
+    selected: { row: -1, col: -1, value: 0 },
+    fromTarget: snapshot.legalTarget,
+    toTarget: snapshot.legalTarget,
+    scores,
+    outcome,
+    timeout
+  };
+  const next: GameSnapshot = {
+    ...snapshot,
+    version,
+    currentTurn: forfeit ? snapshot.currentTurn : nextSide,
+    clock: forfeit ? stopClock(snapshot.clock, now) : nextClock(nextSide, version, counts, snapshot.clock.config, now),
+    outcome,
+    status: outcome ? 'complete' : 'active',
+    moveLog: [...(snapshot.moveLog ?? []), frame],
+    updatedAt: now.toISOString()
+  };
+  return { snapshot: next, frames: [frame], resolved: true };
 }
 
 export function chooseAiMove(snapshot: GameSnapshot): { row: number; col: number } | null {
@@ -103,6 +162,24 @@ export function chooseAiMove(snapshot: GameSnapshot): { row: number; col: number
   if (!legal.length) return null;
   const best = legal.sort((a, b) => b.value - a.value || a.row - b.row || a.col - b.col)[0];
   return { row: best.row, col: best.col };
+}
+
+export function nextClock(activeSide: PlayerSide, deadlineVersion: number, timeoutCount: Record<PlayerSide, number>, config: BlitzClockConfig, now = new Date()): ClockState {
+  const serverNow = now.toISOString();
+  return {
+    enabled: true,
+    serverNow,
+    activeSide,
+    deadlineAt: new Date(now.getTime() + config.turnLimitMs).toISOString(),
+    deadlineVersion,
+    timeoutCount,
+    config
+  };
+}
+
+function stopClock(clock: ClockState | undefined, now: Date): ClockState | undefined {
+  if (!clock) return undefined;
+  return { ...clock, enabled: false, serverNow: now.toISOString(), deadlineAt: undefined };
 }
 
 export function computeOutcome(board: BoardCell[], target: LegalTarget, scores: Record<PlayerSide, number>): GameOutcome | undefined {

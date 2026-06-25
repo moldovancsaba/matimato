@@ -24,6 +24,12 @@ export class BoardActor {
     }
   }
 
+  syncCells(cells: BoardCell[]) {
+    for (const cell of cells) {
+      if (cell.removed) void this.tiles.get(key(cell.row, cell.col))?.remove(false);
+    }
+  }
+
   async showSelected(row: number, col: number, side: PlayerSide) {
     const accent = side === 'north' ? 0xff6a2a : 0xff3f93;
     await this.tiles.get(key(row, col))?.showSelected(accent);

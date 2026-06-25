@@ -2,7 +2,7 @@
 
 A fresh Next.js + Phaser + MongoDB implementation of Matimato.
 
-Current release: `2.2.0`.
+Current release: `2.3.0`.
 
 ## Commands
 
@@ -41,7 +41,9 @@ These flags default to enabled. Set either value to `false` for rollback.
 NEXT_PUBLIC_MATIMATO_ONBOARDING=true
 NEXT_PUBLIC_MATIMATO_LOBBY_V2=true
 NEXT_PUBLIC_MATIMATO_DAILY_V2=true
+NEXT_PUBLIC_MATIMATO_BLITZ_MODE=true
 NEXT_PUBLIC_MATIMATO_TELEMETRY=true
+MATIMATO_BLITZ_ENABLED=true
 MATIMATO_EVENTS_ENABLED=true
 ```
 
@@ -51,7 +53,27 @@ MATIMATO_EVENTS_ENABLED=true
 
 `NEXT_PUBLIC_MATIMATO_DAILY_V2=false` hides daily challenge entry on the Quests screen without affecting solo, battle, or existing daily snapshots.
 
+`NEXT_PUBLIC_MATIMATO_BLITZ_MODE=false` hides Blitz entry points. `MATIMATO_BLITZ_ENABLED=false` rejects new Blitz creation server-side while keeping existing saved snapshots readable.
+
 `NEXT_PUBLIC_MATIMATO_TELEMETRY=false` disables the client event emitter. `MATIMATO_EVENTS_ENABLED=false` keeps `/api/events` accepting payloads but marks ingestion degraded and skips event storage.
+
+## Blitz mode
+
+Blitz is a turn-based quick-play mode with a server-authored per-turn clock. The client displays the countdown and can request timeout resolution, but the server decides whether the deadline expired.
+
+```ts
+POST /api/games
+{ "type": "create", "mode": "blitz", "playerId": "...", "playerTag": "...", "clock": { "turnLimitMs": 30000 } }
+
+POST /api/games
+{ "type": "timeout", "matchId": "...", "playerId": "...", "deadlineVersion": 4 }
+```
+
+Existing solo, battle, and daily snapshots may omit `clock`; clients treat omitted clocks as untimed. Timeout requests are idempotent by match, side, and deadline version. Repeated Blitz timeouts use the documented forfeit policy.
+
+## Match recap
+
+Completed matches transition to a GDS-owned recap screen with final score, outcome reason, move replay, share action, ranks navigation, and rematch. Game snapshots now keep an optional `moveLog` so recap can replay claimed tiles and timeout resolutions without reading Phaser state.
 
 ## Daily challenge
 
@@ -72,7 +94,7 @@ POST /api/events
 { "events": [{ "name": "daily_started", "version": 1, "occurredAt": "...", "sessionHash": "...", "properties": {} }] }
 ```
 
-Tracked product events cover onboarding, battle lobby, daily challenge, weekly/rank views, match completion, Phaser lifecycle, sync errors, and recovery surfaces. `/api/health` returns release version plus database connectivity checks for deployment verification.
+Tracked product events cover onboarding, battle lobby, daily challenge, Blitz clocks/rematches, recap/share actions, weekly/rank views, match completion, Phaser lifecycle, sync errors, and recovery surfaces. `/api/health` returns release version plus database connectivity checks for deployment verification.
 
 ## Core guarantee
 

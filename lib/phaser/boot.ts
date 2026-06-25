@@ -1,8 +1,11 @@
 import * as Phaser from 'phaser';
 import { MatimatoScene } from './MatimatoScene';
 import type { PhaserBootPayload } from './types';
+import { validateBootPayload } from './bootPayload';
 
 export function bootMatimato(parent: HTMLElement, payload: PhaserBootPayload): () => void {
+  validateBootPayload(payload);
+  parent.replaceChildren();
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
@@ -14,5 +17,8 @@ export function bootMatimato(parent: HTMLElement, payload: PhaserBootPayload): (
     scene: [MatimatoScene]
   });
   game.scene.start('matimato', payload);
-  return () => game.destroy(true);
+  return () => {
+    game.destroy(true);
+    parent.replaceChildren();
+  };
 }

@@ -27,13 +27,14 @@ import { emitTelemetry, installTelemetryPagehide } from '@/lib/client/telemetry'
 import type { BoardCell, GameMode, GameSnapshot, LobbyState, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, QuestProgress, RankEntry, TutorialStepId } from '@/lib/shared/types';
 import { PhaserGameRoot } from './PhaserGameRoot';
 
-type Screen = 'home' | 'battle' | 'quests' | 'ranks' | 'history' | 'profile' | 'match' | 'tutorial' | 'lobby';
+type Screen = 'home' | 'battle' | 'quests' | 'ranks' | 'history' | 'profile' | 'match' | 'tutorial' | 'lobby' | 'recap';
 
 type Props = { initialScreen: Screen; initialMatchId?: string };
 
 const ONBOARDING_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_ONBOARDING !== 'false';
 const LOBBY_V2_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_LOBBY_V2 !== 'false';
 const DAILY_V2_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_DAILY_V2 !== 'false';
+const BLITZ_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_BLITZ_MODE !== 'false';
 
 export function GameApp({ initialScreen, initialMatchId }: Props) {
   const [screen, setScreen] = useState<Screen>(initialScreen);
@@ -156,7 +157,13 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     try {
       setBusy(`start-${mode}`);
       persistTag();
-      const options = mode === 'battle' && LOBBY_V2_ENABLED ? { lobbyVersion: 2 as const } : mode === 'daily' && progression?.daily ? { dailyId: progression.daily.id } : undefined;
+      const options = mode === 'battle' && LOBBY_V2_ENABLED
+        ? { lobbyVersion: 2 as const }
+        : mode === 'daily' && progression?.daily
+          ? { dailyId: progression.daily.id }
+          : mode === 'blitz'
+            ? { clock: { turnLimitMs: 30_000 } }
+            : undefined;
       const data = await createGame(mode, playerId, safeTag, options);
       setSnapshot(data.snapshot);
       if (data.snapshot.lobby && data.snapshot.status !== 'active') {
@@ -167,6 +174,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
         const resumedDaily = mode === 'daily' && data.snapshot.version > 0;
         setNotice(mode === 'battle' ? `Share battle code ${data.snapshot.inviteCode}.` : resumedDaily ? 'Daily challenge resumed.' : 'Match ready.');
         if (mode === 'daily') emitTelemetry({ name: resumedDaily ? 'daily_resumed' : 'daily_started', playerId, matchId: data.snapshot.id, properties: { dailyId: data.snapshot.dailyId ?? '', date: data.snapshot.dailyId ?? '' } });
+        if (mode === 'blitz') emitTelemetry({ name: 'blitz_started', playerId, matchId: data.snapshot.id, properties: { turnLimitMs: data.snapshot.clock?.config.turnLimitMs ?? 0 } });
         setScreen('match');
       }
       historyReplace(`/play/${data.snapshot.id}`);
@@ -326,9 +334,11 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
   if (screen === 'match' && snapshot) {
     return <PhaserGameRoot snapshot={snapshot} playerId={playerId} onExit={() => { setScreen('home'); historyReplace('/'); }} onComplete={(next) => {
       setSnapshot(next);
-      setNotice('Match complete.');
+      setNotice('Match complete. Recap ready.');
       emitTelemetry({ name: next.mode === 'daily' ? 'daily_completed' : 'match_completed', playerId, matchId: next.id, properties: { mode: next.mode, dailyId: next.dailyId ?? '', scoreBucket: scoreBucket(next.players.north?.score ?? 0) } });
+      if (next.mode === 'blitz') emitTelemetry({ name: 'blitz_completed', playerId, matchId: next.id, properties: { moveCount: next.moveLog?.length ?? 0, outcomeReason: next.outcome?.reason ?? '' } });
       if (next.mode === 'daily') void fetchProgression(playerId).then((data) => { setProgression(data); setQuests(data.quests); });
+      setScreen('recap');
     }} />;
   }
 
@@ -341,6 +351,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
       {screen === 'tutorial' ? <Tutorial state={tutorial} select={selectTutorialTile} suggest={selectSuggestedTile} resolveAi={resolveAiTurn} finish={finishTutorial} skip={skipTutorial} busy={busy} /> : null}
       {screen === 'battle' ? <Battle tag={tag} setTag={setTag} start={start} inviteCode={inviteCode} setInviteCode={setInviteCode} join={join} busy={busy} /> : null}
       {screen === 'lobby' && snapshot && lobby ? <Lobby snapshot={snapshot} lobby={lobby} playerId={playerId} copy={copyInvite} share={shareInvite} ready={markReady} exit={exitLobby} busy={busy} /> : null}
+      {screen === 'recap' && snapshot ? <Recap snapshot={snapshot} playerId={playerId} rematch={() => start(snapshot.mode === 'daily' ? 'solo' : snapshot.mode)} home={() => { setScreen('home'); historyReplace('/'); }} ranks={() => setScreen('ranks')} busy={busy} /> : null}
       {screen === 'quests' ? <Quests progression={progression} quests={quests} start={() => start('daily')} busy={busy} dailyEnabled={DAILY_V2_ENABLED} /> : null}
       {screen === 'ranks' ? <Ranks leaderboard={leaderboard} /> : null}
       {screen === 'history' ? <History history={history} /> : null}
@@ -371,7 +382,78 @@ function Home({ tag, setTag, start, goBattle, startTutorial, busy }: { tag: stri
           <Button size="lg" loading={busy === 'start-solo'} onClick={() => start('solo')}>Start solo</Button>
           <Button size="lg" variant="light" onClick={goBattle}>Battle</Button>
         </SimpleGrid>
+        <Button disabled={!BLITZ_ENABLED} loading={busy === 'start-blitz'} onClick={() => start('blitz')}>Blitz quick match</Button>
         <Button variant="subtle" onClick={startTutorial}>Replay tutorial</Button>
+      </Stack>
+    </section>
+  );
+}
+
+function Recap({ snapshot, playerId, rematch, home, ranks, busy }: { snapshot: GameSnapshot; playerId: string; rematch: () => void; home: () => void; ranks: () => void; busy: string }) {
+  const [replayIndex, setReplayIndex] = useState(0);
+  const side = snapshot.players.south?.id === playerId ? 'south' : 'north';
+  const you = snapshot.players[side];
+  const rival = snapshot.players[side === 'north' ? 'south' : 'north'];
+  const result = snapshot.outcome?.winner === 'draw' ? 'Draw' : snapshot.outcome?.winner === side ? 'Victory' : 'Defeat';
+  const moves = snapshot.moveLog ?? [];
+  const current = moves[Math.min(replayIndex, Math.max(0, moves.length - 1))];
+
+  useEffect(() => {
+    emitTelemetry({ name: 'recap_viewed', playerId, matchId: snapshot.id, properties: { mode: snapshot.mode, moveCount: moves.length, outcomeReason: snapshot.outcome?.reason ?? '' } });
+  }, [moves.length, playerId, snapshot.id, snapshot.mode, snapshot.outcome?.reason]);
+
+  async function share() {
+    const text = `Matimato ${result}: ${you?.score ?? 0}-${rival?.score ?? 0} in ${snapshot.mode}.`;
+    try {
+      if (navigator.share) await navigator.share({ title: 'Matimato recap', text });
+      else await navigator.clipboard.writeText(text);
+      emitTelemetry({ name: 'recap_shared', playerId, matchId: snapshot.id, properties: { mode: snapshot.mode, result } });
+    } catch {
+      // Share cancellation is not an error state for gameplay.
+    }
+  }
+
+  function replayNext() {
+    setReplayIndex((value) => Math.min(value + 1, Math.max(0, moves.length - 1)));
+    emitTelemetry({ name: 'recap_replay_started', playerId, matchId: snapshot.id, properties: { moveCount: moves.length } });
+  }
+
+  function rematchWithTelemetry() {
+    emitTelemetry({ name: snapshot.mode === 'blitz' ? 'blitz_rematch_clicked' : 'rematch_started', playerId, matchId: snapshot.id, properties: { mode: snapshot.mode } });
+    rematch();
+  }
+
+  return (
+    <section className="panel recap-shell" aria-labelledby="recap-title">
+      <Stack gap="md">
+        <Group justify="space-between">
+          <Badge color={result === 'Victory' ? 'green' : result === 'Draw' ? 'yellow' : 'pink'} variant="light">{result}</Badge>
+          <Badge color="gray" variant="outline">{snapshot.mode}</Badge>
+        </Group>
+        <h2 id="recap-title">Match recap.</h2>
+        <div className="score-row" aria-label="Final score">
+          <Kpi label={you?.tag ?? 'You'} value={you?.score ?? 0} />
+          <Kpi label={rival?.tag ?? 'Rival'} value={rival?.score ?? 0} />
+        </div>
+        <p className="copy">{snapshot.outcome?.reason === 'timeout-forfeit' ? 'Blitz ended by timeout forfeit.' : snapshot.outcome?.reason === 'no-legal-cells' ? 'No legal cells remained.' : 'The board reached its result state.'}</p>
+        <div className="list-card" role="status" aria-label="Move replay">
+          <strong>Replay {moves.length ? `${Math.min(replayIndex + 1, moves.length)} of ${moves.length}` : 'empty'}</strong>
+          <p className="copy">
+            {current
+              ? current.timeout
+                ? `${current.timeout.side} timed out at version ${current.timeout.deadlineVersion}.`
+                : `${current.side} claimed ${signedValue(current.selected.value)} at row ${current.selected.row + 1}, column ${current.selected.col + 1}.`
+              : 'No moves recorded for this match.'}
+          </p>
+          <Progress value={moves.length ? ((replayIndex + 1) / moves.length) * 100 : 0} aria-label="Replay progress" />
+        </div>
+        <SimpleGrid cols={2}>
+          <Button disabled={!moves.length || replayIndex >= moves.length - 1} onClick={replayNext}>Replay next</Button>
+          <Button variant="light" onClick={share}>Share recap</Button>
+          <Button loading={busy === `start-${snapshot.mode === 'daily' ? 'solo' : snapshot.mode}`} onClick={rematchWithTelemetry}>{snapshot.mode === 'blitz' ? 'Blitz rematch' : 'Rematch'}</Button>
+          <Button variant="light" onClick={ranks}>View ranks</Button>
+        </SimpleGrid>
+        <Button variant="subtle" onClick={home}>Back home</Button>
       </Stack>
     </section>
   );

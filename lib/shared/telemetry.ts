@@ -30,7 +30,19 @@ export const TELEMETRY_EVENT_NAMES = [
   'phaser_destroyed',
   'phaser_runtime_error',
   'api_error',
-  'pwa_recovery'
+  'pwa_recovery',
+  'blitz_started',
+  'blitz_move_submitted',
+  'blitz_deadline_warning',
+  'blitz_timeout_requested',
+  'blitz_timeout_resolved',
+  'blitz_completed',
+  'blitz_rematch_clicked',
+  'blitz_abandoned',
+  'recap_viewed',
+  'recap_replay_started',
+  'recap_shared',
+  'rematch_started'
 ] as const satisfies readonly TelemetryEventName[];
 
 export const TELEMETRY_PROPERTY_KEYS = [
@@ -51,7 +63,12 @@ export const TELEMETRY_PROPERTY_KEYS = [
   'errorCode',
   'result',
   'version',
-  'source'
+  'source',
+  'turnLimitMs',
+  'deadlineVersion',
+  'timeoutCount',
+  'moveCount',
+  'outcomeReason'
 ] as const;
 
 export function isTelemetryEventName(value: string): value is TelemetryEventName {

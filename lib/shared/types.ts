@@ -1,8 +1,9 @@
 export type PlayerSide = 'north' | 'south';
-export type GameMode = 'solo' | 'battle' | 'daily';
+export type GameMode = 'solo' | 'battle' | 'daily' | 'blitz';
 export type GameStatus = 'waiting' | 'active' | 'complete';
 export type LobbyStatus = 'waiting' | 'ready' | 'active' | 'expired' | 'cancelled';
 export type TutorialStepId = 'first-pick' | 'column-target' | 'row-target' | 'negative-risk' | 'ai-turn' | 'finish';
+export type BlitzTimeoutPolicy = 'skip-turn' | 'forfeit-on-repeat';
 export type TelemetryEventName =
   | 'onboarding_started'
   | 'onboarding_step_completed'
@@ -33,7 +34,19 @@ export type TelemetryEventName =
   | 'phaser_destroyed'
   | 'phaser_runtime_error'
   | 'api_error'
-  | 'pwa_recovery';
+  | 'pwa_recovery'
+  | 'blitz_started'
+  | 'blitz_move_submitted'
+  | 'blitz_deadline_warning'
+  | 'blitz_timeout_requested'
+  | 'blitz_timeout_resolved'
+  | 'blitz_completed'
+  | 'blitz_rematch_clicked'
+  | 'blitz_abandoned'
+  | 'recap_viewed'
+  | 'recap_replay_started'
+  | 'recap_shared'
+  | 'rematch_started';
 export type LegalTarget = { axis: 'any' } | { axis: 'row'; index: number } | { axis: 'column'; index: number };
 
 export type BoardCell = {
@@ -61,11 +74,36 @@ export type MoveFrame = {
   toTarget: LegalTarget;
   scores: Record<PlayerSide, number>;
   outcome?: GameOutcome;
+  timeout?: TimeoutResolution;
 };
 
 export type GameOutcome = {
   winner: PlayerSide | 'draw';
-  reason: 'board-complete' | 'no-legal-cells' | 'resigned';
+  reason: 'board-complete' | 'no-legal-cells' | 'resigned' | 'timeout-forfeit';
+};
+
+export type BlitzClockConfig = {
+  mode: 'perTurn';
+  turnLimitMs: number;
+  graceMs: number;
+  timeoutPolicy: BlitzTimeoutPolicy;
+};
+
+export type ClockState = {
+  enabled: boolean;
+  serverNow: string;
+  activeSide: PlayerSide;
+  deadlineAt?: string;
+  deadlineVersion?: number;
+  timeoutCount: Record<PlayerSide, number>;
+  config: BlitzClockConfig;
+};
+
+export type TimeoutResolution = {
+  side: PlayerSide;
+  deadlineVersion: number;
+  policy: BlitzTimeoutPolicy;
+  count: number;
 };
 
 export type GameSnapshot = {
@@ -79,6 +117,8 @@ export type GameSnapshot = {
   players: Record<PlayerSide, PlayerState | null>;
   currentTurn: PlayerSide;
   legalTarget: LegalTarget;
+  clock?: ClockState;
+  moveLog?: MoveFrame[];
   outcome?: GameOutcome;
   lobby?: LobbyState;
   createdAt: string;
@@ -177,14 +217,15 @@ export type HealthResponse = {
   checks: HealthCheck[];
 };
 
-export type CreateGameRequest = { type: 'create'; mode: GameMode; playerId: string; playerTag: string; lobbyVersion?: 2; dailyId?: string };
+export type CreateGameRequest = { type: 'create'; mode: GameMode; playerId: string; playerTag: string; lobbyVersion?: 2; dailyId?: string; clock?: Partial<Pick<BlitzClockConfig, 'turnLimitMs'>> };
 export type JoinGameRequest = { type: 'join'; inviteCode: string; playerId: string; playerTag: string };
 export type MoveRequest = { type: 'move'; matchId: string; playerId: string; actionId: string; row: number; col: number; expectedVersion: number };
 export type SyncRequest = { type: 'sync'; matchId: string; playerId?: string };
+export type TimeoutRequest = { type: 'timeout'; matchId: string; playerId: string; deadlineVersion: number };
 export type LobbyStatusRequest = { type: 'lobbyStatus'; matchId: string; playerId: string };
 export type LobbyReadyRequest = { type: 'ready'; matchId: string; playerId: string; actionId: string };
 export type LobbyLeaveRequest = { type: 'leave' | 'cancel'; matchId: string; playerId: string; actionId: string };
-export type GameRequest = CreateGameRequest | JoinGameRequest | MoveRequest | SyncRequest | LobbyStatusRequest | LobbyReadyRequest | LobbyLeaveRequest;
+export type GameRequest = CreateGameRequest | JoinGameRequest | MoveRequest | SyncRequest | TimeoutRequest | LobbyStatusRequest | LobbyReadyRequest | LobbyLeaveRequest;
 
 export type CreateJoinResponse = { snapshot: GameSnapshot };
 export type MoveResponse = { snapshot: GameSnapshot; frames: MoveFrame[] };
