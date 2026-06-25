@@ -15,8 +15,12 @@ npm run build
 npm run verify
 npm run assets:ios
 npm run mobile:smoke
+npm run ios:preflight
 npm run ios:sync
 npm run ios:build
+npm run ios:archive
+npm run ios:export
+npm run ios:upload
 npm audit --omit=dev
 ```
 
@@ -60,6 +64,9 @@ MATIMATO_EVENTS_ENABLED=true
 MATIMATO_BOARD_JOURNEY_ENABLED=true
 CAPACITOR_SERVER_URL=https://matimato.vercel.app
 CAPACITOR_BUILD_NUMBER=local
+APP_STORE_CONNECT_API_KEY_ID=
+APP_STORE_CONNECT_ISSUER_ID=
+APP_STORE_CONNECT_API_KEY_PATH=
 ```
 
 `NEXT_PUBLIC_MATIMATO_ONBOARDING=false` disables automatic first-run tutorial entry while keeping normal solo and battle actions available.
@@ -85,11 +92,15 @@ Key commands:
 ```bash
 npm run assets:ios
 npm run ios:sync
+npm run ios:preflight
 npm run ios:build
+npm run ios:archive
+npm run ios:export
+npm run ios:upload
 MATIMATO_SMOKE_URL=https://matimato.vercel.app npm run mobile:smoke
 ```
 
-The local machine currently has Command Line Tools selected instead of full Xcode, so `ios:build` is expected to fail until Xcode is installed/selected. Apple signing, App Store Connect app creation, and TestFlight upload require external Apple Developer credentials and are intentionally not stored in this repository.
+The local machine currently lacks full Xcode, Apple code-signing identities, provisioning profiles, and App Store Connect API credentials, so `ios:preflight` blocks archive/upload. Apple signing, App Store Connect app creation, and TestFlight upload require external Apple Developer credentials and are intentionally not stored in this repository.
 
 ## Board progression
 
@@ -210,7 +221,7 @@ Before promoting an iOS app release, verify:
 - `ios_runtime_detected`, offline retry/recovery, and wrapper error telemetry are accepted by `/api/events`.
 - `npm run mobile:smoke` passes at 320x568, 390x844, and 430x932.
 - `npx cap sync ios` succeeds.
-- `npm run ios:build` succeeds on a full-Xcode machine, or the Xcode/Apple credential blocker is recorded in the release issue.
+- `npm run ios:preflight`, `npm run ios:archive`, `npm run ios:export`, and `npm run ios:upload` succeed on a full-Xcode/signing machine, or the Xcode/Apple credential blocker is recorded in the release issue.
 
 ## Battle lobby
 

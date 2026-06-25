@@ -111,24 +111,61 @@ open ios/App/App.xcodeproj
 Unsigned simulator check:
 
 ```bash
+npm run ios:preflight
 npm run ios:build
 ```
 
 Current local blocker:
 
 ```text
-xcode-select: error: tool 'xcodebuild' requires Xcode, but active developer directory '/Library/Developer/CommandLineTools' is a command line tools instance
+missing - Full Xcode: /Applications/Xcode.app/Contents/Developer does not contain xcodebuild
+missing - Code signing identity: no Apple signing identity found in keychain
+missing - Provisioning profile: /Users/chappie/Library/MobileDevice/Provisioning Profiles does not exist
+missing - App Store Connect API credentials: set APP_STORE_CONNECT_API_KEY_ID, APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_API_KEY_PATH
 ```
 
-Recovery on a Mac with full Xcode installed:
+Recovery on a Mac with Apple access:
 
 ```bash
+# install full Xcode from Apple/App Store first
 sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 xcodebuild -version
-npm run ios:build
+# install/import Apple Distribution certificate and provisioning profile
+# export APP_STORE_CONNECT_API_KEY_ID, APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_API_KEY_PATH
+npm run ios:preflight
+npm run ios:archive
+npm run ios:export
+npm run ios:upload
 ```
 
 Signing and TestFlight remain external until an Apple Developer team, bundle identifier ownership, signing certificate/profile, and App Store Connect app record are available. Do not commit certificates, provisioning profiles, API keys, or team-private Apple metadata.
+
+## TestFlight Upload
+
+Automated upload is gated by `npm run ios:preflight`, which checks full Xcode, Apple code-signing identities, local provisioning profiles, App Store Connect API credentials, and `ios/exportOptions.plist`.
+
+Required private environment:
+
+```bash
+export APP_STORE_CONNECT_API_KEY_ID="..."
+export APP_STORE_CONNECT_ISSUER_ID="..."
+export APP_STORE_CONNECT_API_KEY_PATH="/secure/path/AuthKey_....p8"
+```
+
+Do not commit the `.p8` key, certificates, provisioning profiles, or Apple account data.
+
+Upload flow after prerequisites are installed:
+
+```bash
+npm run assets:ios
+npm run ios:sync
+npm run ios:preflight
+npm run ios:archive
+npm run ios:export
+npm run ios:upload
+```
+
+`npm run ios:upload` copies the private key into `~/.appstoreconnect/private_keys/AuthKey_<key id>.p8`, which is the location used by Apple command-line upload tooling, and then calls `xcrun altool --upload-app`.
 
 ## App Store Connect Package
 
@@ -171,7 +208,11 @@ npm run verify
 npm audit --omit=dev
 npm run mobile:smoke
 npx cap sync ios
+npm run ios:preflight
 npm run ios:build
+npm run ios:archive
+npm run ios:export
+npm run ios:upload
 ```
 
 Production verification:
