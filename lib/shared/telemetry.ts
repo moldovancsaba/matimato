@@ -56,7 +56,26 @@ export const TELEMETRY_EVENT_NAMES = [
   'ios_offline_state_changed',
   'ios_offline_retry',
   'ios_offline_recovered',
-  'ios_wrapper_error'
+  'ios_wrapper_error',
+  'season_viewed',
+  'season_task_progressed',
+  'season_reward_unlocked',
+  'season_reward_claimed',
+  'season_completed',
+  'season_expired',
+  'season_progress_error',
+  'rules_help_opened',
+  'rules_help_topic_viewed',
+  'rules_contextual_hint_shown',
+  'rules_tutorial_replay_started',
+  'rules_help_closed',
+  'rules_help_error',
+  'bot_profile_viewed',
+  'bot_profile_selected',
+  'bot_move_chosen',
+  'bot_decision_timeout',
+  'bot_match_completed',
+  'bot_fallback_used'
 ] as const satisfies readonly TelemetryEventName[];
 
 export const TELEMETRY_PROPERTY_KEYS = [
@@ -91,7 +110,14 @@ export const TELEMETRY_PROPERTY_KEYS = [
   'appVersion',
   'buildNumber',
   'networkState',
-  'serviceWorker'
+  'serviceWorker',
+  'seasonId',
+  'rewardId',
+  'topic',
+  'profileId',
+  'difficulty',
+  'newlyClaimed',
+  'xp'
 ] as const;
 
 export function isTelemetryEventName(value: string): value is TelemetryEventName {

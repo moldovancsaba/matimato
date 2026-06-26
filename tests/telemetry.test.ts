@@ -70,4 +70,30 @@ describe('telemetry validation and redaction', () => {
     });
     expect(event?.properties).toEqual({ boardSize: 6, costXp: 120, spendableBucket: '120-259' });
   });
+
+  it('accepts season and bot telemetry safe properties', () => {
+    const event = sanitizeTelemetryEvent({
+      name: 'season_reward_claimed',
+      version: 1,
+      occurredAt: '2026-06-26T10:00:00.000Z',
+      sessionHash: 'a'.repeat(16),
+      playerHash: 'b'.repeat(16),
+      result: 'ok',
+      properties: {
+        seasonId: 'founders-chase-2026',
+        rewardId: 'starter-cache',
+        xp: 40,
+        newlyClaimed: true,
+        rawPlayerId: 'not-allowed'
+      }
+    });
+    expect(event?.properties).toEqual({ seasonId: 'founders-chase-2026', rewardId: 'starter-cache', xp: 40, newlyClaimed: true });
+    expect(sanitizeTelemetryEvent({
+      name: 'bot_profile_selected',
+      version: 1,
+      occurredAt: '2026-06-26T10:00:00.000Z',
+      sessionHash: 'a'.repeat(16),
+      properties: { profileId: 'rookie-guide', difficulty: 'rookie', boardSize: 5 }
+    })?.properties).toEqual({ profileId: 'rookie-guide', difficulty: 'rookie', boardSize: 5 });
+  });
 });

@@ -1,4 +1,4 @@
-import type { BoardProgression, BoardSize, GameApiResponse, GameMode, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, RankEntry, TelemetryEventName, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
+import type { ActiveSeasonState, BoardProgression, BoardSize, GameApiResponse, GameMode, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, RankEntry, SeasonReward, SeasonRewardGrant, SeasonTaskMetric, SeasonTaskSource, TelemetryEventName, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
 
 export const RETRY_POLICY = { maxAttempts: 3, baseDelayMs: 500, timeoutMs: 5000 } as const;
 
@@ -108,7 +108,7 @@ export function setLocalOnboarding(onboarding: OnboardingState): void {
   localStorage.setItem(`matimato.onboarding.${onboarding.playerId}`, JSON.stringify(onboarding));
 }
 
-export function createGame(mode: GameMode, playerId: string, playerTag: string, options?: { lobbyVersion?: 2; dailyId?: string; boardSize?: BoardSize; clock?: { turnLimitMs?: number } }): Promise<GameApiResponse> {
+export function createGame(mode: GameMode, playerId: string, playerTag: string, options?: { lobbyVersion?: 2; dailyId?: string; boardSize?: BoardSize; botProfileId?: string; clock?: { turnLimitMs?: number } }): Promise<GameApiResponse> {
   return request('/api/games', { method: 'POST', body: JSON.stringify({ type: 'create', mode, playerId, playerTag, ...options }) });
 }
 
@@ -167,4 +167,12 @@ export function purchaseBoardSize(playerId: string, boardSize: BoardSize, action
 
 export function selectBoardSize(playerId: string, boardSize: BoardSize): Promise<{ ok: true; progression: BoardProgression }> {
   return request('/api/progression', { method: 'POST', body: JSON.stringify({ type: 'selectBoard', playerId, boardSize }) });
+}
+
+export function recordSeasonAction(input: { playerId: string; source: SeasonTaskSource; metric: SeasonTaskMetric; actionId: string; score?: number; boardSize?: BoardSize }): Promise<{ ok: true; activeSeason?: ActiveSeasonState }> {
+  return request('/api/progression', { method: 'POST', body: JSON.stringify({ type: 'seasonAction', ...input }) });
+}
+
+export function claimSeasonReward(playerId: string, rewardId: string): Promise<{ ok: true; claimed: boolean; reward: SeasonReward; grant: SeasonRewardGrant; profileDelta: { xp: number; spendableXp: number }; activeSeason: ActiveSeasonState; progression: BoardProgression }> {
+  return request('/api/progression', { method: 'POST', body: JSON.stringify({ type: 'claimSeasonReward', playerId, rewardId }) });
 }

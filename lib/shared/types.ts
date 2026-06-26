@@ -62,7 +62,26 @@ export type TelemetryEventName =
   | 'ios_offline_state_changed'
   | 'ios_offline_retry'
   | 'ios_offline_recovered'
-  | 'ios_wrapper_error';
+  | 'ios_wrapper_error'
+  | 'season_viewed'
+  | 'season_task_progressed'
+  | 'season_reward_unlocked'
+  | 'season_reward_claimed'
+  | 'season_completed'
+  | 'season_expired'
+  | 'season_progress_error'
+  | 'rules_help_opened'
+  | 'rules_help_topic_viewed'
+  | 'rules_contextual_hint_shown'
+  | 'rules_tutorial_replay_started'
+  | 'rules_help_closed'
+  | 'rules_help_error'
+  | 'bot_profile_viewed'
+  | 'bot_profile_selected'
+  | 'bot_move_chosen'
+  | 'bot_decision_timeout'
+  | 'bot_match_completed'
+  | 'bot_fallback_used';
 export type LegalTarget = { axis: 'any' } | { axis: 'row'; index: number } | { axis: 'column'; index: number };
 
 export type BoardCell = {
@@ -115,6 +134,27 @@ export type ClockState = {
   config: BlitzClockConfig;
 };
 
+export type BotDifficulty = 'rookie' | 'steady' | 'sharp' | 'expert';
+
+export type BotProfile = {
+  profileId: string;
+  name: string;
+  difficulty: BotDifficulty;
+  unlockBoardSize: BoardSize;
+  description: string;
+  weights: {
+    immediateScore: number;
+    denyPlayerScore: number;
+    trapAvoidance: number;
+    lineControl: number;
+    endgameMobility: number;
+    riskTolerance: number;
+  };
+  maxDecisionMs: number;
+};
+
+export type BotProfileSummary = Pick<BotProfile, 'profileId' | 'name' | 'difficulty' | 'unlockBoardSize' | 'description'>;
+
 export type TimeoutResolution = {
   side: PlayerSide;
   deadlineVersion: number;
@@ -135,11 +175,84 @@ export type GameSnapshot = {
   currentTurn: PlayerSide;
   legalTarget: LegalTarget;
   clock?: ClockState;
+  botProfile?: BotProfileSummary;
   moveLog?: MoveFrame[];
   outcome?: GameOutcome;
   lobby?: LobbyState;
   createdAt: string;
   updatedAt: string;
+};
+
+export type SeasonTaskSource = 'daily' | 'solo' | 'battle' | 'blitz' | 'journey' | 'recap' | 'rank';
+export type SeasonTaskMetric = 'complete_match' | 'win_match' | 'score_threshold' | 'unlock_board' | 'replay_move' | 'share_recap' | 'view_rank';
+
+export type SeasonTask = {
+  taskId: string;
+  title: string;
+  source: SeasonTaskSource;
+  metric: SeasonTaskMetric;
+  target: number;
+  weight: number;
+};
+
+export type SeasonCollectible = {
+  collectibleId: string;
+  name: string;
+  taskId: string;
+  threshold: number;
+};
+
+export type SeasonReward = {
+  rewardId: string;
+  title: string;
+  threshold: number;
+  xp: number;
+  collectibleId?: string;
+};
+
+export type SeasonDefinition = {
+  seasonId: string;
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  claimUntil: string;
+  version: number;
+  tasks: SeasonTask[];
+  collectibles: SeasonCollectible[];
+  rewards: SeasonReward[];
+};
+
+export type SeasonRewardGrant = {
+  grantId: string;
+  seasonId: string;
+  rewardId: string;
+  playerId: string;
+  grantedAt: string;
+  claimedAt?: string;
+};
+
+export type SeasonProgress = {
+  seasonId: string;
+  playerId: string;
+  taskProgress: Record<string, number>;
+  collectedIds: string[];
+  rewardGrants: SeasonRewardGrant[];
+  processedActionIds: string[];
+  completedAt?: string;
+  updatedAt: string;
+};
+
+export type ActiveSeasonState = {
+  definition: SeasonDefinition;
+  progress: SeasonProgress;
+  points: number;
+  status: 'active' | 'completed' | 'expired' | 'claimable' | 'none';
+  nextAction: string;
+};
+
+export type BadgeAlbum = {
+  seasonId: string;
+  badges: Array<SeasonCollectible & { state: 'locked' | 'unlocked' | 'collected' }>;
 };
 
 export type LobbyState = {
@@ -239,6 +352,9 @@ export type ProgressionResponse = {
   quests: QuestProgress[];
   onboarding?: OnboardingState;
   progression?: BoardProgression;
+  activeSeason?: ActiveSeasonState;
+  badgeAlbum?: BadgeAlbum;
+  serverNow?: string;
 };
 
 export type TelemetryPropertyValue = string | number | boolean | null;
@@ -266,7 +382,7 @@ export type HealthResponse = {
   checks: HealthCheck[];
 };
 
-export type CreateGameRequest = { type: 'create'; mode: GameMode; playerId: string; playerTag: string; lobbyVersion?: 2; dailyId?: string; boardSize?: BoardSize; clock?: Partial<Pick<BlitzClockConfig, 'turnLimitMs'>> };
+export type CreateGameRequest = { type: 'create'; mode: GameMode; playerId: string; playerTag: string; lobbyVersion?: 2; dailyId?: string; boardSize?: BoardSize; botProfileId?: string; clock?: Partial<Pick<BlitzClockConfig, 'turnLimitMs'>> };
 export type JoinGameRequest = { type: 'join'; inviteCode: string; playerId: string; playerTag: string };
 export type MoveRequest = { type: 'move'; matchId: string; playerId: string; actionId: string; row: number; col: number; expectedVersion: number };
 export type SyncRequest = { type: 'sync'; matchId: string; playerId?: string };
@@ -294,6 +410,7 @@ export type ProfileSummary = {
   draws: number;
   bestScore: number;
   onboarding?: OnboardingState;
+  selectedBotProfileId?: string;
 };
 
 export type MatchSummary = {

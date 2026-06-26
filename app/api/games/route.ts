@@ -16,6 +16,7 @@ const schema = z.discriminatedUnion('type', [
     lobbyVersion: z.literal(2).optional(),
     dailyId: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     boardSize: z.number().int().min(5).max(9).optional(),
+    botProfileId: z.string().min(1).max(60).optional(),
     clock: z.object({ turnLimitMs: z.number().int().min(5000).max(120000).optional() }).optional()
   }),
   z.object({ type: z.literal('join'), inviteCode: z.string().min(3), playerId: z.string().min(1), playerTag: z.string().min(1) }),
@@ -89,7 +90,7 @@ export async function POST(request: Request) {
         return ok({ snapshot } satisfies GameApiResponse);
       }
       const boardSize = input.mode === 'solo' || input.mode === 'blitz' ? await resolveBoardSizeForGame(input.playerId, input.boardSize as 5 | 6 | 7 | 8 | 9 | undefined) : 9;
-      let snapshot = newGame(randomUUID(), input.mode as GameMode, input.playerId, input.playerTag, input.mode === 'blitz' ? { clock: input.clock, boardSize } : { boardSize });
+      let snapshot = newGame(randomUUID(), input.mode as GameMode, input.playerId, input.playerTag, input.mode === 'blitz' ? { clock: input.clock, boardSize, botProfileId: input.botProfileId } : { boardSize, botProfileId: input.botProfileId });
       if (input.mode === 'battle' && input.lobbyVersion === 2) snapshot = { ...snapshot, lobby: createLobby(snapshot) };
       await saveGame(snapshot);
       return ok((snapshot.lobby ? { snapshot, lobby: snapshot.lobby } : { snapshot }) satisfies GameApiResponse);

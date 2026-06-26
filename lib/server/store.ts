@@ -1,6 +1,7 @@
 import { createDailyChallenge, createEmptyStreak, getWeekEndExclusive, getWeekStart, rankWeeklyResults, updateStreak } from '@/lib/game/daily';
 import { applyBoardPurchase, createProgression, normalizeBoardSize, selectActiveBoard } from '@/lib/game/progression';
-import type { BoardProgression, BoardSize, DailyResult, GameSnapshot, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, RankEntry, StreakState, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
+import { applySeasonAction, buildActiveSeasonState, buildBadgeAlbum, claimSeasonReward } from '@/lib/game/seasons';
+import type { BoardProgression, BoardSize, DailyResult, GameSnapshot, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, RankEntry, SeasonTaskMetric, SeasonTaskSource, StreakState, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
 import { getDb } from './mongo';
 
 const GAMES = 'games';
@@ -62,6 +63,24 @@ export async function completeGame(snapshot: GameSnapshot): Promise<void> {
         },
         { upsert: true }
       );
+      await recordSeasonProgressAction({
+        playerId: player!.id,
+        source: snapshot.mode,
+        metric: 'complete_match',
+        actionId: summary.id,
+        score,
+        boardSize: snapshot.boardSize
+      });
+      if (result === 'victory') {
+        await recordSeasonProgressAction({
+          playerId: player!.id,
+          source: snapshot.mode,
+          metric: 'win_match',
+          actionId: `${summary.id}:win`,
+          score,
+          boardSize: snapshot.boardSize
+        });
+      }
     }
     if (snapshot.mode === 'daily' && snapshot.dailyId && player!.side === 'north') {
       await upsertDailyResult({
@@ -92,7 +111,8 @@ export async function getProfile(playerId: string, fallbackTag = 'Player'): Prom
     wins: Number(raw?.wins ?? 0),
     draws: Number(raw?.draws ?? 0),
     bestScore: Number(raw?.bestScore ?? 0),
-    onboarding: normalizeOnboarding(playerId, raw?.onboarding)
+    onboarding: normalizeOnboarding(playerId, raw?.onboarding),
+    selectedBotProfileId: typeof raw?.selectedBotProfileId === 'string' ? raw.selectedBotProfileId : undefined
   };
 }
 
@@ -151,6 +171,7 @@ export async function getProgression(playerId?: string, now = new Date()): Promi
     .toArray();
   const onboarding = playerId ? normalizeOnboarding(playerId, profile?.onboarding) ?? createEmptyOnboarding(playerId) : undefined;
   const progression = playerId ? createProgression(profile ?? {}) : undefined;
+  const activeSeason = playerId ? buildActiveSeasonState(playerId, profile?.seasonProgress, now) : undefined;
   return {
     daily,
     dailyResult: dailyResult ?? undefined,
@@ -162,7 +183,10 @@ export async function getProgression(playerId?: string, now = new Date()): Promi
       { id: 'positive-row', title: 'Claim a positive row swing', progress: dailyResult && dailyResult.score > 0 ? 1 : 0, target: 1, rewardXp: 60 }
     ],
     onboarding,
-    progression
+    progression,
+    activeSeason,
+    badgeAlbum: buildBadgeAlbum(activeSeason),
+    serverNow: now.toISOString()
   };
 }
 
@@ -190,7 +214,52 @@ export async function purchaseBoardUnlock(input: { playerId: string; boardSize: 
     },
     { upsert: true }
   );
+  await recordSeasonProgressAction({ playerId: input.playerId, source: 'journey', metric: 'unlock_board', actionId: input.actionId, boardSize: input.boardSize });
   return next;
+}
+
+export async function recordSeasonProgressAction(input: { playerId: string; source: SeasonTaskSource; metric: SeasonTaskMetric; actionId: string; score?: number; boardSize?: BoardSize }) {
+  const db = await getDb();
+  const raw = await db.collection(PROFILES).findOne({ playerId: input.playerId }, { projection: { _id: 0 } });
+  const seasonProgress = applySeasonAction(raw?.seasonProgress, input);
+  await db.collection(PROFILES).updateOne(
+    { playerId: input.playerId },
+    { $set: { playerId: input.playerId, seasonProgress } },
+    { upsert: true }
+  );
+  return buildActiveSeasonState(input.playerId, seasonProgress);
+}
+
+export async function claimSeasonProgressReward(input: { playerId: string; rewardId: string }) {
+  const db = await getDb();
+  const raw = await db.collection(PROFILES).findOne({ playerId: input.playerId }, { projection: { _id: 0 } });
+  const claim = claimSeasonReward(raw?.seasonProgress, input.playerId, input.rewardId);
+  const currentProgression = createProgression(raw ?? {});
+  const xpDelta = claim.newlyClaimed ? claim.reward.xp : 0;
+  const nextWallet = {
+    lifetimeXp: currentProgression.wallet.lifetimeXp + xpDelta,
+    spendableXp: currentProgression.wallet.spendableXp + xpDelta
+  };
+  await db.collection(PROFILES).updateOne(
+    { playerId: input.playerId },
+    {
+      $set: {
+        playerId: input.playerId,
+        seasonProgress: claim.state.progress,
+        spendableXp: nextWallet.spendableXp
+      },
+      $inc: { xp: xpDelta }
+    },
+    { upsert: true }
+  );
+  return {
+    claimed: true,
+    reward: claim.reward,
+    grant: claim.grant,
+    profileDelta: { xp: xpDelta, spendableXp: xpDelta },
+    activeSeason: claim.state,
+    progression: createProgression({ ...(raw ?? {}), xp: nextWallet.lifetimeXp, spendableXp: nextWallet.spendableXp })
+  };
 }
 
 export async function updateActiveBoardSize(input: { playerId: string; boardSize: BoardSize }): Promise<BoardProgression> {
