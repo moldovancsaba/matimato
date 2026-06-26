@@ -95,6 +95,36 @@ Home or Journey
 
 Rollback is two-layered. `NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY=false` hides the Journey UI. `MATIMATO_BOARD_JOURNEY_ENABLED=false` rejects new purchases and active-size changes and makes new solo/Blitz game creation fall back to 9x9 while preserving stored wallet/unlock data for forward recovery.
 
+## Seasonal collection events
+
+Seasonal events live inside the progression/profile boundary so rewards share the same XP wallet and rollback story. `GET /api/progression` returns `activeSeason`, `badgeAlbum`, and `serverNow` when events are enabled. `POST /api/progression` accepts `seasonAction` for non-match actions such as recap share and `claimSeasonReward` for idempotent claims.
+
+Match completion, daily completion, Blitz completion, and Journey unlocks are recorded only after an authoritative server action succeeds. The season evaluator deduplicates by source, metric, and action id. Reward grants are deterministic and never use paid odds or random packs.
+
+Rollback controls are `NEXT_PUBLIC_MATIMATO_SEASONAL_EVENTS=false` for UI and `MATIMATO_SEASONAL_EVENTS_ENABLED=false` for server evaluation. Rollback hides new progress surfaces and pauses new grants while preserving existing profile `seasonProgress` and XP data.
+
+## Persistent rule assist
+
+Rules help is a React/GDS overlay shared by product screens and the Phaser match host. Static topics live in `lib/game/rules-help.ts`; contextual hints are derived from public snapshot state only. The hint system can explain legal target, no-legal-cells, all-negative target, and high-value visible options, but it does not run a solver or recommend hidden future strategy.
+
+Rollback is `NEXT_PUBLIC_MATIMATO_RULE_ASSIST=false`, which hides app-shell help buttons. The active match help button is a DOM overlay around Phaser and does not change the board renderer.
+
+## Bot opponent profiles
+
+Bot profiles live in `lib/game/ai.ts` and are selected through the existing game creation contract:
+
+```ts
+type BotDifficulty = 'rookie' | 'steady' | 'sharp' | 'expert';
+type BotProfile = {
+  profileId: string;
+  difficulty: BotDifficulty;
+  unlockBoardSize: 5 | 6 | 7 | 8 | 9;
+  weights: { immediateScore: number; denyPlayerScore: number; trapAvoidance: number; lineControl: number; endgameMobility: number; riskTolerance: number };
+};
+```
+
+The server validates profile availability against the active board size and falls back to the rookie profile when a requested profile is unavailable. AI move selection is legal-only, deterministic under snapshot/version seed, and bounded by profile decision limits. Rollback is `NEXT_PUBLIC_MATIMATO_AI_PROFILES=false`, which leaves solo mode on the rookie/default profile.
+
 ## Daily challenge loop
 
 Daily challenges live inside the existing game and progression boundaries. The challenge id is the UTC date (`yyyy-mm-dd`) and the board seed is `daily:{yyyy-mm-dd}`, so every player receives the same 9x9 board for the current UTC day. `POST /api/games` with `mode: "daily"` validates the supplied `dailyId`, resumes an active daily for that player when one exists, and otherwise creates a normal AI-backed snapshot with `dailyId` attached.
@@ -192,6 +222,10 @@ Optional:
 - `NEXT_PUBLIC_MATIMATO_COACH_BUBBLES`
 - `NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY`
 - `NEXT_PUBLIC_MATIMATO_SERVICE_WORKER`
+- `NEXT_PUBLIC_MATIMATO_SEASONAL_EVENTS`
+- `MATIMATO_SEASONAL_EVENTS_ENABLED`
+- `NEXT_PUBLIC_MATIMATO_RULE_ASSIST`
+- `NEXT_PUBLIC_MATIMATO_AI_PROFILES`
 - `NEXT_PUBLIC_MATIMATO_APP_VERSION`
 - `NEXT_PUBLIC_MATIMATO_IOS_BUILD_NUMBER`
 - `MATIMATO_BLITZ_ENABLED`

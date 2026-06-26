@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { fail, ok } from '@/lib/server/http';
-import { getProgression, purchaseBoardUnlock, updateActiveBoardSize, updateOnboarding } from '@/lib/server/store';
+import { claimSeasonProgressReward, getProgression, purchaseBoardUnlock, recordSeasonProgressAction, updateActiveBoardSize, updateOnboarding } from '@/lib/server/store';
 import { BOARD_SIZES } from '@/lib/game/progression';
 
 const tutorialStepSchema = z.enum(['first-pick', 'column-target', 'row-target', 'negative-risk', 'ai-turn', 'finish']);
@@ -24,6 +24,20 @@ const progressionUpdateSchema = z.discriminatedUnion('type', [
     type: z.literal('selectBoard'),
     playerId: z.string().min(1),
     boardSize: boardSizeSchema
+  }),
+  z.object({
+    type: z.literal('seasonAction'),
+    playerId: z.string().min(1),
+    source: z.enum(['daily', 'solo', 'battle', 'blitz', 'journey', 'recap', 'rank']),
+    metric: z.enum(['complete_match', 'win_match', 'score_threshold', 'unlock_board', 'replay_move', 'share_recap', 'view_rank']),
+    actionId: z.string().min(3).max(140),
+    score: z.number().optional(),
+    boardSize: boardSizeSchema.optional()
+  }),
+  z.object({
+    type: z.literal('claimSeasonReward'),
+    playerId: z.string().min(1),
+    rewardId: z.string().min(1).max(80)
   })
 ]);
 
@@ -42,6 +56,8 @@ export async function POST(request: Request) {
     if ((input.type === 'purchaseBoard' || input.type === 'selectBoard') && process.env.MATIMATO_BOARD_JOURNEY_ENABLED === 'false') throw new Error('BOARD_JOURNEY_DISABLED');
     if (input.type === 'purchaseBoard') return ok({ ok: true, progression: await purchaseBoardUnlock(input) });
     if (input.type === 'selectBoard') return ok({ ok: true, progression: await updateActiveBoardSize(input) });
+    if (input.type === 'seasonAction') return ok({ ok: true, activeSeason: await recordSeasonProgressAction(input) });
+    if (input.type === 'claimSeasonReward') return ok({ ok: true, ...(await claimSeasonProgressReward(input)) });
     const onboarding = await updateOnboarding(input);
     return ok({ ok: true, onboarding });
   } catch (error) {

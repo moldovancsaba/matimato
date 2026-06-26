@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'matimato-shell-v2.5.0';
+const CACHE_VERSION = 'matimato-shell-v2.6.0';
 const STATIC_CACHE = `${CACHE_VERSION}:static`;
 const STATIC_ASSETS = [
   '/',

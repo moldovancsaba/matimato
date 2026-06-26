@@ -2,7 +2,7 @@
 
 A fresh Next.js + Phaser + MongoDB implementation of Matimato.
 
-Current release: `2.5.0`.
+Current release: `2.6.0`.
 
 ## Commands
 
@@ -57,11 +57,15 @@ NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE=true
 NEXT_PUBLIC_MATIMATO_COACH_BUBBLES=true
 NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY=true
 NEXT_PUBLIC_MATIMATO_SERVICE_WORKER=true
-NEXT_PUBLIC_MATIMATO_APP_VERSION=2.5.0
+NEXT_PUBLIC_MATIMATO_APP_VERSION=2.6.0
 NEXT_PUBLIC_MATIMATO_IOS_BUILD_NUMBER=web
 MATIMATO_BLITZ_ENABLED=true
 MATIMATO_EVENTS_ENABLED=true
 MATIMATO_BOARD_JOURNEY_ENABLED=true
+NEXT_PUBLIC_MATIMATO_SEASONAL_EVENTS=true
+MATIMATO_SEASONAL_EVENTS_ENABLED=true
+NEXT_PUBLIC_MATIMATO_RULE_ASSIST=true
+NEXT_PUBLIC_MATIMATO_AI_PROFILES=true
 CAPACITOR_SERVER_URL=https://matimato.vercel.app
 CAPACITOR_BUILD_NUMBER=local
 APP_STORE_CONNECT_API_KEY_ID=
@@ -80,6 +84,8 @@ APP_STORE_CONNECT_API_KEY_PATH=
 `NEXT_PUBLIC_MATIMATO_TELEMETRY=false` disables the client event emitter. `MATIMATO_EVENTS_ENABLED=false` keeps `/api/events` accepting payloads but marks ingestion degraded and skips event storage.
 
 `NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE=false` restores the previous automatic onboarding behavior. `NEXT_PUBLIC_MATIMATO_COACH_BUBBLES=false` hides contextual tutorial explanations. `NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY=false` hides the board journey UI. `MATIMATO_BOARD_JOURNEY_ENABLED=false` rejects new board purchases and active-board changes server-side while keeping stored wallet/unlock data readable.
+
+`NEXT_PUBLIC_MATIMATO_SEASONAL_EVENTS=false` hides the seasonal album and reward track. `MATIMATO_SEASONAL_EVENTS_ENABLED=false` pauses server-side season progress evaluation while preserving saved ledgers. `NEXT_PUBLIC_MATIMATO_RULE_ASSIST=false` hides persistent help buttons. `NEXT_PUBLIC_MATIMATO_AI_PROFILES=false` falls back to the rookie solo AI profile.
 
 `NEXT_PUBLIC_MATIMATO_SERVICE_WORKER=false` stops registering the offline shell worker for new sessions. `CAPACITOR_SERVER_URL` controls the iOS wrapper target and must stay on HTTPS for production.
 
@@ -126,9 +132,26 @@ POST /api/progression
 
 POST /api/progression
 { "type": "selectBoard", "playerId": "...", "boardSize": 6 }
+
+POST /api/progression
+{ "type": "claimSeasonReward", "playerId": "...", "rewardId": "starter-cache" }
 ```
 
 Purchases are server-validated by sequence and spendable balance, idempotent by action id or board size, and never trust client-supplied costs or final balances. Solo and Blitz creation accepts an unlocked `boardSize`; battle and daily remain on the current safe 9x9 behavior.
+
+## Seasonal collection track
+
+The Quests screen includes a deterministic seasonal album and reward track. Eligible authoritative actions from solo, daily, Blitz, Journey unlocks, and recap shares update server-side season progress. Rewards are granted and claimed idempotently through `/api/progression`; claimed XP increases lifetime and spendable balances once.
+
+Season rewards are deterministic. There are no paid packs, odds, loot boxes, or tradable collectibles.
+
+## Persistent rule assist
+
+Every primary product screen exposes GDS-only rules help. The help dialog covers objective, turn flow, legal moves, scoring, traps, XP, board journey, recap, and ranks. Live matches include a help button over the Phaser host that derives contextual hints from public board state without solving the best move.
+
+## Bot opponent profiles
+
+Solo mode supports named AI profiles. Players start with `Mati Rookie`; larger unlocked boards expose stronger profiles with deterministic legal move selection, bounded decision time, and replay-safe profile metadata on snapshots.
 
 ## Blitz mode
 

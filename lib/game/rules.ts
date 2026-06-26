@@ -1,4 +1,5 @@
 import { normalizeBoardSize } from './progression';
+import { chooseProfiledBotMove, getBotProfile, summarizeBotProfile } from './ai';
 import type { BlitzClockConfig, BoardCell, BoardSize, ClockState, GameMode, GameOutcome, GameSnapshot, LegalTarget, MoveFrame, PlayerSide, PlayerState, TimeoutResolution } from '@/lib/shared/types';
 
 const SIDES: PlayerSide[] = ['north', 'south'];
@@ -28,11 +29,12 @@ export function createBoard(seedText: string, boardSize: BoardSize = 9): BoardCe
   return board;
 }
 
-export function newGame(id: string, mode: GameMode, playerId: string, tag: string, options?: { boardSeed?: string; boardSize?: BoardSize; dailyId?: string; clock?: Partial<Pick<BlitzClockConfig, 'turnLimitMs'>>; now?: Date }): GameSnapshot {
+export function newGame(id: string, mode: GameMode, playerId: string, tag: string, options?: { boardSeed?: string; boardSize?: BoardSize; dailyId?: string; botProfileId?: string; clock?: Partial<Pick<BlitzClockConfig, 'turnLimitMs'>>; now?: Date }): GameSnapshot {
   const now = (options?.now ?? new Date()).toISOString();
   const boardSize = normalizeBoardSize(options?.boardSize, 9);
+  const botProfile = mode === 'solo' || mode === 'daily' || mode === 'blitz' ? getBotProfile(options?.botProfileId, boardSize) : undefined;
   const north = createPlayer(playerId, tag, 'north');
-  const south = mode === 'solo' || mode === 'daily' || mode === 'blitz' ? createPlayer('matimato-ai', 'Matimato AI', 'south') : null;
+  const south = botProfile ? createPlayer('matimato-ai', botProfile.name, 'south') : null;
   const clockConfig = mode === 'blitz' ? createBlitzClockConfig(options?.clock) : undefined;
   return {
     id,
@@ -47,6 +49,7 @@ export function newGame(id: string, mode: GameMode, playerId: string, tag: strin
     currentTurn: 'north',
     legalTarget: { axis: 'any' },
     clock: clockConfig ? nextClock('north', 0, { north: 0, south: 0 }, clockConfig, new Date(now)) : undefined,
+    botProfile: botProfile ? summarizeBotProfile(botProfile) : undefined,
     moveLog: [],
     createdAt: now,
     updatedAt: now
@@ -162,10 +165,8 @@ export function applyTimeout(snapshot: GameSnapshot, side: PlayerSide, deadlineV
 }
 
 export function chooseAiMove(snapshot: GameSnapshot): { row: number; col: number } | null {
-  const legal = snapshot.board.filter((cell) => isLegal(snapshot.legalTarget, cell.row, cell.col, snapshot.board));
-  if (!legal.length) return null;
-  const best = legal.sort((a, b) => b.value - a.value || a.row - b.row || a.col - b.col)[0];
-  return { row: best.row, col: best.col };
+  const move = chooseProfiledBotMove(snapshot);
+  return move ? { row: move.row, col: move.col } : null;
 }
 
 export function nextClock(activeSide: PlayerSide, deadlineVersion: number, timeoutCount: Record<PlayerSide, number>, config: BlitzClockConfig, now = new Date()): ClockState {

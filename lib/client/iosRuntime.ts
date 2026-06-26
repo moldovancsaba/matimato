@@ -27,7 +27,7 @@ export function detectIOSRuntimeMode(): IOSRuntimeMode {
 export function getRuntimeTelemetryProperties(): Record<string, TelemetryPropertyValue> {
   return {
     runtimeMode: detectIOSRuntimeMode(),
-    appVersion: process.env.NEXT_PUBLIC_MATIMATO_APP_VERSION ?? '2.5.0',
+    appVersion: process.env.NEXT_PUBLIC_MATIMATO_APP_VERSION ?? '2.6.0',
     buildNumber: process.env.NEXT_PUBLIC_MATIMATO_IOS_BUILD_NUMBER ?? 'web',
     serviceWorker: typeof navigator !== 'undefined' && 'serviceWorker' in navigator ? 'supported' : 'unsupported'
   };

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Badge, Button, Group, Progress, SimpleGrid, Stack, TextInput } from '@doneisbetter/gds';
-import { IconCalendar, IconHistory, IconHome, IconLogout, IconRoute, IconSwords, IconTrophy, IconUser } from '@tabler/icons-react';
+import { IconCalendar, IconHelpCircle, IconHistory, IconHome, IconLogout, IconRoute, IconSwords, IconTrophy, IconUser } from '@tabler/icons-react';
 import {
   cancelLobby,
   clearPlayerSession,
@@ -22,17 +22,22 @@ import {
   purchaseBoardSize,
   readyLobby,
   offlineTelemetryName,
+  claimSeasonReward,
+  recordSeasonAction,
   selectBoardSize,
   setLocalOnboarding,
   setPlayerTag
 } from '@/lib/client/api';
 import { getSuggestedTutorialCell, createTutorialState, resolveTutorialAi, selectTutorialCell, TUTORIAL_STEPS, type TutorialState } from '@/lib/game/tutorial';
 import { BOARD_SIZES, boardUnlockCost, shouldShowTrainingChoice } from '@/lib/game/progression';
+import { availableBotProfiles, BOT_PROFILES, DEFAULT_BOT_PROFILE_ID } from '@/lib/game/ai';
+import { topicForScreen, type RulesHelpTopicId } from '@/lib/game/rules-help';
 import { isLegal } from '@/lib/game/rules';
 import { emitTelemetry, installTelemetryPagehide } from '@/lib/client/telemetry';
 import { getRuntimeTelemetryProperties, registerServiceWorker, type NetworkState } from '@/lib/client/iosRuntime';
-import type { BoardProgression, BoardSize, BoardCell, GameMode, GameSnapshot, LobbyState, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, QuestProgress, RankEntry, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
+import type { BoardProgression, BoardSize, BoardCell, BotProfileSummary, GameMode, GameSnapshot, LobbyState, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, QuestProgress, RankEntry, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
 import { PhaserGameRoot } from './PhaserGameRoot';
+import { RulesHelpDialog } from './RulesHelpDialog';
 
 type Screen = 'home' | 'training-choice' | 'journey' | 'battle' | 'quests' | 'ranks' | 'history' | 'profile' | 'match' | 'tutorial' | 'lobby' | 'recap';
 
@@ -45,6 +50,9 @@ const BLITZ_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_BLITZ_MODE !== 'false';
 const TRAINING_CHOICE_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE !== 'false';
 const COACH_BUBBLES_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_COACH_BUBBLES !== 'false';
 const BOARD_JOURNEY_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY !== 'false';
+const SEASONAL_EVENTS_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_SEASONAL_EVENTS !== 'false';
+const AI_PROFILES_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_AI_PROFILES !== 'false';
+const RULE_ASSIST_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_RULE_ASSIST !== 'false';
 
 export function GameApp({ initialScreen, initialMatchId }: Props) {
   const [screen, setScreen] = useState<Screen>(initialScreen);
@@ -64,6 +72,9 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
   const [dismissedCoachSteps, setDismissedCoachSteps] = useState<TutorialStepId[]>([]);
   const [busy, setBusy] = useState('');
   const [networkState, setNetworkState] = useState<NetworkState>('online');
+  const [selectedBotProfileId, setSelectedBotProfileId] = useState(DEFAULT_BOT_PROFILE_ID);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpTopic, setHelpTopic] = useState<RulesHelpTopicId>('objective');
   const reportedRuntime = useRef(false);
 
   useEffect(() => {
@@ -204,6 +215,8 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
   const lobby = snapshot?.lobby ?? null;
   const boardProgression = progression?.progression;
   const activeBoardSize = BOARD_JOURNEY_ENABLED ? boardProgression?.boardUnlocks.activeBoardSize ?? 5 : 9;
+  const botProfiles = useMemo<BotProfileSummary[]>(() => AI_PROFILES_ENABLED ? availableBotProfiles(activeBoardSize) : [BOT_PROFILES[0]].map((profile) => ({ profileId: profile.profileId, name: profile.name, difficulty: profile.difficulty, unlockBoardSize: profile.unlockBoardSize, description: profile.description })), [activeBoardSize]);
+  const selectedBot = botProfiles.find((profile) => profile.profileId === selectedBotProfileId) ?? botProfiles[0];
 
   const blockOfflineWrite = useCallback((label: string) => {
     if (networkState === 'online') return false;
@@ -270,10 +283,10 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
         ? { lobbyVersion: 2 as const }
         : mode === 'daily' && progression?.daily
           ? { dailyId: progression.daily.id }
-          : mode === 'blitz'
+        : mode === 'blitz'
             ? { clock: { turnLimitMs: 30_000 }, boardSize: activeBoardSize }
             : mode === 'solo'
-              ? { boardSize: activeBoardSize }
+              ? { boardSize: activeBoardSize, botProfileId: selectedBot?.profileId }
               : undefined;
       const data = await createGame(mode, playerId, safeTag, options);
       setSnapshot(data.snapshot);
@@ -287,6 +300,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
         if (mode === 'daily') emitTelemetry({ name: resumedDaily ? 'daily_resumed' : 'daily_started', playerId, matchId: data.snapshot.id, properties: { dailyId: data.snapshot.dailyId ?? '', date: data.snapshot.dailyId ?? '' } });
         if (mode === 'blitz') emitTelemetry({ name: 'blitz_started', playerId, matchId: data.snapshot.id, properties: { turnLimitMs: data.snapshot.clock?.config.turnLimitMs ?? 0, boardSize: data.snapshot.boardSize ?? 9 } });
         if (mode === 'solo' || mode === 'blitz') emitTelemetry({ name: 'board_size_selected', playerId, matchId: data.snapshot.id, properties: { boardSize: data.snapshot.boardSize ?? 9, mode } });
+        if (mode === 'solo' && data.snapshot.botProfile) emitTelemetry({ name: 'bot_profile_selected', playerId, matchId: data.snapshot.id, properties: { profileId: data.snapshot.botProfile.profileId, difficulty: data.snapshot.botProfile.difficulty, boardSize: data.snapshot.boardSize ?? 9 } });
         setScreen('match');
       }
       historyReplace(`/play/${data.snapshot.id}`);
@@ -441,6 +455,29 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     }
   }
 
+  async function claimSeason(rewardId: string) {
+    if (blockOfflineWrite('Claiming a season reward')) return;
+    try {
+      setBusy(`claim-${rewardId}`);
+      const data = await claimSeasonReward(playerId, rewardId);
+      setProgression((current) => current ? { ...current, activeSeason: data.activeSeason, badgeAlbum: { seasonId: data.activeSeason.definition.seasonId, badges: data.activeSeason.definition.collectibles.map((badge) => ({ ...badge, state: data.activeSeason.progress.collectedIds.includes(badge.collectibleId) ? 'collected' : (data.activeSeason.progress.taskProgress[badge.taskId] ?? 0) >= badge.threshold ? 'unlocked' : 'locked' })) }, progression: data.progression } : current);
+      setNotice(data.profileDelta.xp ? `${data.reward.title} claimed for ${data.reward.xp} XP.` : `${data.reward.title} was already claimed.`);
+      emitTelemetry({ name: 'season_reward_claimed', playerId, properties: { seasonId: data.activeSeason.definition.seasonId, rewardId, xp: data.reward.xp, newlyClaimed: data.profileDelta.xp > 0 } });
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Reward claim failed.');
+      emitTelemetry({ name: 'season_progress_error', playerId, result: 'error', properties: { rewardId, errorCode: error instanceof Error ? error.message : 'claim_failed' } });
+      void refreshProgression();
+    } finally {
+      setBusy('');
+    }
+  }
+
+  function openHelp(topic: RulesHelpTopicId = topicForScreen(screen)) {
+    setHelpTopic(topic);
+    setHelpOpen(true);
+    emitTelemetry({ name: 'rules_help_opened', playerId, properties: { screen, topic, boardSize: activeBoardSize } });
+  }
+
   async function finishTutorial() {
     await persistTutorial('finish', true);
     setTutorialReplay(false);
@@ -524,7 +561,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
 
   return (
     <main className={`app-shell theme-${screen === 'tutorial' ? 'home' : screen}`}>
-      <Header status={screen === 'home' ? 'Ready' : screen} />
+      <Header status={screen === 'home' ? 'Ready' : screen} onHelp={RULE_ASSIST_ENABLED && screen !== 'training-choice' ? () => openHelp() : undefined} />
       <p className="sr-only" aria-live="polite">{notice}</p>
       <div className={`notice-slot${notice || networkState !== 'online' ? '' : ' empty'}`}>
         {networkState !== 'online'
@@ -533,7 +570,7 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
       </div>
       <div className="screen-slot">
         {screen === 'training-choice' ? <TrainingChoiceScreen choose={chooseTraining} /> : null}
-        {screen === 'home' ? <Home tag={tag} setTag={setTag} start={start} goBattle={() => setScreen('battle')} goJourney={() => setScreen('journey')} busy={busy} boardSize={activeBoardSize} journeyEnabled={BOARD_JOURNEY_ENABLED} /> : null}
+        {screen === 'home' ? <Home tag={tag} setTag={setTag} start={start} goBattle={() => setScreen('battle')} goJourney={() => setScreen('journey')} busy={busy} boardSize={activeBoardSize} journeyEnabled={BOARD_JOURNEY_ENABLED} botProfiles={botProfiles} selectedBotProfileId={selectedBot?.profileId ?? DEFAULT_BOT_PROFILE_ID} setSelectedBotProfileId={setSelectedBotProfileId} /> : null}
         {screen === 'journey' ? <BoardJourney progression={boardProgression} buy={buyBoard} select={chooseBoard} start={start} busy={busy} /> : null}
         {screen === 'tutorial' ? <Tutorial state={tutorial} select={selectTutorialTile} suggest={selectSuggestedTile} resolveAi={resolveAiTurn} finish={finishTutorial} skip={skipTutorial} busy={busy} coachEnabled={COACH_BUBBLES_ENABLED} dismissedCoachSteps={dismissedCoachSteps} dismissCoach={(step) => {
           setDismissedCoachSteps((steps) => steps.includes(step) ? steps : [...steps, step]);
@@ -542,21 +579,35 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
         {screen === 'battle' ? <Battle tag={tag} setTag={setTag} start={start} inviteCode={inviteCode} setInviteCode={setInviteCode} join={join} busy={busy} /> : null}
         {screen === 'lobby' && snapshot && lobby ? <Lobby snapshot={snapshot} lobby={lobby} playerId={playerId} copy={copyInvite} share={shareInvite} ready={markReady} exit={exitLobby} busy={busy} /> : null}
         {screen === 'recap' && snapshot ? <Recap snapshot={snapshot} playerId={playerId} rematch={() => start(snapshot.mode === 'daily' ? 'solo' : snapshot.mode)} home={() => { setScreen('home'); historyReplace('/'); }} ranks={() => setScreen('ranks')} busy={busy} /> : null}
-        {screen === 'quests' ? <Quests progression={progression} quests={quests} start={() => start('daily')} busy={busy} dailyEnabled={DAILY_V2_ENABLED} /> : null}
+        {screen === 'quests' ? <Quests progression={progression} quests={quests} start={() => start('daily')} busy={busy} dailyEnabled={DAILY_V2_ENABLED} seasonalEnabled={SEASONAL_EVENTS_ENABLED} claimSeason={claimSeason} /> : null}
         {screen === 'ranks' ? <Ranks leaderboard={leaderboard} /> : null}
         {screen === 'history' ? <History history={history} /> : null}
         {screen === 'profile' ? <Profile tag={tag} setTag={setTag} persistTag={persistTag} profile={profile} replayTutorial={() => openTutorial(true)} signOut={signOut} /> : null}
       </div>
       {screen !== 'tutorial' && screen !== 'lobby' && screen !== 'training-choice' ? <Nav screen={screen} setScreen={setScreen} /> : null}
+      <RulesHelpDialog open={helpOpen} topicId={helpTopic} snapshot={snapshot} onTopicChange={(topicId) => {
+        setHelpTopic(topicId);
+        emitTelemetry({ name: 'rules_help_topic_viewed', playerId, properties: { screen, topic: topicId } });
+      }} onClose={() => {
+        setHelpOpen(false);
+        emitTelemetry({ name: 'rules_help_closed', playerId, properties: { screen } });
+      }} onReplayTutorial={screen === 'profile' || screen === 'home' ? () => {
+        setHelpOpen(false);
+        emitTelemetry({ name: 'rules_tutorial_replay_started', playerId, properties: { screen } });
+        openTutorial(true);
+      } : undefined} />
     </main>
   );
 }
 
-function Header({ status }: { status: string }) {
+function Header({ status, onHelp }: { status: string; onHelp?: () => void }) {
   return (
     <section className="top-card" aria-label="Matimato status">
       <div className="brand"><div className="logo" aria-hidden="true">M</div><h1>Matimato</h1></div>
-      <Badge variant="light" color="orange">{status}</Badge>
+      <Group gap="xs">
+        {onHelp ? <Button size="xs" variant="light" aria-label="Open rules help" onClick={onHelp}><IconHelpCircle size={18} aria-hidden="true" /></Button> : null}
+        <Badge variant="light" color="orange">{status}</Badge>
+      </Group>
     </section>
   );
 }
@@ -595,7 +646,7 @@ function TrainingChoiceScreen({ choose }: { choose: (choice: TrainingChoice) => 
   );
 }
 
-function Home({ tag, setTag, start, goBattle, goJourney, busy, boardSize, journeyEnabled }: { tag: string; setTag: (v: string) => void; start: (mode: GameMode) => void; goBattle: () => void; goJourney: () => void; busy: string; boardSize: BoardSize; journeyEnabled: boolean }) {
+function Home({ tag, setTag, start, goBattle, goJourney, busy, boardSize, journeyEnabled, botProfiles, selectedBotProfileId, setSelectedBotProfileId }: { tag: string; setTag: (v: string) => void; start: (mode: GameMode) => void; goBattle: () => void; goJourney: () => void; busy: string; boardSize: BoardSize; journeyEnabled: boolean; botProfiles: BotProfileSummary[]; selectedBotProfileId: string; setSelectedBotProfileId: (profileId: string) => void }) {
   return (
     <section className="panel">
       <Stack gap="sm">
@@ -603,6 +654,17 @@ function Home({ tag, setTag, start, goBattle, goJourney, busy, boardSize, journe
         <h2>Own the grid.</h2>
         <p className="copy">Pick bright tiles, dodge negative traps, force the next move through rows and columns, and spend XP to unlock bigger boards.</p>
         <TextInput label="Player tag" value={tag} onChange={(event) => setTag(event.currentTarget.value)} placeholder="Enter your tag" />
+        <div className="bot-picker" role="radiogroup" aria-label="Solo opponent">
+          {botProfiles.map((profile) => (
+            <button key={profile.profileId} type="button" role="radio" aria-checked={selectedBotProfileId === profile.profileId} className={selectedBotProfileId === profile.profileId ? 'active' : ''} onClick={() => {
+              setSelectedBotProfileId(profile.profileId);
+              emitTelemetry({ name: 'bot_profile_viewed', properties: { profileId: profile.profileId, difficulty: profile.difficulty, boardSize } });
+            }}>
+              <strong>{profile.name}</strong>
+              <span>{profile.difficulty} · {profile.description}</span>
+            </button>
+          ))}
+        </div>
         <SimpleGrid cols={2}>
           <Button size="lg" loading={busy === 'start-solo'} onClick={() => start('solo')}>Start solo</Button>
           <Button size="lg" variant="light" onClick={goBattle}>Battle</Button>
@@ -694,6 +756,7 @@ function Recap({ snapshot, playerId, rematch, home, ranks, busy }: { snapshot: G
       if (navigator.share) await navigator.share({ title: 'Matimato recap', text });
       else await navigator.clipboard.writeText(text);
       emitTelemetry({ name: 'recap_shared', playerId, matchId: snapshot.id, properties: { mode: snapshot.mode, result } });
+      void recordSeasonAction({ playerId, source: 'recap', metric: 'share_recap', actionId: `${snapshot.id}:share`, boardSize: snapshot.boardSize });
     } catch {
       // Share cancellation is not an error state for gameplay.
     }
@@ -879,9 +942,11 @@ function Seat({ label, player, ready }: { label: string; player: string; ready: 
   return <div className="list-card"><strong>{label}</strong><p className="copy">{player}</p><Badge color={ready ? 'green' : 'gray'} variant="light">{ready ? 'Ready' : 'Waiting'}</Badge></div>;
 }
 
-function Quests({ progression, quests, start, busy, dailyEnabled }: { progression: ProgressionResponse | null; quests: QuestProgress[]; start: () => void; busy: string; dailyEnabled: boolean }) {
+function Quests({ progression, quests, start, busy, dailyEnabled, seasonalEnabled, claimSeason }: { progression: ProgressionResponse | null; quests: QuestProgress[]; start: () => void; busy: string; dailyEnabled: boolean; seasonalEnabled: boolean; claimSeason: (rewardId: string) => void }) {
   const daily = progression?.daily;
   const completed = daily?.status === 'completed';
+  const activeSeason = seasonalEnabled ? progression?.activeSeason : undefined;
+  const album = seasonalEnabled ? progression?.badgeAlbum : undefined;
   return (
     <section className="panel scroll-screen">
       <div className="scroll-screen-header">
@@ -906,6 +971,32 @@ function Quests({ progression, quests, start, busy, dailyEnabled }: { progressio
         <Button loading={busy === 'start-daily'} disabled={!dailyEnabled || completed || !daily} onClick={start}>{completed ? 'Daily complete' : 'Start or resume daily'}</Button>
       </div>
       <div className="scroll-list" role="region" aria-label="Daily quests and weekly ranks" tabIndex={0}>
+        {activeSeason ? (
+          <div className="season-card" aria-labelledby="season-title">
+            <Group justify="space-between">
+              <strong id="season-title">{activeSeason.definition.title}</strong>
+              <Badge color={activeSeason.status === 'completed' ? 'green' : activeSeason.status === 'claimable' ? 'orange' : 'blue'} variant="light">{activeSeason.status}</Badge>
+            </Group>
+            <p className="copy">{activeSeason.nextAction}</p>
+            <Progress value={Math.min(100, (activeSeason.points / 120) * 100)} aria-label={`${activeSeason.points} season points`} />
+            <div className="badge-album" role="list" aria-label="Season badge album">
+              {album?.badges.map((badge) => <div key={badge.collectibleId} className={`badge-tile ${badge.state}`} role="listitem"><strong>{badge.name}</strong><span>{badge.state}</span></div>)}
+            </div>
+            <div className="reward-list" aria-label="Season rewards">
+              {activeSeason.definition.rewards.map((reward) => {
+                const grant = activeSeason.progress.rewardGrants.find((item) => item.rewardId === reward.rewardId);
+                const unlocked = activeSeason.points >= reward.threshold;
+                const claimed = Boolean(grant?.claimedAt);
+                return (
+                  <div className="list-card reward-row" key={reward.rewardId}>
+                    <div><strong>{reward.title}</strong><p className="copy">{reward.xp} XP · {Math.min(activeSeason.points, reward.threshold)}/{reward.threshold} points</p></div>
+                    <Button size="xs" disabled={!unlocked || claimed} loading={busy === `claim-${reward.rewardId}`} onClick={() => claimSeason(reward.rewardId)}>{claimed ? 'Claimed' : 'Claim'}</Button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
         <div className="stack" aria-label="Daily quests">
           {quests.map((quest) => <div className="list-card" key={quest.id}><strong>{quest.title}</strong><p className="copy">{Math.min(quest.progress, quest.target)}/{quest.target} · {quest.rewardXp} XP</p></div>)}
         </div>
