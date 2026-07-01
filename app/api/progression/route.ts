@@ -28,8 +28,8 @@ const progressionUpdateSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('seasonAction'),
     playerId: z.string().min(1),
-    source: z.enum(['daily', 'solo', 'battle', 'blitz', 'journey', 'recap', 'rank']),
-    metric: z.enum(['complete_match', 'win_match', 'score_threshold', 'unlock_board', 'replay_move', 'share_recap', 'view_rank']),
+    source: z.enum(['daily', 'solo', 'battle', 'blitz', 'journey', 'recap', 'rank', 'social']),
+    metric: z.enum(['complete_match', 'win_match', 'score_threshold', 'unlock_board', 'replay_move', 'share_recap', 'view_rank', 'send_friend_gift']),
     actionId: z.string().min(3).max(140),
     score: z.number().optional(),
     boardSize: boardSizeSchema.optional()

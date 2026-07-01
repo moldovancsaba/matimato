@@ -20,7 +20,7 @@ The Phaser boot boundary validates boot payloads, clears the mount host before c
 
 Matimato imports `@doneisbetter/gds-theme/styles.css` once at the app entry and wraps the app with `GdsProvider`. Product screens compose controls from `@doneisbetter/gds`; Phaser remains the exception surface for the active game renderer, with GDS-derived shell styling and DOM live-region support around it.
 
-Current consumed GDS version: `3.5.0`.
+Current consumed GDS version: `3.7.0`.
 
 ## iOS PWA and native wrapper
 
@@ -153,11 +153,49 @@ The server creates deadlines, rejects expired move submissions, and resolves tim
 
 Game snapshots append accepted moves and timeout resolutions to optional `moveLog`. Completed matches transition from Phaser into a GDS-owned recap screen with final score, outcome reason, step-through replay, share action, ranks navigation, and rematch. Daily rematch routes to solo to avoid replaying a completed daily; Blitz rematch creates a fresh timed match with the default clock.
 
+## Friends, gifts, and safe social return
+
+Friends live in MongoDB as relationship documents keyed by a stable hash of the sorted anonymous player ids:
+
+```ts
+type FriendshipStatus = 'active' | 'removed' | 'blocked';
+type Friendship = {
+  id: string;
+  playerIds: [string, string];
+  tags: Record<string, string>;
+  statusByPlayer: Record<string, FriendshipStatus>;
+  lastMatchId?: string;
+  lastPlayedAt?: string;
+};
+```
+
+The public client receives `FriendSummary` rows with the friend tag, relationship state, daily gift availability, next reset time, and a hashed friend id for privacy. Raw friend player ids are accepted only in invite writes from battle lobby, recap, or profile invite link contexts. Remove hides the relationship for the current player; block prevents future gifts and friend-battle actions. A later invite can recreate a removed relationship unless either side blocked it.
+
+Gift ledgers are idempotent by `friendshipId:senderId:yyyy-mm-dd`. A successful first write grants the receiver 15 XP through the same profile wallet normalization used by match rewards and records a `social/send_friend_gift` season action for future live events. Duplicate retries return the same daily state with `xpGranted: 0`. Friend battle creation starts the existing V2 lobby flow; no social route bypasses ready checks or server-owned game rules.
+
+Rollback is `NEXT_PUBLIC_MATIMATO_FRIENDS=false` for the client and `MATIMATO_FRIENDS_ENABLED=false` for server writes. Stored friendships and gift ledgers are retained for recovery.
+
+## Read-only spectator replays
+
+Replay viewing is separated from active game mutation routes:
+
+```text
+/replay/[id]
+  -> GET /api/replays/[id]
+  -> find completed GameSnapshot
+  -> sanitize ReplaySnapshot
+  -> render read-only GDS ReplayViewer
+```
+
+`ReplaySnapshot` includes only mode, board size, outcome, sanitized player tags/scores, completed time, visibility, and `ReplayFrame` rows stripped of action ids. It never returns invite codes, raw player ids, mutable game endpoints, or private telemetry identifiers. Completed snapshots without `moveLog` return `summaryOnly: true` so old matches remain shareable as final-score summaries.
+
+Replay errors are stable: `REPLAY_NOT_FOUND`, `REPLAY_NOT_COMPLETE`, `REPLAY_PRIVATE`, `REPLAY_EXPIRED`, and `REPLAY_UNAVAILABLE`. Conversion actions from a replay create fresh solo, Blitz, or V2 battle sessions through `/api/games`; they never mutate the viewed match. Rollback is `NEXT_PUBLIC_MATIMATO_REPLAYS=false` for share entry points and `MATIMATO_REPLAYS_ENABLED=false` for the API.
+
 ## Telemetry and health
 
 Telemetry is an allowlisted product-event stream, not raw analytics capture. The client hashes session, player, and match identifiers before enqueueing events and redacts invite-like codes from string properties. `/api/events` accepts `{ events }` payloads capped at 50 events and 32 KB; invalid events are rejected individually, valid events fail open with `degraded: true` when storage is disabled or temporarily unavailable. Rollback controls are `NEXT_PUBLIC_MATIMATO_TELEMETRY=false` for the browser emitter and `MATIMATO_EVENTS_ENABLED=false` for server-side storage.
 
-Progression and iOS events are allowlisted: `training_choice_shown`, `training_choice_selected`, `coach_bubble_shown`, `coach_bubble_dismissed`, `board_unlock_viewed`, `board_unlock_purchased`, `board_unlock_failed`, `board_size_selected`, `ios_runtime_detected`, `ios_offline_state_changed`, `ios_offline_retry`, `ios_offline_recovered`, and `ios_wrapper_error`. Properties are bounded to safe keys such as board size, cost, choice, step, result, error code, spendable XP bucket, runtime mode, app version, build number, network state, and service worker status.
+Progression, social, replay, and iOS events are allowlisted: `training_choice_shown`, `training_choice_selected`, `coach_bubble_shown`, `coach_bubble_dismissed`, `board_unlock_viewed`, `board_unlock_purchased`, `board_unlock_failed`, `board_size_selected`, `friend_invite_accepted`, `friend_gift_sent`, `friend_gift_duplicate`, `friend_battle_started`, `friend_removed`, `friend_blocked`, `replay_viewed`, `replay_step_changed`, `replay_share_copied`, `replay_conversion_clicked`, `ios_runtime_detected`, `ios_offline_state_changed`, `ios_offline_retry`, `ios_offline_recovered`, and `ios_wrapper_error`. Properties are bounded to safe keys such as board size, cost, choice, step, result, error code, spendable XP bucket, friend/replay count buckets, runtime mode, app version, build number, network state, and service worker status.
 
 `/api/health` reports release version, database status, and named check latencies so deploy verification can distinguish app boot from persistence availability.
 
@@ -226,6 +264,10 @@ Optional:
 - `MATIMATO_SEASONAL_EVENTS_ENABLED`
 - `NEXT_PUBLIC_MATIMATO_RULE_ASSIST`
 - `NEXT_PUBLIC_MATIMATO_AI_PROFILES`
+- `NEXT_PUBLIC_MATIMATO_FRIENDS`
+- `MATIMATO_FRIENDS_ENABLED`
+- `NEXT_PUBLIC_MATIMATO_REPLAYS`
+- `MATIMATO_REPLAYS_ENABLED`
 - `NEXT_PUBLIC_MATIMATO_APP_VERSION`
 - `NEXT_PUBLIC_MATIMATO_IOS_BUILD_NUMBER`
 - `MATIMATO_BLITZ_ENABLED`
@@ -245,7 +287,8 @@ Optional:
 7. Run `npx cap sync ios` and `npm run ios:build` on a full-Xcode machine, or record the Xcode/signing blocker.
 8. If training is unsafe, set `NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE=false` and/or `NEXT_PUBLIC_MATIMATO_COACH_BUBBLES=false`.
 9. If board progression is unsafe, set `NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY=false` and `MATIMATO_BOARD_JOURNEY_ENABLED=false`. Do not delete wallet or purchase ledger records; they are preserved for recovery.
-10. If offline shell is unsafe, set `NEXT_PUBLIC_MATIMATO_SERVICE_WORKER=false`, bump the cache version after the fix, and redeploy.
+10. If social or replay loops are unsafe, set `NEXT_PUBLIC_MATIMATO_FRIENDS=false`, `MATIMATO_FRIENDS_ENABLED=false`, `NEXT_PUBLIC_MATIMATO_REPLAYS=false`, or `MATIMATO_REPLAYS_ENABLED=false`; do not delete relationship, ledger, or match history data.
+11. If offline shell is unsafe, set `NEXT_PUBLIC_MATIMATO_SERVICE_WORKER=false`, bump the cache version after the fix, and redeploy.
 
 ## Verification
 

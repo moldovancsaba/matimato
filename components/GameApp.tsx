@@ -2,11 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Badge, Button, Group, Progress, SimpleGrid, Stack, TextInput } from '@doneisbetter/gds';
-import { IconCalendar, IconHelpCircle, IconHistory, IconHome, IconLogout, IconRoute, IconSwords, IconTrophy, IconUser } from '@tabler/icons-react';
+import { IconBan, IconCalendar, IconGift, IconHelpCircle, IconHistory, IconHome, IconLogout, IconRoute, IconSwords, IconTrophy, IconUser, IconUserPlus, IconUsers } from '@tabler/icons-react';
 import {
+  acceptFriendInvite,
+  blockFriend,
   cancelLobby,
   clearPlayerSession,
   createGame,
+  fetchFriends,
   fetchGame,
   fetchHistory,
   fetchLeaderboard,
@@ -18,6 +21,7 @@ import {
   getPlayerTag,
   joinGame,
   leaveLobby,
+  removeFriend,
   persistOnboarding,
   purchaseBoardSize,
   readyLobby,
@@ -25,6 +29,7 @@ import {
   claimSeasonReward,
   recordSeasonAction,
   selectBoardSize,
+  sendFriendGift,
   setLocalOnboarding,
   setPlayerTag
 } from '@/lib/client/api';
@@ -35,11 +40,11 @@ import { topicForScreen, type RulesHelpTopicId } from '@/lib/game/rules-help';
 import { isLegal } from '@/lib/game/rules';
 import { emitTelemetry, installTelemetryPagehide } from '@/lib/client/telemetry';
 import { getRuntimeTelemetryProperties, registerServiceWorker, type NetworkState } from '@/lib/client/iosRuntime';
-import type { BoardProgression, BoardSize, BoardCell, BotProfileSummary, GameMode, GameSnapshot, LobbyState, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, QuestProgress, RankEntry, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
+import type { BoardProgression, BoardSize, BoardCell, BotProfileSummary, FriendSummary, GameMode, GameSnapshot, LobbyState, MatchSummary, OnboardingState, PlayerState, ProfileSummary, ProgressionResponse, QuestProgress, RankEntry, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
 import { PhaserGameRoot } from './PhaserGameRoot';
 import { RulesHelpDialog } from './RulesHelpDialog';
 
-type Screen = 'home' | 'training-choice' | 'journey' | 'battle' | 'quests' | 'ranks' | 'history' | 'profile' | 'match' | 'tutorial' | 'lobby' | 'recap';
+type Screen = 'home' | 'training-choice' | 'journey' | 'battle' | 'friends' | 'quests' | 'ranks' | 'history' | 'profile' | 'match' | 'tutorial' | 'lobby' | 'recap';
 
 type Props = { initialScreen: Screen; initialMatchId?: string };
 
@@ -53,6 +58,8 @@ const BOARD_JOURNEY_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY !==
 const SEASONAL_EVENTS_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_SEASONAL_EVENTS !== 'false';
 const AI_PROFILES_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_AI_PROFILES !== 'false';
 const RULE_ASSIST_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_RULE_ASSIST !== 'false';
+const FRIENDS_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_FRIENDS !== 'false';
+const REPLAYS_ENABLED = process.env.NEXT_PUBLIC_MATIMATO_REPLAYS !== 'false';
 
 export function GameApp({ initialScreen, initialMatchId }: Props) {
   const [screen, setScreen] = useState<Screen>(initialScreen);
@@ -63,6 +70,8 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
   const [notice, setNotice] = useState('');
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [history, setHistory] = useState<MatchSummary[]>([]);
+  const [friends, setFriends] = useState<FriendSummary[]>([]);
+  const [pendingFriendInvite, setPendingFriendInvite] = useState<{ friendPlayerId: string; friendTag: string } | null>(null);
   const [leaderboard, setLeaderboard] = useState<RankEntry[]>([]);
   const [progression, setProgression] = useState<ProgressionResponse | null>(null);
   const [quests, setQuests] = useState<QuestProgress[]>([]);
@@ -82,6 +91,17 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     const savedTag = getPlayerTag();
     setPlayerId(id);
     setTag(savedTag);
+    if (FRIENDS_ENABLED) {
+      const params = new URLSearchParams(window.location.search);
+      const friendPlayerId = params.get('friendPlayerId');
+      const friendTag = params.get('friendTag') || 'Friend';
+      if (friendPlayerId && friendPlayerId !== id) {
+        setPendingFriendInvite({ friendPlayerId, friendTag });
+        setNotice(`${friendTag} invited you to connect. Review it on Friends.`);
+        setScreen('friends');
+        historyReplace('/');
+      }
+    }
     const localOnboarding = getLocalOnboarding(id);
     setOnboarding(localOnboarding);
     if (TRAINING_CHOICE_ENABLED && initialScreen === 'home' && shouldShowTrainingChoice(localOnboarding, initialMatchId)) {
@@ -161,6 +181,13 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     if (!playerId) return;
     if (screen === 'profile') fetchProfile(playerId, tag || 'Player').then((data) => setProfile(data.profile)).catch((error: Error) => setNotice(error.message));
     if (screen === 'history') fetchHistory(playerId).then((data) => setHistory(data.history)).catch((error: Error) => setNotice(error.message));
+    if (screen === 'friends' && FRIENDS_ENABLED) fetchFriends(playerId).then((data) => {
+      setFriends(data.friends);
+      emitTelemetry({ name: 'friend_list_viewed', playerId, properties: { friendCountBucket: countBucket(data.friends.length) } });
+    }).catch((error: Error) => {
+      setNotice(friendErrorMessage(error.message));
+      emitTelemetry({ name: 'friend_action_failed', playerId, result: 'error', properties: { errorCode: error.message } });
+    });
     if (screen === 'ranks') fetchLeaderboard().then((data) => {
       setLeaderboard(data.leaderboard);
       emitTelemetry({ name: 'rank_viewed', playerId, properties: { screen: 'ranks' } });
@@ -262,6 +289,8 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     setSnapshot(null);
     setProfile(null);
     setHistory([]);
+    setFriends([]);
+    setPendingFriendInvite(null);
     setLeaderboard([]);
     setProgression(null);
     setQuests([]);
@@ -455,6 +484,115 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
     }
   }
 
+  async function refreshFriends() {
+    try {
+      const data = await fetchFriends(playerId);
+      setFriends(data.friends);
+      emitTelemetry({ name: 'friend_list_viewed', playerId, properties: { friendCountBucket: countBucket(data.friends.length) } });
+    } catch (error) {
+      setNotice(error instanceof Error ? friendErrorMessage(error.message) : 'Friends are temporarily unavailable.');
+      emitTelemetry({ name: 'friend_action_failed', playerId, result: 'error', properties: { errorCode: error instanceof Error ? error.message : 'friend_list_failed' } });
+    }
+  }
+
+  async function acceptFriend(friendPlayerId: string, friendTag: string, source: string, matchId?: string) {
+    if (!FRIENDS_ENABLED) return;
+    if (blockOfflineWrite('Accepting a friend invite')) return;
+    try {
+      setBusy(`friend-accept-${source}`);
+      const data = await acceptFriendInvite({ playerId, playerTag: safeTag, friendPlayerId, friendTag, matchId });
+      setFriends(data.friends);
+      setPendingFriendInvite(null);
+      setNotice(`${friendTag} added to Friends.`);
+      emitTelemetry({ name: 'friend_invite_accepted', playerId, matchId, properties: { source, friendCountBucket: countBucket(data.friends.length), result: 'ok' } });
+    } catch (error) {
+      setNotice(error instanceof Error ? friendErrorMessage(error.message) : 'Friend invite failed.');
+      emitTelemetry({ name: 'friend_action_failed', playerId, matchId, result: 'error', properties: { source, errorCode: error instanceof Error ? error.message : 'accept_failed' } });
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function giftFriend(friend: FriendSummary) {
+    if (blockOfflineWrite('Sending a friend gift')) return;
+    try {
+      setBusy(`gift-${friend.friendshipId}`);
+      const data = await sendFriendGift(playerId, friend.friendshipId);
+      setFriends(data.friends);
+      setNotice(data.duplicate ? 'Gift already sent today. It resets at the next UTC day.' : `${friend.tag} received 15 XP.`);
+      emitTelemetry({ name: data.duplicate ? 'friend_gift_duplicate' : 'friend_gift_sent', playerId, properties: { giftState: data.duplicate ? 'sent-today' : 'available', friendCountBucket: countBucket(data.friends.length), result: 'ok' } });
+    } catch (error) {
+      setNotice(error instanceof Error ? friendErrorMessage(error.message) : 'Gift failed.');
+      emitTelemetry({ name: 'friend_action_failed', playerId, result: 'error', properties: { errorCode: error instanceof Error ? error.message : 'gift_failed' } });
+      void refreshFriends();
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function removeFriendRelationship(friend: FriendSummary) {
+    if (blockOfflineWrite('Removing a friend')) return;
+    try {
+      setBusy(`remove-${friend.friendshipId}`);
+      const data = await removeFriend(playerId, friend.friendshipId);
+      setFriends(data.friends);
+      setNotice(`${friend.tag} removed from Friends.`);
+      emitTelemetry({ name: 'friend_removed', playerId, properties: { friendCountBucket: countBucket(data.friends.length), result: 'ok' } });
+    } catch (error) {
+      setNotice(error instanceof Error ? friendErrorMessage(error.message) : 'Remove failed.');
+      emitTelemetry({ name: 'friend_action_failed', playerId, result: 'error', properties: { errorCode: error instanceof Error ? error.message : 'remove_failed' } });
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function blockFriendRelationship(friend: FriendSummary) {
+    if (blockOfflineWrite('Blocking a friend')) return;
+    try {
+      setBusy(`block-${friend.friendshipId}`);
+      const data = await blockFriend(playerId, friend.friendshipId);
+      setFriends(data.friends);
+      setNotice(`${friend.tag} blocked. Gifts and battle actions are disabled.`);
+      emitTelemetry({ name: 'friend_blocked', playerId, properties: { friendCountBucket: countBucket(data.friends.length), result: 'ok' } });
+    } catch (error) {
+      setNotice(error instanceof Error ? friendErrorMessage(error.message) : 'Block failed.');
+      emitTelemetry({ name: 'friend_action_failed', playerId, result: 'error', properties: { errorCode: error instanceof Error ? error.message : 'block_failed' } });
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function startFriendBattle(friend: FriendSummary) {
+    if (!friend.canBattle) {
+      setNotice('This friendship cannot start battles right now.');
+      return;
+    }
+    emitTelemetry({ name: 'friend_battle_started', playerId, properties: { giftState: friend.giftState } });
+    await start('battle');
+  }
+
+  function addOpponentFriend(source: 'lobby' | 'recap') {
+    if (!snapshot) return;
+    const opponent = opponentForSnapshot(snapshot, playerId);
+    if (!opponent) {
+      setNotice('No rival is available to add yet.');
+      return;
+    }
+    void acceptFriend(opponent.id, opponent.tag, source, snapshot.id);
+  }
+
+  async function copyProfileInvite() {
+    if (!FRIENDS_ENABLED) return;
+    try {
+      persistTag();
+      const url = `${window.location.origin}/?friendPlayerId=${encodeURIComponent(playerId)}&friendTag=${encodeURIComponent(safeTag)}`;
+      await navigator.clipboard.writeText(url);
+      setNotice('Friend invite link copied.');
+    } catch {
+      setNotice('Could not copy the friend invite link.');
+    }
+  }
+
   async function claimSeason(rewardId: string) {
     if (blockOfflineWrite('Claiming a season reward')) return;
     try {
@@ -570,19 +708,20 @@ export function GameApp({ initialScreen, initialMatchId }: Props) {
       </div>
       <div className="screen-slot">
         {screen === 'training-choice' ? <TrainingChoiceScreen choose={chooseTraining} /> : null}
-        {screen === 'home' ? <Home tag={tag} setTag={setTag} start={start} goBattle={() => setScreen('battle')} goJourney={() => setScreen('journey')} busy={busy} boardSize={activeBoardSize} journeyEnabled={BOARD_JOURNEY_ENABLED} botProfiles={botProfiles} selectedBotProfileId={selectedBot?.profileId ?? DEFAULT_BOT_PROFILE_ID} setSelectedBotProfileId={setSelectedBotProfileId} /> : null}
+        {screen === 'home' ? <Home tag={tag} setTag={setTag} start={start} goBattle={() => setScreen('battle')} goJourney={() => setScreen('journey')} goFriends={() => setScreen('friends')} busy={busy} boardSize={activeBoardSize} journeyEnabled={BOARD_JOURNEY_ENABLED} friendsEnabled={FRIENDS_ENABLED} botProfiles={botProfiles} selectedBotProfileId={selectedBot?.profileId ?? DEFAULT_BOT_PROFILE_ID} setSelectedBotProfileId={setSelectedBotProfileId} /> : null}
         {screen === 'journey' ? <BoardJourney progression={boardProgression} buy={buyBoard} select={chooseBoard} start={start} busy={busy} /> : null}
         {screen === 'tutorial' ? <Tutorial state={tutorial} select={selectTutorialTile} suggest={selectSuggestedTile} resolveAi={resolveAiTurn} finish={finishTutorial} skip={skipTutorial} busy={busy} coachEnabled={COACH_BUBBLES_ENABLED} dismissedCoachSteps={dismissedCoachSteps} dismissCoach={(step) => {
           setDismissedCoachSteps((steps) => steps.includes(step) ? steps : [...steps, step]);
           emitTelemetry({ name: 'coach_bubble_dismissed', playerId, properties: { step } });
         }} /> : null}
         {screen === 'battle' ? <Battle tag={tag} setTag={setTag} start={start} inviteCode={inviteCode} setInviteCode={setInviteCode} join={join} busy={busy} /> : null}
-        {screen === 'lobby' && snapshot && lobby ? <Lobby snapshot={snapshot} lobby={lobby} playerId={playerId} copy={copyInvite} share={shareInvite} ready={markReady} exit={exitLobby} busy={busy} /> : null}
-        {screen === 'recap' && snapshot ? <Recap snapshot={snapshot} playerId={playerId} rematch={() => start(snapshot.mode === 'daily' ? 'solo' : snapshot.mode)} home={() => { setScreen('home'); historyReplace('/'); }} ranks={() => setScreen('ranks')} busy={busy} /> : null}
+        {screen === 'friends' ? <Friends friends={friends} pendingInvite={pendingFriendInvite} acceptPending={(invite) => acceptFriend(invite.friendPlayerId, invite.friendTag, 'profile-link')} refresh={refreshFriends} gift={giftFriend} startBattle={startFriendBattle} remove={removeFriendRelationship} block={blockFriendRelationship} busy={busy} /> : null}
+        {screen === 'lobby' && snapshot && lobby ? <Lobby snapshot={snapshot} lobby={lobby} playerId={playerId} copy={copyInvite} share={shareInvite} ready={markReady} exit={exitLobby} addFriend={FRIENDS_ENABLED ? () => addOpponentFriend('lobby') : undefined} busy={busy} /> : null}
+        {screen === 'recap' && snapshot ? <Recap snapshot={snapshot} playerId={playerId} rematch={() => start(snapshot.mode === 'daily' ? 'solo' : snapshot.mode)} home={() => { setScreen('home'); historyReplace('/'); }} ranks={() => setScreen('ranks')} addFriend={FRIENDS_ENABLED ? () => addOpponentFriend('recap') : undefined} openReplay={REPLAYS_ENABLED ? () => window.location.assign(`/replay/${snapshot.id}`) : undefined} busy={busy} /> : null}
         {screen === 'quests' ? <Quests progression={progression} quests={quests} start={() => start('daily')} busy={busy} dailyEnabled={DAILY_V2_ENABLED} seasonalEnabled={SEASONAL_EVENTS_ENABLED} claimSeason={claimSeason} /> : null}
         {screen === 'ranks' ? <Ranks leaderboard={leaderboard} /> : null}
         {screen === 'history' ? <History history={history} /> : null}
-        {screen === 'profile' ? <Profile tag={tag} setTag={setTag} persistTag={persistTag} profile={profile} replayTutorial={() => openTutorial(true)} signOut={signOut} /> : null}
+        {screen === 'profile' ? <Profile tag={tag} setTag={setTag} persistTag={persistTag} profile={profile} replayTutorial={() => openTutorial(true)} signOut={signOut} copyFriendInvite={FRIENDS_ENABLED ? copyProfileInvite : undefined} /> : null}
       </div>
       {screen !== 'tutorial' && screen !== 'lobby' && screen !== 'training-choice' ? <Nav screen={screen} setScreen={setScreen} /> : null}
       <RulesHelpDialog open={helpOpen} topicId={helpTopic} snapshot={snapshot} onTopicChange={(topicId) => {
@@ -646,7 +785,7 @@ function TrainingChoiceScreen({ choose }: { choose: (choice: TrainingChoice) => 
   );
 }
 
-function Home({ tag, setTag, start, goBattle, goJourney, busy, boardSize, journeyEnabled, botProfiles, selectedBotProfileId, setSelectedBotProfileId }: { tag: string; setTag: (v: string) => void; start: (mode: GameMode) => void; goBattle: () => void; goJourney: () => void; busy: string; boardSize: BoardSize; journeyEnabled: boolean; botProfiles: BotProfileSummary[]; selectedBotProfileId: string; setSelectedBotProfileId: (profileId: string) => void }) {
+function Home({ tag, setTag, start, goBattle, goJourney, goFriends, busy, boardSize, journeyEnabled, friendsEnabled, botProfiles, selectedBotProfileId, setSelectedBotProfileId }: { tag: string; setTag: (v: string) => void; start: (mode: GameMode) => void; goBattle: () => void; goJourney: () => void; goFriends: () => void; busy: string; boardSize: BoardSize; journeyEnabled: boolean; friendsEnabled: boolean; botProfiles: BotProfileSummary[]; selectedBotProfileId: string; setSelectedBotProfileId: (profileId: string) => void }) {
   return (
     <section className="panel">
       <Stack gap="sm">
@@ -670,6 +809,7 @@ function Home({ tag, setTag, start, goBattle, goJourney, busy, boardSize, journe
           <Button size="lg" variant="light" onClick={goBattle}>Battle</Button>
         </SimpleGrid>
         {journeyEnabled ? <Button variant="light" onClick={goJourney}>Board journey</Button> : null}
+        {friendsEnabled ? <Button variant="light" onClick={goFriends}><span className="button-icon-label"><IconUsers size={18} aria-hidden="true" /> Friends</span></Button> : null}
         <Button disabled={!BLITZ_ENABLED} loading={busy === 'start-blitz'} onClick={() => start('blitz')}>Blitz quick match</Button>
       </Stack>
     </section>
@@ -737,7 +877,7 @@ function BoardJourney({ progression, buy, select, start, busy }: { progression: 
   );
 }
 
-function Recap({ snapshot, playerId, rematch, home, ranks, busy }: { snapshot: GameSnapshot; playerId: string; rematch: () => void; home: () => void; ranks: () => void; busy: string }) {
+function Recap({ snapshot, playerId, rematch, home, ranks, addFriend, openReplay, busy }: { snapshot: GameSnapshot; playerId: string; rematch: () => void; home: () => void; ranks: () => void; addFriend?: () => void; openReplay?: () => void; busy: string }) {
   const [replayIndex, setReplayIndex] = useState(0);
   const side = snapshot.players.south?.id === playerId ? 'south' : 'north';
   const you = snapshot.players[side];
@@ -752,9 +892,10 @@ function Recap({ snapshot, playerId, rematch, home, ranks, busy }: { snapshot: G
 
   async function share() {
     const text = `Matimato ${result}: ${you?.score ?? 0}-${rival?.score ?? 0} in ${snapshot.mode}.`;
+    const url = `${window.location.origin}${openReplay ? `/replay/${snapshot.id}` : `/play/${snapshot.id}`}`;
     try {
-      if (navigator.share) await navigator.share({ title: 'Matimato recap', text });
-      else await navigator.clipboard.writeText(text);
+      if (navigator.share) await navigator.share({ title: 'Matimato recap', text, url });
+      else await navigator.clipboard.writeText(`${text} ${url}`);
       emitTelemetry({ name: 'recap_shared', playerId, matchId: snapshot.id, properties: { mode: snapshot.mode, result } });
       void recordSeasonAction({ playerId, source: 'recap', metric: 'share_recap', actionId: `${snapshot.id}:share`, boardSize: snapshot.boardSize });
     } catch {
@@ -799,6 +940,8 @@ function Recap({ snapshot, playerId, rematch, home, ranks, busy }: { snapshot: G
         <SimpleGrid cols={2}>
           <Button disabled={!moves.length || replayIndex >= moves.length - 1} onClick={replayNext}>Replay next</Button>
           <Button variant="light" onClick={share}>Share recap</Button>
+          {openReplay ? <Button variant="light" onClick={openReplay}>Open replay</Button> : null}
+          {addFriend && rival ? <Button variant="light" loading={busy === 'friend-accept-recap'} onClick={addFriend}><span className="button-icon-label"><IconUserPlus size={18} aria-hidden="true" /> Add rival</span></Button> : null}
           <Button loading={busy === `start-${snapshot.mode === 'daily' ? 'solo' : snapshot.mode}`} onClick={rematchWithTelemetry}>{snapshot.mode === 'blitz' ? 'Blitz rematch' : 'Rematch'}</Button>
           <Button variant="light" onClick={ranks}>View ranks</Button>
         </SimpleGrid>
@@ -905,7 +1048,77 @@ function Battle(props: { tag: string; setTag: (v: string) => void; start: (mode:
   );
 }
 
-function Lobby({ snapshot, lobby, playerId, copy, share, ready, exit, busy }: { snapshot: GameSnapshot; lobby: LobbyState; playerId: string; copy: () => void; share: () => void; ready: () => void; exit: (kind: 'leave' | 'cancel') => void; busy: string }) {
+function Friends({ friends, pendingInvite, acceptPending, refresh, gift, startBattle, remove, block, busy }: { friends: FriendSummary[]; pendingInvite: { friendPlayerId: string; friendTag: string } | null; acceptPending: (invite: { friendPlayerId: string; friendTag: string }) => void; refresh: () => void; gift: (friend: FriendSummary) => void; startBattle: (friend: FriendSummary) => void; remove: (friend: FriendSummary) => void; block: (friend: FriendSummary) => void; busy: string }) {
+  const [confirm, setConfirm] = useState<{ kind: 'remove' | 'block'; friendshipId: string } | null>(null);
+  return (
+    <section className="panel scroll-screen friends-screen" aria-labelledby="friends-title">
+      <div className="scroll-screen-header">
+        <Group justify="space-between">
+          <span className="hero-tag">Friends</span>
+          <Badge color="blue" variant="light">{friends.length} saved</Badge>
+        </Group>
+        <h2 id="friends-title">Return to rivals.</h2>
+        <p className="copy">Keep battle rivals, send one daily XP gift, and create a normal ready-check lobby when you want a rematch.</p>
+        {pendingInvite ? (
+          <div className="list-card friend-invite" role="status">
+            <strong>{pendingInvite.friendTag} invited you.</strong>
+            <p className="copy">Accepting creates a mutual relationship on this anonymous player profile.</p>
+            <Button loading={busy === 'friend-accept-profile-link'} onClick={() => acceptPending(pendingInvite)}>
+              <span className="button-icon-label"><IconUserPlus size={18} aria-hidden="true" /> Accept friend</span>
+            </Button>
+          </div>
+        ) : null}
+        <Button variant="light" onClick={refresh}>Refresh friends</Button>
+      </div>
+      <div className="scroll-list" role="list" aria-label="Friend list" tabIndex={0}>
+        {friends.length ? friends.map((friend) => {
+          const confirming = confirm?.friendshipId === friend.friendshipId ? confirm.kind : null;
+          return (
+            <div className="list-card friend-row" role="listitem" key={friend.friendshipId}>
+              <Group justify="space-between" align="start">
+                <div>
+                  <strong>{friend.tag}</strong>
+                  <p className="copy">{friendStatusCopy(friend)}</p>
+                </div>
+                <Badge color={friend.status === 'blocked' ? 'red' : friend.canGiftToday ? 'green' : 'gray'} variant="light">{friend.giftState}</Badge>
+              </Group>
+              <SimpleGrid cols={2}>
+                <Button disabled={!friend.canGiftToday} loading={busy === `gift-${friend.friendshipId}`} onClick={() => gift(friend)}>
+                  <span className="button-icon-label"><IconGift size={18} aria-hidden="true" /> Gift</span>
+                </Button>
+                <Button variant="light" disabled={!friend.canBattle} onClick={() => startBattle(friend)}>
+                  <span className="button-icon-label"><IconSwords size={18} aria-hidden="true" /> Battle</span>
+                </Button>
+              </SimpleGrid>
+              {confirming ? (
+                <div className="friend-confirm" role="group" aria-label={`Confirm ${confirming} friend`}>
+                  <p className="copy">{confirming === 'block' ? 'Block disables future gifts and friend battles.' : 'Remove hides this relationship until a later invite recreates it.'}</p>
+                  <Group grow>
+                    <Button color={confirming === 'block' ? 'red' : 'gray'} loading={busy === `${confirming}-${friend.friendshipId}`} onClick={() => {
+                      setConfirm(null);
+                      if (confirming === 'block') block(friend);
+                      else remove(friend);
+                    }}>Confirm</Button>
+                    <Button variant="light" onClick={() => setConfirm(null)}>Cancel</Button>
+                  </Group>
+                </div>
+              ) : (
+                <Group grow>
+                  <Button size="xs" variant="subtle" onClick={() => setConfirm({ kind: 'remove', friendshipId: friend.friendshipId })}>Remove</Button>
+                  <Button size="xs" variant="light" color="red" onClick={() => setConfirm({ kind: 'block', friendshipId: friend.friendshipId })}>
+                    <span className="button-icon-label"><IconBan size={16} aria-hidden="true" /> Block</span>
+                  </Button>
+                </Group>
+              )}
+            </div>
+          );
+        }) : <div className="list-card" role="listitem"><strong>No friends yet</strong><p className="copy">Create a battle, finish with a rival, or share your profile invite link to add someone safely.</p></div>}
+      </div>
+    </section>
+  );
+}
+
+function Lobby({ snapshot, lobby, playerId, copy, share, ready, exit, addFriend, busy }: { snapshot: GameSnapshot; lobby: LobbyState; playerId: string; copy: () => void; share: () => void; ready: () => void; exit: (kind: 'leave' | 'cancel') => void; addFriend?: () => void; busy: string }) {
   const side = snapshot.players.south?.id === playerId ? 'south' : 'north';
   const readyBySide = Boolean(lobby.ready[side]);
   const creator = side === 'north';
@@ -924,6 +1137,7 @@ function Lobby({ snapshot, lobby, playerId, copy, share, ready, exit, busy }: { 
           <Button onClick={copy}>Copy invite</Button>
           <Button variant="light" onClick={share}>Share</Button>
         </Group>
+        {addFriend ? <Button variant="light" disabled={!snapshot.players.south} loading={busy === 'friend-accept-lobby'} onClick={addFriend}><span className="button-icon-label"><IconUserPlus size={18} aria-hidden="true" /> Add rival friend</span></Button> : null}
         <SimpleGrid cols={2}>
           <Seat label="Creator" player={snapshot.players.north?.tag ?? 'Open'} ready={Boolean(lobby.ready.north)} />
           <Seat label="Rival" player={snapshot.players.south?.tag ?? 'Open seat'} ready={Boolean(lobby.ready.south)} />
@@ -1042,7 +1256,7 @@ function History({ history }: { history: MatchSummary[] }) {
   );
 }
 
-function Profile({ tag, setTag, persistTag, profile, replayTutorial, signOut }: { tag: string; setTag: (v: string) => void; persistTag: () => void; profile: ProfileSummary | null; replayTutorial: () => void; signOut: () => void }) {
+function Profile({ tag, setTag, persistTag, profile, replayTutorial, signOut, copyFriendInvite }: { tag: string; setTag: (v: string) => void; persistTag: () => void; profile: ProfileSummary | null; replayTutorial: () => void; signOut: () => void; copyFriendInvite?: () => void }) {
   return (
     <section className="panel scroll-screen profile-panel">
       <div className="scroll-screen-header">
@@ -1051,6 +1265,7 @@ function Profile({ tag, setTag, persistTag, profile, replayTutorial, signOut }: 
         <p className="copy">Track level, spendable XP, active board, and replay the rules path any time.</p>
         <TextInput label="Player tag" value={tag} onChange={(event) => setTag(event.currentTarget.value)} placeholder="Enter your tag" />
         <Group grow><Button onClick={persistTag}>Save tag</Button><Button variant="light" onClick={replayTutorial}>Replay tutorial</Button></Group>
+        {copyFriendInvite ? <Button variant="light" onClick={copyFriendInvite}><span className="button-icon-label"><IconUserPlus size={18} aria-hidden="true" /> Copy friend invite</span></Button> : null}
         <Button variant="light" color="red" onClick={signOut}>
           <span className="button-icon-label"><IconLogout size={18} aria-hidden="true" /> Sign out</span>
         </Button>
@@ -1069,6 +1284,7 @@ function Nav({ screen, setScreen }: { screen: Screen; setScreen: (screen: Screen
     ['home', 'Home', IconHome],
     ['journey', 'Journey', IconRoute],
     ['battle', 'Battle', IconSwords],
+    ['friends', 'Friends', IconUsers],
     ['quests', 'Quests', IconCalendar],
     ['ranks', 'Ranks', IconTrophy],
     ['history', 'History', IconHistory],
@@ -1115,6 +1331,14 @@ function scoreBucket(score: number): string {
   return '<-25';
 }
 
+function countBucket(count: number): string {
+  if (count >= 50) return '50+';
+  if (count >= 20) return '20-49';
+  if (count >= 5) return '5-19';
+  if (count >= 1) return '1-4';
+  return '0';
+}
+
 function xpBucket(xp: number): string {
   if (xp >= 900) return '900+';
   if (xp >= 520) return '520-899';
@@ -1129,6 +1353,29 @@ function boardPurchaseMessage(code: string, boardSize: BoardSize): string {
   if (code.includes('BOARD_ALREADY_UNLOCKED')) return `${boardSize}x${boardSize} is already unlocked.`;
   if (code.includes('BOARD_JOURNEY_DISABLED')) return 'Board purchases are temporarily disabled.';
   return 'Board purchase failed. Refresh Journey and try again.';
+}
+
+function opponentForSnapshot(snapshot: GameSnapshot, playerId: string): PlayerState | null {
+  const side = snapshot.players.south?.id === playerId ? 'south' : 'north';
+  const opponent = snapshot.players[side === 'north' ? 'south' : 'north'];
+  return opponent?.id && opponent.id !== playerId ? opponent : null;
+}
+
+function friendStatusCopy(friend: FriendSummary): string {
+  if (friend.status === 'blocked') return 'Blocked. Gifts and friend battles are disabled.';
+  if (friend.giftState === 'sent-today' && friend.nextGiftAt) return `Gift sent today. Resets ${new Date(friend.nextGiftAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} UTC.`;
+  if (friend.canGiftToday) return 'Gift available today.';
+  if (friend.lastPlayedAt) return `Last played ${new Date(friend.lastPlayedAt).toLocaleDateString()}.`;
+  return 'Ready for a safe rematch lobby.';
+}
+
+function friendErrorMessage(code: string): string {
+  if (code.includes('FRIENDS_DISABLED')) return 'Friends are temporarily disabled.';
+  if (code.includes('FRIEND_SELF_NOT_ALLOWED')) return 'You cannot add this player profile as its own friend.';
+  if (code.includes('FRIEND_BLOCKED')) return 'This relationship is blocked.';
+  if (code.includes('FRIEND_REMOVED')) return 'This relationship was removed. Accept a fresh invite to reconnect.';
+  if (code.includes('FRIEND_NOT_FOUND')) return 'Friend relationship not found.';
+  return 'Friend action failed. Try again.';
 }
 
 function historyReplace(path: string) {

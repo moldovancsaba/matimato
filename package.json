@@ -1,6 +1,6 @@
 {
   "name": "matimato",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -22,7 +22,7 @@
   "dependencies": {
     "@capacitor/core": "^8.4.1",
     "@capacitor/ios": "^8.4.1",
-    "@doneisbetter/gds": "^3.5.0",
+    "@doneisbetter/gds": "^3.7.0",
     "@mantine/core": "^8.3.18",
     "@mantine/hooks": "^8.3.18",
     "@mantine/modals": "^8.3.18",
