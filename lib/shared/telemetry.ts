@@ -75,7 +75,22 @@ export const TELEMETRY_EVENT_NAMES = [
   'bot_move_chosen',
   'bot_decision_timeout',
   'bot_match_completed',
-  'bot_fallback_used'
+  'bot_fallback_used',
+  'friend_invite_accepted',
+  'friend_list_viewed',
+  'friend_gift_sent',
+  'friend_gift_duplicate',
+  'friend_battle_started',
+  'friend_removed',
+  'friend_blocked',
+  'friend_action_failed',
+  'replay_viewed',
+  'replay_step_changed',
+  'replay_playback_started',
+  'replay_share_copied',
+  'replay_conversion_clicked',
+  'replay_unavailable',
+  'replay_error'
 ] as const satisfies readonly TelemetryEventName[];
 
 export const TELEMETRY_PROPERTY_KEYS = [
@@ -117,7 +132,13 @@ export const TELEMETRY_PROPERTY_KEYS = [
   'profileId',
   'difficulty',
   'newlyClaimed',
-  'xp'
+  'xp',
+  'relationshipAgeBucket',
+  'friendCountBucket',
+  'giftState',
+  'frameCountBucket',
+  'stepIndex',
+  'summaryOnly'
 ] as const;
 
 export function isTelemetryEventName(value: string): value is TelemetryEventName {

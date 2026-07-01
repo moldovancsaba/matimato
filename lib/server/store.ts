@@ -1,13 +1,17 @@
 import { createDailyChallenge, createEmptyStreak, getWeekEndExclusive, getWeekStart, rankWeeklyResults, updateStreak } from '@/lib/game/daily';
 import { applyBoardPurchase, createProgression, normalizeBoardSize, selectActiveBoard } from '@/lib/game/progression';
+import { buildReplaySnapshot } from '@/lib/game/replay';
 import { applySeasonAction, buildActiveSeasonState, buildBadgeAlbum, claimSeasonReward } from '@/lib/game/seasons';
-import type { BoardProgression, BoardSize, DailyResult, GameSnapshot, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, RankEntry, SeasonTaskMetric, SeasonTaskSource, StreakState, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
+import { buildGiftLedgerEntry, friendshipIdForPlayers, normalizeFriendTag, nextUtcGiftReset, otherFriendPlayer, publicPlayerHash, relationshipBlocksActions, utcGiftDate } from '@/lib/game/social';
+import type { BoardProgression, BoardSize, DailyResult, FriendActionResponse, FriendListResponse, FriendSummary, Friendship, FriendshipStatus, GameSnapshot, GiftLedgerEntry, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, RankEntry, ReplaySnapshot, SeasonTaskMetric, SeasonTaskSource, StreakState, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
 import { getDb } from './mongo';
 
 const GAMES = 'games';
 const HISTORY = 'history';
 const PROFILES = 'profiles';
 const DAILY_RESULTS = 'dailyResults';
+const FRIENDSHIPS = 'friendships';
+const GIFT_LEDGER = 'friendGiftLedger';
 
 export async function saveGame(snapshot: GameSnapshot): Promise<void> {
   const db = await getDb();
@@ -93,6 +97,113 @@ export async function completeGame(snapshot: GameSnapshot): Promise<void> {
       });
     }
   }
+}
+
+export async function listFriends(playerId: string, now = new Date()): Promise<FriendListResponse> {
+  const db = await getDb();
+  const relationships = await db.collection<Friendship>(FRIENDSHIPS)
+    .find({ playerIds: playerId }, { projection: { _id: 0 } })
+    .sort({ updatedAt: -1 })
+    .limit(100)
+    .toArray();
+  const giftDate = utcGiftDate(now);
+  const friendshipIds = relationships.map((friendship) => friendship.id);
+  const sentToday = friendshipIds.length
+    ? await db.collection<GiftLedgerEntry>(GIFT_LEDGER)
+      .find({ senderId: playerId, giftDate, friendshipId: { $in: friendshipIds } }, { projection: { _id: 0 } })
+      .toArray()
+    : [];
+  const sentSet = new Set(sentToday.map((gift) => gift.friendshipId));
+  return {
+    friends: relationships
+      .filter((friendship) => (friendship.statusByPlayer[playerId] ?? 'active') !== 'removed')
+      .map((friendship) => buildFriendSummary(friendship, playerId, sentSet.has(friendship.id), now)),
+    serverNow: now.toISOString()
+  };
+}
+
+export async function acceptFriendInvite(input: { playerId: string; playerTag?: string; friendPlayerId: string; friendTag: string; actionId: string; matchId?: string }, now = new Date()): Promise<FriendActionResponse> {
+  const db = await getDb();
+  const friendshipId = friendshipIdForPlayers(input.playerId, input.friendPlayerId);
+  const existing = await db.collection<Friendship>(FRIENDSHIPS).findOne({ id: friendshipId }, { projection: { _id: 0 } });
+  if (existing && Object.values(existing.statusByPlayer).includes('blocked')) throw new Error('FRIEND_BLOCKED');
+  const currentProfile = await db.collection(PROFILES).findOne({ playerId: input.playerId }, { projection: { _id: 0 } });
+  const friendProfile = await db.collection(PROFILES).findOne({ playerId: input.friendPlayerId }, { projection: { _id: 0 } });
+  const playerTag = normalizeFriendTag(input.playerTag ?? String(currentProfile?.tag ?? 'Player'), 'Player');
+  const friendTag = normalizeFriendTag(input.friendTag ?? String(friendProfile?.tag ?? 'Friend'), 'Friend');
+  const playerIds = [input.playerId, input.friendPlayerId].sort() as [string, string];
+  const createdAt = existing?.createdAt ?? now.toISOString();
+  const friendship: Friendship = {
+    id: friendshipId,
+    playerIds,
+    tags: {
+      ...(existing?.tags ?? {}),
+      [input.playerId]: playerTag,
+      [input.friendPlayerId]: friendTag
+    },
+    statusByPlayer: {
+      ...(existing?.statusByPlayer ?? {}),
+      [input.playerId]: 'active',
+      [input.friendPlayerId]: 'active'
+    },
+    createdAt,
+    updatedAt: now.toISOString(),
+    lastMatchId: input.matchId ?? existing?.lastMatchId,
+    lastPlayedAt: input.matchId ? now.toISOString() : existing?.lastPlayedAt
+  };
+  await db.collection<Friendship>(FRIENDSHIPS).updateOne({ id: friendshipId }, { $set: friendship }, { upsert: true });
+  const list = await listFriends(input.playerId, now);
+  return { ...list, friendship: list.friends.find((friend) => friend.friendshipId === friendshipId) };
+}
+
+export async function removeFriend(input: { playerId: string; friendshipId: string; actionId: string }, now = new Date()): Promise<FriendActionResponse> {
+  await updateFriendStatus(input.friendshipId, input.playerId, 'removed', now);
+  return listFriends(input.playerId, now);
+}
+
+export async function blockFriend(input: { playerId: string; friendshipId: string; actionId: string }, now = new Date()): Promise<FriendActionResponse> {
+  await updateFriendStatus(input.friendshipId, input.playerId, 'blocked', now);
+  return listFriends(input.playerId, now);
+}
+
+export async function sendFriendGift(input: { playerId: string; friendshipId: string; actionId: string }, now = new Date()): Promise<FriendActionResponse> {
+  const db = await getDb();
+  const friendship = await db.collection<Friendship>(FRIENDSHIPS).findOne({ id: input.friendshipId }, { projection: { _id: 0 } });
+  if (!friendship || !friendship.playerIds.includes(input.playerId)) throw new Error('FRIEND_NOT_FOUND');
+  const blocked = relationshipBlocksActions(friendship, input.playerId);
+  if (blocked === 'blocked') throw new Error('FRIEND_BLOCKED');
+  if (blocked === 'removed') throw new Error('FRIEND_REMOVED');
+  const receiverId = otherFriendPlayer(friendship, input.playerId);
+  const gift = buildGiftLedgerEntry({ friendshipId: friendship.id, senderId: input.playerId, receiverId, actionId: input.actionId, now });
+  const result = await db.collection<GiftLedgerEntry>(GIFT_LEDGER).updateOne({ id: gift.id }, { $setOnInsert: gift }, { upsert: true });
+  const inserted = result.upsertedCount > 0;
+  if (inserted) {
+    const currentProfile = await db.collection(PROFILES).findOne({ playerId: receiverId }, { projection: { _id: 0 } });
+    const currentProgression = createProgression(currentProfile ?? {});
+    await db.collection(PROFILES).updateOne(
+      { playerId: receiverId },
+      {
+        $set: { playerId: receiverId, spendableXp: currentProgression.wallet.spendableXp + gift.xpGranted },
+        $inc: { xp: gift.xpGranted }
+      },
+      { upsert: true }
+    );
+    await recordSeasonProgressAction({ playerId: input.playerId, source: 'social', metric: 'send_friend_gift', actionId: gift.id });
+  }
+  const list = await listFriends(input.playerId, now);
+  return {
+    ...list,
+    friendship: list.friends.find((friend) => friend.friendshipId === friendship.id),
+    gift,
+    xpGranted: inserted ? gift.xpGranted : 0,
+    duplicate: !inserted
+  };
+}
+
+export async function findReplaySnapshot(matchId: string, now = new Date()): Promise<ReplaySnapshot> {
+  const snapshot = await findGame(matchId);
+  if (!snapshot) throw new Error('REPLAY_NOT_FOUND');
+  return buildReplaySnapshot(snapshot, now);
 }
 
 export async function getProfile(playerId: string, fallbackTag = 'Player'): Promise<ProfileSummary> {
@@ -301,6 +412,46 @@ async function upsertDailyResult(input: Omit<DailyResult, 'id' | 'attempts'>): P
     },
     { upsert: true }
   );
+}
+
+async function updateFriendStatus(friendshipId: string, playerId: string, status: FriendshipStatus, now = new Date()): Promise<void> {
+  const db = await getDb();
+  const friendship = await db.collection<Friendship>(FRIENDSHIPS).findOne({ id: friendshipId }, { projection: { _id: 0 } });
+  if (!friendship || !friendship.playerIds.includes(playerId)) throw new Error('FRIEND_NOT_FOUND');
+  await db.collection<Friendship>(FRIENDSHIPS).updateOne(
+    { id: friendshipId },
+    {
+      $set: {
+        [`statusByPlayer.${playerId}`]: status,
+        updatedAt: now.toISOString()
+      }
+    }
+  );
+}
+
+function buildFriendSummary(friendship: Friendship, playerId: string, giftSentToday: boolean, now = new Date()): FriendSummary {
+  const other = otherFriendPlayer(friendship, playerId);
+  const ownStatus = friendship.statusByPlayer[playerId] ?? 'active';
+  const blocked = relationshipBlocksActions(friendship, playerId);
+  const giftState = blocked === 'blocked'
+    ? 'blocked'
+    : blocked === 'removed' || ownStatus === 'removed'
+      ? 'removed'
+      : giftSentToday
+        ? 'sent-today'
+        : 'available';
+  return {
+    friendshipId: friendship.id,
+    friendPlayerIdHash: publicPlayerHash(other),
+    tag: normalizeFriendTag(friendship.tags[other], 'Friend'),
+    status: ownStatus,
+    canGiftToday: giftState === 'available',
+    canBattle: !blocked,
+    giftState,
+    nextGiftAt: giftSentToday ? nextUtcGiftReset(now) : undefined,
+    lastPlayedAt: friendship.lastPlayedAt,
+    activeLobbyId: undefined
+  };
 }
 
 function createEmptyOnboarding(playerId: string): OnboardingState {

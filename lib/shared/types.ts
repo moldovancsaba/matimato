@@ -81,7 +81,22 @@ export type TelemetryEventName =
   | 'bot_move_chosen'
   | 'bot_decision_timeout'
   | 'bot_match_completed'
-  | 'bot_fallback_used';
+  | 'bot_fallback_used'
+  | 'friend_invite_accepted'
+  | 'friend_list_viewed'
+  | 'friend_gift_sent'
+  | 'friend_gift_duplicate'
+  | 'friend_battle_started'
+  | 'friend_removed'
+  | 'friend_blocked'
+  | 'friend_action_failed'
+  | 'replay_viewed'
+  | 'replay_step_changed'
+  | 'replay_playback_started'
+  | 'replay_share_copied'
+  | 'replay_conversion_clicked'
+  | 'replay_unavailable'
+  | 'replay_error';
 export type LegalTarget = { axis: 'any' } | { axis: 'row'; index: number } | { axis: 'column'; index: number };
 
 export type BoardCell = {
@@ -183,8 +198,8 @@ export type GameSnapshot = {
   updatedAt: string;
 };
 
-export type SeasonTaskSource = 'daily' | 'solo' | 'battle' | 'blitz' | 'journey' | 'recap' | 'rank';
-export type SeasonTaskMetric = 'complete_match' | 'win_match' | 'score_threshold' | 'unlock_board' | 'replay_move' | 'share_recap' | 'view_rank';
+export type SeasonTaskSource = 'daily' | 'solo' | 'battle' | 'blitz' | 'journey' | 'recap' | 'rank' | 'social';
+export type SeasonTaskMetric = 'complete_match' | 'win_match' | 'score_threshold' | 'unlock_board' | 'replay_move' | 'share_recap' | 'view_rank' | 'send_friend_gift';
 
 export type SeasonTask = {
   taskId: string;
@@ -380,6 +395,73 @@ export type HealthResponse = {
   database: 'connected' | 'error';
   version: string;
   checks: HealthCheck[];
+};
+
+export type FriendshipStatus = 'active' | 'removed' | 'blocked';
+
+export type Friendship = {
+  id: string;
+  playerIds: [string, string];
+  tags: Record<string, string>;
+  statusByPlayer: Record<string, FriendshipStatus>;
+  createdAt: string;
+  updatedAt: string;
+  lastMatchId?: string;
+  lastPlayedAt?: string;
+};
+
+export type GiftLedgerEntry = {
+  id: string;
+  friendshipId: string;
+  senderId: string;
+  receiverId: string;
+  giftDate: string;
+  xpGranted: number;
+  actionId: string;
+  createdAt: string;
+};
+
+export type FriendSummary = {
+  friendshipId: string;
+  friendPlayerIdHash: string;
+  tag: string;
+  status: FriendshipStatus;
+  canGiftToday: boolean;
+  canBattle: boolean;
+  giftState: 'available' | 'sent-today' | 'blocked' | 'removed';
+  nextGiftAt?: string;
+  lastPlayedAt?: string;
+  activeLobbyId?: string;
+};
+
+export type FriendListResponse = {
+  friends: FriendSummary[];
+  serverNow: string;
+};
+
+export type FriendActionResponse = FriendListResponse & {
+  friendship?: FriendSummary;
+  gift?: GiftLedgerEntry;
+  xpGranted?: number;
+  duplicate?: boolean;
+};
+
+export type ReplayVisibility = 'public-link' | 'private' | 'expired';
+
+export type ReplayFrame = Pick<MoveFrame, 'version' | 'side' | 'selected' | 'fromTarget' | 'toTarget' | 'scores' | 'timeout' | 'outcome'>;
+
+export type ReplaySnapshot = {
+  replayId: string;
+  matchId: string;
+  mode: GameMode;
+  boardSize: BoardSize;
+  outcome: GameOutcome;
+  players: { side: PlayerSide; tag: string; score: number }[];
+  frames: ReplayFrame[];
+  completedAt: string;
+  visibility: ReplayVisibility;
+  shareExpiresAt?: string;
+  summaryOnly: boolean;
 };
 
 export type CreateGameRequest = { type: 'create'; mode: GameMode; playerId: string; playerTag: string; lobbyVersion?: 2; dailyId?: string; boardSize?: BoardSize; botProfileId?: string; clock?: Partial<Pick<BlitzClockConfig, 'turnLimitMs'>> };

@@ -2,7 +2,7 @@
 
 A fresh Next.js + Phaser + MongoDB implementation of Matimato.
 
-Current release: `2.6.0`.
+Current release: `2.7.0`.
 
 ## Commands
 
@@ -27,7 +27,7 @@ npm audit --omit=dev
 ## Stack
 
 - Next.js App Router
-- Sovereign Squad General Design System `@doneisbetter/gds` 3.5.0 for React UI controls and theme bootstrap
+- Sovereign Squad General Design System `@doneisbetter/gds` 3.7.0 for React UI controls and theme bootstrap
 - Phaser 3 for the game board
 - MongoDB Atlas for persistence
 - Vitest for rules tests
@@ -57,7 +57,7 @@ NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE=true
 NEXT_PUBLIC_MATIMATO_COACH_BUBBLES=true
 NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY=true
 NEXT_PUBLIC_MATIMATO_SERVICE_WORKER=true
-NEXT_PUBLIC_MATIMATO_APP_VERSION=2.6.0
+NEXT_PUBLIC_MATIMATO_APP_VERSION=2.7.0
 NEXT_PUBLIC_MATIMATO_IOS_BUILD_NUMBER=web
 MATIMATO_BLITZ_ENABLED=true
 MATIMATO_EVENTS_ENABLED=true
@@ -66,6 +66,10 @@ NEXT_PUBLIC_MATIMATO_SEASONAL_EVENTS=true
 MATIMATO_SEASONAL_EVENTS_ENABLED=true
 NEXT_PUBLIC_MATIMATO_RULE_ASSIST=true
 NEXT_PUBLIC_MATIMATO_AI_PROFILES=true
+NEXT_PUBLIC_MATIMATO_FRIENDS=true
+MATIMATO_FRIENDS_ENABLED=true
+NEXT_PUBLIC_MATIMATO_REPLAYS=true
+MATIMATO_REPLAYS_ENABLED=true
 CAPACITOR_SERVER_URL=https://matimato.vercel.app
 CAPACITOR_BUILD_NUMBER=local
 APP_STORE_CONNECT_API_KEY_ID=
@@ -86,6 +90,8 @@ APP_STORE_CONNECT_API_KEY_PATH=
 `NEXT_PUBLIC_MATIMATO_TRAINING_CHOICE=false` restores the previous automatic onboarding behavior. `NEXT_PUBLIC_MATIMATO_COACH_BUBBLES=false` hides contextual tutorial explanations. `NEXT_PUBLIC_MATIMATO_BOARD_JOURNEY=false` hides the board journey UI. `MATIMATO_BOARD_JOURNEY_ENABLED=false` rejects new board purchases and active-board changes server-side while keeping stored wallet/unlock data readable.
 
 `NEXT_PUBLIC_MATIMATO_SEASONAL_EVENTS=false` hides the seasonal album and reward track. `MATIMATO_SEASONAL_EVENTS_ENABLED=false` pauses server-side season progress evaluation while preserving saved ledgers. `NEXT_PUBLIC_MATIMATO_RULE_ASSIST=false` hides persistent help buttons. `NEXT_PUBLIC_MATIMATO_AI_PROFILES=false` falls back to the rookie solo AI profile.
+
+`NEXT_PUBLIC_MATIMATO_FRIENDS=false` hides Friends UI and profile invite links. `MATIMATO_FRIENDS_ENABLED=false` rejects new friend/gift writes while preserving stored relationships and gift ledgers. `NEXT_PUBLIC_MATIMATO_REPLAYS=false` hides replay share entry points. `MATIMATO_REPLAYS_ENABLED=false` disables `/api/replays/[id]` without changing existing match snapshots.
 
 `NEXT_PUBLIC_MATIMATO_SERVICE_WORKER=false` stops registering the offline shell worker for new sessions. `CAPACITOR_SERVER_URL` controls the iOS wrapper target and must stay on HTTPS for production.
 
@@ -171,6 +177,28 @@ Existing solo, battle, and daily snapshots may omit `clock`; clients treat omitt
 
 Completed matches transition to a GDS-owned recap screen with final score, outcome reason, move replay, share action, ranks navigation, and rematch. Game snapshots now keep an optional `moveLog` so recap can replay claimed tiles and timeout resolutions without reading Phaser state.
 
+## Friends and gifts
+
+The Friends screen stores anonymous-player relationships created from battle lobbies, recaps, or profile invite links. Friend summaries expose tags and hashed identifiers only; raw friend player ids stay server-side or in write-only invite actions. Each active relationship supports one deterministic 15 XP gift per sender/receiver UTC day and a normal V2 battle lobby entry that still requires existing ready checks.
+
+Friend actions use `/api/friends`:
+
+```ts
+GET /api/friends?playerId=...
+POST /api/friends
+{ "type": "acceptInvite", "playerId": "...", "friendPlayerId": "...", "friendTag": "...", "actionId": "uuid" }
+POST /api/friends
+{ "type": "sendGift", "playerId": "...", "friendshipId": "...", "actionId": "uuid" }
+```
+
+Remove and block controls require confirmation in the Friends screen. Blocked relationships reject gifts and friend battles. Gifts are idempotent by `friendshipId:senderId:yyyy-mm-dd`; retries cannot double-grant XP. There are no paid gifts, random packs, contact imports, chat, push notifications, or competitive-rank boosts.
+
+## Read-only replays
+
+Completed matches are shareable at `/replay/{matchId}` through a public-safe DTO from `/api/replays/[id]`. Replay responses include final score context, sanitized tags, board size, outcome, and move frames stripped of raw player ids, invite codes, and action ids. Completed legacy snapshots without `moveLog` render a summary-only replay instead of failing.
+
+Replay pages are read-only. Conversion actions create new solo, Blitz, or V2 battle sessions through the existing `/api/games` create flow and never mutate the viewed match. Private, expired, incomplete, disabled, and missing replay states return explicit recoverable errors.
+
 ## Daily challenge
 
 The Quests screen now exposes one deterministic UTC challenge per day using seed `daily:{yyyy-mm-dd}`. `POST /api/games` creates or resumes the active daily for the same player:
@@ -190,7 +218,7 @@ POST /api/events
 { "events": [{ "name": "daily_started", "version": 1, "occurredAt": "...", "sessionHash": "...", "properties": {} }] }
 ```
 
-Tracked product events cover optional training choice, coach bubbles, board journey purchases/selection, onboarding, battle lobby, daily challenge, Blitz clocks/rematches, recap/share actions, weekly/rank views, match completion, Phaser lifecycle, sync errors, iOS runtime mode, offline retry/recovery, and recovery surfaces. `/api/health` returns release version plus database connectivity checks for deployment verification.
+Tracked product events cover optional training choice, coach bubbles, board journey purchases/selection, onboarding, battle lobby, friends/gifts, read-only replays, daily challenge, Blitz clocks/rematches, recap/share actions, weekly/rank views, match completion, Phaser lifecycle, sync errors, iOS runtime mode, offline retry/recovery, and recovery surfaces. `/api/health` returns release version plus database connectivity checks for deployment verification.
 
 ## Core guarantee
 
@@ -227,6 +255,8 @@ Before promoting a progression release, verify:
 - Learn path shows coach bubbles, supports keyboard-only tile selection, and can be skipped.
 - Play-now path reaches Home without starting training.
 - Journey shows 5x5 through 9x9, lifetime/spendable XP, disabled reasons, and active board state.
+- Friends accepts a profile invite link, sends one daily gift, rejects a duplicate gift without extra XP, and disables actions after block.
+- Completed matches open at `/replay/{matchId}`, step through sanitized moves or summary-only fallback, copy the replay link, and start a fresh solo/Blitz/battle session.
 - Insufficient XP cannot purchase the next board and exposes a readable reason.
 - Successful 6x6 purchase reduces spendable XP, preserves lifetime XP, and selects 6x6.
 - Duplicate purchase retry does not double-spend XP.

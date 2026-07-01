@@ -1,4 +1,4 @@
-import type { ActiveSeasonState, BoardProgression, BoardSize, GameApiResponse, GameMode, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, RankEntry, SeasonReward, SeasonRewardGrant, SeasonTaskMetric, SeasonTaskSource, TelemetryEventName, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
+import type { ActiveSeasonState, BoardProgression, BoardSize, FriendActionResponse, FriendListResponse, GameApiResponse, GameMode, MatchSummary, OnboardingState, ProfileSummary, ProgressionResponse, RankEntry, ReplaySnapshot, SeasonReward, SeasonRewardGrant, SeasonTaskMetric, SeasonTaskSource, TelemetryEventName, TrainingChoice, TutorialStepId } from '@/lib/shared/types';
 
 export const RETRY_POLICY = { maxAttempts: 3, baseDelayMs: 500, timeoutMs: 5000 } as const;
 
@@ -155,6 +155,30 @@ export function fetchLeaderboard(): Promise<{ leaderboard: RankEntry[] }> {
 export function fetchProgression(playerId?: string): Promise<ProgressionResponse> {
   const suffix = playerId ? `?playerId=${encodeURIComponent(playerId)}` : '';
   return request(`/api/progression${suffix}`);
+}
+
+export function fetchFriends(playerId: string): Promise<FriendListResponse> {
+  return request(`/api/friends?playerId=${encodeURIComponent(playerId)}`);
+}
+
+export function acceptFriendInvite(input: { playerId: string; playerTag?: string; friendPlayerId: string; friendTag: string; matchId?: string; actionId?: string }): Promise<{ ok: true } & FriendActionResponse> {
+  return request('/api/friends', { method: 'POST', body: JSON.stringify({ type: 'acceptInvite', actionId: input.actionId ?? crypto.randomUUID(), ...input }) });
+}
+
+export function sendFriendGift(playerId: string, friendshipId: string, actionId = crypto.randomUUID()): Promise<{ ok: true } & FriendActionResponse> {
+  return request('/api/friends', { method: 'POST', body: JSON.stringify({ type: 'sendGift', playerId, friendshipId, actionId }) });
+}
+
+export function removeFriend(playerId: string, friendshipId: string, actionId = crypto.randomUUID()): Promise<{ ok: true } & FriendActionResponse> {
+  return request('/api/friends', { method: 'POST', body: JSON.stringify({ type: 'remove', playerId, friendshipId, actionId }) });
+}
+
+export function blockFriend(playerId: string, friendshipId: string, actionId = crypto.randomUUID()): Promise<{ ok: true } & FriendActionResponse> {
+  return request('/api/friends', { method: 'POST', body: JSON.stringify({ type: 'block', playerId, friendshipId, actionId }) });
+}
+
+export function fetchReplay(replayId: string): Promise<{ replay: ReplaySnapshot }> {
+  return request(`/api/replays/${encodeURIComponent(replayId)}`);
 }
 
 export function persistOnboarding(playerId: string, input: { step?: TutorialStepId; completed?: boolean; dismissed?: boolean; trainingChoice?: TrainingChoice }): Promise<{ ok: true; onboarding: OnboardingState }> {

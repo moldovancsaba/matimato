@@ -1,9 +1,9 @@
-import type { ActiveSeasonState, BadgeAlbum, BoardSize, SeasonDefinition, SeasonProgress, SeasonReward, SeasonRewardGrant, SeasonTaskSource } from '@/lib/shared/types';
+import type { ActiveSeasonState, BadgeAlbum, BoardSize, SeasonDefinition, SeasonProgress, SeasonReward, SeasonRewardGrant, SeasonTaskMetric, SeasonTaskSource } from '@/lib/shared/types';
 
 export type SeasonActionInput = {
   playerId: string;
   source: SeasonTaskSource;
-  metric: 'complete_match' | 'win_match' | 'score_threshold' | 'unlock_board' | 'replay_move' | 'share_recap' | 'view_rank';
+  metric: SeasonTaskMetric;
   actionId: string;
   completedAt?: string;
   score?: number;
