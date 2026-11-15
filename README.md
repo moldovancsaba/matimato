@@ -4,6 +4,8 @@ A fresh Next.js + Phaser + MongoDB implementation of Matimato.
 
 Current release: `2.7.0`.
 
+- [Project board review and manual movement / Scrum journal](docs/PROJECT_BOARD_MOVEMENT_LOG.md)
+
 ## Commands
 
 ```bash
